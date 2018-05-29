@@ -22,7 +22,6 @@ type persistentVolume struct{
 
 type volumeManager struct {
 	volumeService     *qcservice.VolumeService
-	persistentVolume  *persistentVolume
 }
 
 func newVolumeManager(config *qcconfig.Config)(*volumeManager, error){
@@ -38,7 +37,6 @@ func newVolumeManager(config *qcconfig.Config)(*volumeManager, error){
 
 	qc := volumeManager{
 		volumeService: volumeService,
-		persistentVolume: &persistentVolume{},
 	}
 	glog.Infof("newVolumeManager init finish, zone: %v", config.Zone)
 	return &qc, nil
@@ -46,9 +44,8 @@ func newVolumeManager(config *qcconfig.Config)(*volumeManager, error){
 
 // check existence volume by volume ID
 // Return: true: volume exist, false: volume not exist
-func (vm *volumeManager)IsVolumeIdExist()(bool,error){
+func (vm *volumeManager)IsVolumeIdExist(id string)(bool,error){
 	input := qcservice.DescribeVolumesInput{}
-	id := vm.persistentVolume.VolID
 	input.Volumes = append(input.Volumes, &id)
 	// consult volume info
 	output, err := vm.volumeService.DescribeVolumes(&input)
@@ -61,9 +58,6 @@ func (vm *volumeManager)IsVolumeIdExist()(bool,error){
 			*output.RetCode, id, vm.volumeService.Properties.Zone)
 	}
 	// IaaS response total count more than 1
-	if *output.TotalCount == 0 {
-
-	}
 	if *output.TotalCount > 1 {
 		glog.Errorf("has duplicated volume ID %s in zone %s",
 			id, vm.volumeService.Properties.Zone)

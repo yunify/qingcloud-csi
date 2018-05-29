@@ -7,15 +7,9 @@ import(
 )
 
 func createConfig()(config *qcconfig.Config, err error){
-	accessKeyId := ""
-	accessKeySecret := ""
-	config,err = qcconfig.New(accessKeyId,accessKeySecret)
-	config.Zone = "sh1a"
-	if err != nil{
-		return nil, err
-	}else{
-		return config,nil
-	}
+	config = &qcconfig.Config{}
+	config.LoadConfigFromFilepath("C:\\Users\\wangx\\Documents\\config.yaml")
+	return config,err
 }
 
 func TestVolumeIdExist(t *testing.T){
@@ -37,14 +31,15 @@ func TestVolumeIdExist(t *testing.T){
 		{"vol-aseereww", false},
 	}
 	for _, v:=range testcase{
-		vm.persistentVolume.VolID = v.id
-		flag, err := vm.IsVolumeIdExist()
+		flag, err := vm.IsVolumeIdExist(v.id)
 		if err != nil{
 			t.Errorf("test in %s: error: %v", v.id, err)
 		}
 		if flag != v.ret{
 			t.Errorf("testcase failed in %s, expected %t, actually %t",
 				v.id, v.ret, flag)
+		}else{
+			t.Logf("testcase success in %s, result %t",v.id, flag)
 		}
 	}
 
