@@ -44,7 +44,7 @@ func TestVolumeIdExist(t *testing.T){
 	}
 }
 
-func TestVolumeCreateAndDelete(t *testing.T){
+func TestVolumeCreate(t *testing.T){
 	// create volume manager
 	config, err := createConfig()
 	if err != nil{
@@ -61,11 +61,38 @@ func TestVolumeCreateAndDelete(t *testing.T){
 	//	{volumeClaim{VolName:"pvc-hpp-0001", VolSizeRequest: 2, VolType:3}},
 	}
 	for i, _:=range testcases{
+		t.Logf("\tcreate volume... request = %d\n", testcases[i].claim.VolSizeRequest)
 		err:= vm.CreateVolume(&testcases[i].claim)
 		if err != nil{
 			t.Errorf("Error: %v", err.Error())
 			continue
 		}
-		t.Logf("testcase[%d]: %v", i, testcases[i])
+		t.Logf("\tsuccess, volume id = %d, capacity = %d\n",
+			testcases[i].claim.VolID, testcases[i].claim.VolSizeCapacity)
+	}
+}
+
+func TestVolumeDelete(t *testing.T){
+	// create volume manager
+	config, err := createConfig()
+	if err != nil{
+		glog.Error(err)
+	}
+	vm, err := newVolumeManager(config)
+	if err != nil{
+		glog.Error(err)
+	}
+	testcases := []struct{
+		id string
+	}{
+		{"vol-rslqhbsa"},
+	}
+	for i, _:=range testcases{
+		err := vm.DeleteVolume(testcases[i].id)
+		if err != nil{
+			t.Error(err)
+		}else{
+			t.Logf("Delete volume %s success", testcases[i].id)
+		}
 	}
 }

@@ -130,3 +130,25 @@ func (vm *volumeProvisioner)CreateVolume(opt *volumeClaim)error{
 			opt.VolID, opt.VolName))
 	}
 }
+
+// delete volume
+func (vm *volumeProvisioner)DeleteVolume(id string)error{
+	// set input value
+	input := &qcservice.DeleteVolumesInput{}
+	input.Volumes = append(input.Volumes, &id)
+	// delete volume
+	glog.Infof("call DeleteVolume request id: %s, zone: %s",
+		id, vm.volumeService.Properties.Zone)
+	output, err := vm.volumeService.DeleteVolumes(input)
+	if err != nil{
+		return err
+	}
+
+	// check output
+	if *output.RetCode != 0{
+		glog.Warningf("call DeleteVolumes return %d, id %s",
+			*output.RetCode, id)
+	}
+	return nil
+}
+
