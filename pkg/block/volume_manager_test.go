@@ -42,6 +42,30 @@ func TestVolumeIdExist(t *testing.T){
 			t.Logf("testcase success in %s, result %t",v.id, flag)
 		}
 	}
+}
 
-
+func TestVolumeCreateAndDelete(t *testing.T){
+	// create volume manager
+	config, err := createConfig()
+	if err != nil{
+		glog.Error(err)
+	}
+	vm, err := newVolumeManager(config)
+	if err != nil{
+		glog.Error(err)
+	}
+	testcases := []struct{
+		claim volumeClaim
+	}{
+		{volumeClaim{VolName: "pvc-hp-0001", VolSizeRequest: 12,VolType: 0 }},
+	//	{volumeClaim{VolName:"pvc-hpp-0001", VolSizeRequest: 2, VolType:3}},
+	}
+	for i, _:=range testcases{
+		err:= vm.CreateVolume(&testcases[i].claim)
+		if err != nil{
+			t.Errorf("Error: %v", err.Error())
+			continue
+		}
+		t.Logf("testcase[%d]: %v", i, testcases[i])
+	}
 }
