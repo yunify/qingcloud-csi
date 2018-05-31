@@ -80,3 +80,13 @@ func TestCreateVolume(t *testing.T){
 	}
 }
 
+func TestDeleteVolume(t *testing.T){
+	vp:=getvp()
+	volumeID := "vol-az6ofhp5"
+	err :=vp.DeleteVolume(volumeID)
+	if err != nil{
+		t.Error(err)
+	}else{
+		t.Logf("testcase delete %s success", volumeID)
+	}
+}
