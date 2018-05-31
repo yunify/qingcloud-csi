@@ -1,8 +1,6 @@
 package block
 
 import (
-//	qcclient "github.com/yunify/qingcloud-sdk-go/client"
-	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
@@ -27,24 +25,58 @@ type volumeClaim struct{
 
 type volumeProvisioner struct {
 	volumeService     *qcservice.VolumeService
+	jobService 		  *qcservice.JobService
+	volumeType string
 }
 
-func newVolumeManager(config *qcconfig.Config)(*volumeProvisioner, error){
-	qcService, err := qcservice.Init(config)
+func newVolumeProvisioner(sc *qingStorageClass)(*volumeProvisioner, error){
+	// create config
+	config := getConfigFromStorageClass(sc)
+	// initial qingcloud iaas service
+	qs, err := qcservice.Init(config)
 	if err != nil{
 		return nil,err
 	}
 	// create volume service
-	volumeService, err := qcService.Volume(config.Zone)
-	if err != nil {
+	vs, _ := qs.Volume(config.Zone)
+	// create job service
+	js, _ := qs.Job(config.Zone)
+	// initial volume provisioner
+	vp := volumeProvisioner{
+		volumeService: vs,
+		jobService: js,
+		volumeType: sc.Type,
+	}
+	glog.Infof("volume provisioner init finish, zone: %s, type: %d", vp.volumeService.Properties.Zone, vp.volumeType)
+	return &vp, nil
+}
+
+// find volume by volume ID
+// return: 	nil,	nil: 	not found volumes
+//			volume, nil: 	found volume
+//			nil, 	error:	error
+func (vm *volumeProvisioner)findVolume(id string)(volume *qcservice.Volume, err error){
+	// set describe volume input
+	input := qcservice.DescribeVolumesInput{}
+	input.Volumes = append(input.Volumes, &id)
+	// call describe volume
+	output, err := vm.volumeService.DescribeVolumes(&input)
+	// error
+	if err != nil{
 		return nil, err
 	}
-
-	qc := volumeProvisioner{
-		volumeService: volumeService,
+	if *output.RetCode != 0 {
+		return nil, fmt.Errorf("call DescribeVolumes return: %d", output.RetCode)
 	}
-	glog.Infof("newVolumeManager init finish, zone: %v", config.Zone)
-	return &qc, nil
+	// not found volumes
+	switch *output.TotalCount {
+	case 0:
+		return nil,nil
+	case 1:
+		return output.VolumeSet[0],nil
+	default:
+		return nil, fmt.Errorf("call DescribeVolumes return %d volumesets", output.TotalCount)
+	}
 }
 
 // check existence volume by volume ID
@@ -99,7 +131,7 @@ func (vm *volumeProvisioner)getVolumeInfoById(id string)(*qcservice.Volume,error
 func (vm *volumeProvisioner)CreateVolume(opt *volumeClaim)error{
 	// set input value
 	input := &qcservice.CreateVolumesInput{}
-	size := formatVolumeSize(opt.VolSizeRequest)
+	size := FormatVolumeSize(opt.VolSizeRequest)
 	input.Size = &size
 	count := 1
 	input.Count = &count
@@ -151,4 +183,3 @@ func (vm *volumeProvisioner)DeleteVolume(id string)error{
 	}
 	return nil
 }
-
