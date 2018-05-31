@@ -1,98 +1,118 @@
 package block
 
 import(
-	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
 	"testing"
-	"github.com/golang/glog"
+	"io/ioutil"
+	"encoding/json"
+	"os"
+	"fmt"
+	"strconv"
 )
 
-func createConfig()(config *qcconfig.Config, err error){
-	config = &qcconfig.Config{}
-	config.LoadConfigFromFilepath("C:\\Users\\wangx\\Documents\\config.yaml")
-	return config,err
+var getvp = func() *volumeProvisioner{
+	// get storage class
+	var winfilepath = "C:\\Users\\wangx\\Documents\\config.json"
+	content, err := ioutil.ReadFile(winfilepath)
+	if err != nil{
+		fmt.Errorf("Open file error: %s", err.Error())
+		os.Exit(-1)
+	}
+	sc := qingStorageClass{}
+	err = json.Unmarshal(content, &sc)
+	if err != nil{
+		fmt.Errorf("get storage class error: %s", err.Error())
+		os.Exit(-1)
+	}
+
+	// get volume provisioner
+	vp, err := newVolumeProvisioner(&sc)
+	if err != nil{
+		fmt.Errorf("new volume provisioner error: %s", err.Error())
+		os.Exit(-1)
+	}
+	return vp
 }
 
-func TestVolumeIdExist(t *testing.T){
-	// create volume manager
-	config, err := createConfig()
-	if err != nil{
-		glog.Error(err)
-	}
-	vm, err := newVolumeManager(config)
-	if err != nil{
-		glog.Error(err)
-	}
-
+func TestFindVolume(t *testing.T){
+	// testcase
 	testcase := []struct{
 		id string
-		ret bool
+		exist bool
 	}{
-		{"vol-57sm6cas", true},
-		{"vol-aseereww", false},
+		{"vol-fhlkhxpr", true},
+		{"vol-vol-fhlkhxpw",false},
 	}
-	for _, v:=range testcase{
-		flag, err := vm.IsVolumeIdExist(v.id)
+
+	vp := getvp()
+	// test findVolume
+	for _, v:= range testcase{
+		flag, err := vp.findVolume(v.id)
 		if err != nil{
-			t.Errorf("test in %s: error: %v", v.id, err)
+			t.Error("find volume error: ", err.Error())
 		}
-		if flag != v.ret{
-			t.Errorf("testcase failed in %s, expected %t, actually %t",
-				v.id, v.ret, flag)
+		if (flag != nil) == v.exist{
+			t.Logf("volume id %s, expect %t, actually %t", v.id, v.exist, flag != nil)
 		}else{
-			t.Logf("testcase success in %s, result %t",v.id, flag)
+			t.Errorf("volume id %s, expect %t, actually %t", v.id, v.exist, flag != nil)
 		}
 	}
 }
 
-func TestVolumeCreate(t *testing.T){
-	// create volume manager
-	config, err := createConfig()
-	if err != nil{
-		glog.Error(err)
-	}
-	vm, err := newVolumeManager(config)
-	if err != nil{
-		glog.Error(err)
-	}
-	testcases := []struct{
-		claim volumeClaim
+func TestCreateVolume(t *testing.T){
+	// testcase
+	testcase := []struct{
+		vc volumeClaim
+		createSuccess bool
 	}{
-		{volumeClaim{VolName: "pvc-hp-0001", VolSizeRequest: 12,VolType: 0 }},
-	//	{volumeClaim{VolName:"pvc-hpp-0001", VolSizeRequest: 2, VolType:3}},
+		{volumeClaim{VolName:"pvc-test-", VolType:"hp", VolSizeRequest:12},true},
+		{volumeClaim{VolName:"pvc-test-", VolType:"hp", VolSizeRequest:121},true},
+		{volumeClaim{VolName:"pvc-test-", VolType:"hp", VolSizeRequest:-1},false},
 	}
-	for i, _:=range testcases{
-		t.Logf("\tcreate volume... request = %d\n", testcases[i].claim.VolSizeRequest)
-		err:= vm.CreateVolume(&testcases[i].claim)
-		if err != nil{
-			t.Errorf("Error: %v", err.Error())
-			continue
-		}
-		t.Logf("\tsuccess, volume id = %d, capacity = %d\n",
-			testcases[i].claim.VolID, testcases[i].claim.VolSizeCapacity)
-	}
-}
-
-func TestVolumeDelete(t *testing.T){
-	// create volume manager
-	config, err := createConfig()
-	if err != nil{
-		glog.Error(err)
-	}
-	vm, err := newVolumeManager(config)
-	if err != nil{
-		glog.Error(err)
-	}
-	testcases := []struct{
-		id string
-	}{
-		{"vol-rslqhbsa"},
-	}
-	for i, _:=range testcases{
-		err := vm.DeleteVolume(testcases[i].id)
-		if err != nil{
+	vp:=getvp()
+	for i,v:=range testcase{
+		v.vc.VolName += strconv.Itoa(i)
+		err := vp.CreateVolume(&v.vc)
+		if (err == nil)== v.createSuccess{
+			t.Logf("testcase passed, %v", v)
+		}else{
 			t.Error(err)
-		}else{
-			t.Logf("Delete volume %s success", testcases[i].id)
 		}
+	}
+}
+
+func TestDeleteVolume(t *testing.T){
+	vp:=getvp()
+	volumeID := "vol-az6ofhp5"
+	err :=vp.DeleteVolume(volumeID)
+	if err != nil{
+		t.Error(err)
+	}else{
+		t.Logf("testcase delete %s success", volumeID)
+	}
+}
+
+func TestAttachVolume(t *testing.T){
+	vp:=getvp()
+	volumeID := "vol-fhlkhxpr"
+	instanceID:= "i-msu2th7i"
+	err := vp.AttachVolume(&volumeID, &instanceID)
+	if err != nil{
+		t.Error(err)
+	}else{
+		t.Logf("testcase attach volume %s to instance %s success",
+			volumeID, instanceID)
+	}
+}
+
+func TestDetachVolume(t *testing.T){
+	vp:=getvp()
+	volumeID := "vol-fhlkhxpr"
+	instanceID:= "i-msu2th7i"
+	err := vp.DetachVolume(&volumeID, &instanceID)
+	if err != nil{
+		t.Error(err)
+	}else{
+		t.Logf("testcase detach volume %s from instance %s success",
+			volumeID, instanceID)
 	}
 }
