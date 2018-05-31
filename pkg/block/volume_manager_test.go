@@ -6,6 +6,7 @@ import(
 	"encoding/json"
 	"os"
 	"fmt"
+	"strconv"
 )
 
 var getvp = func() *volumeProvisioner{
@@ -56,3 +57,26 @@ func TestFindVolume(t *testing.T){
 		}
 	}
 }
+
+func TestCreateVolume(t *testing.T){
+	// testcase
+	testcase := []struct{
+		vc volumeClaim
+		createSuccess bool
+	}{
+		{volumeClaim{VolName:"pvc-test-", VolType:"hp", VolSizeRequest:12},true},
+		{volumeClaim{VolName:"pvc-test-", VolType:"hp", VolSizeRequest:121},true},
+		{volumeClaim{VolName:"pvc-test-", VolType:"hp", VolSizeRequest:-1},false},
+	}
+	vp:=getvp()
+	for i,v:=range testcase{
+		v.vc.VolName += strconv.Itoa(i)
+		err := vp.CreateVolume(&v.vc)
+		if (err == nil)== v.createSuccess{
+			t.Logf("testcase passed, %v", v)
+		}else{
+			t.Error(err)
+		}
+	}
+}
+

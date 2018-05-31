@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 )
 
-
-
 func Test_getConfigFromQingStorageClass(t *testing.T){
 	// get storage class
 	var winfilepath = "C:\\Users\\wangx\\Documents\\config.json"
