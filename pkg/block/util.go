@@ -1,6 +1,6 @@
 package block
 
-func formatVolumeSize(size int)int{
+func FormatVolumeSize(size int)int{
 	if size % 10 != 0 {
 		size = (size / 10 + 1) * 10
 	}
