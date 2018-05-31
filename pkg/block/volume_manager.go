@@ -4,6 +4,7 @@ import (
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
 	"github.com/golang/glog"
 	"fmt"
+	"github.com/pkg/errors"
 )
 
 type volumeClaim struct{
@@ -173,6 +174,33 @@ func (vm *volumeProvisioner)AttachVolume(volumeId *string, instanceId *string) e
 	// check output
 	if *output.RetCode != 0{
 		glog.Errorf("call AttachVolume return %d, volume id %s",
+			*output.RetCode, *volumeId)
+	}
+	return nil
+}
+
+// detach volume
+func (vm *volumeProvisioner)DetachVolume(volumeId *string, instanceId *string) error{
+	// check volume status
+	if vm.isAttachedToInstance(volumeId, instanceId) == false{
+		return errors.New(
+			fmt.Sprintf("volume %s is not attached to instance %s in zone %s",
+			*volumeId, *instanceId, *vm.volumeService.Properties.Zone))
+	}
+	// set input parameter
+	input:=&qcservice.DetachVolumesInput{}
+	input.Volumes = append(input.Volumes, volumeId)
+	input.Instance = instanceId
+	// attach volume
+	glog.Infof("call DetachVolume request volume id: %s, instance id: %s, zone: %s",
+		*volumeId, *instanceId, *vm.volumeService.Properties.Zone)
+	output, err := vm.volumeService.DetachVolumes(input)
+	if err != nil{
+		return err
+	}
+	// check output
+	if *output.RetCode != 0{
+		glog.Errorf("call DetachVolume return %d, volume id %s",
 			*output.RetCode, *volumeId)
 	}
 	return nil

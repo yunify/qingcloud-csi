@@ -95,12 +95,24 @@ func TestAttachVolume(t *testing.T){
 	vp:=getvp()
 	volumeID := "vol-fhlkhxpr"
 	instanceID:= "i-msu2th7i"
-//	instanceID := "i-hgz8mri2"
 	err := vp.AttachVolume(&volumeID, &instanceID)
 	if err != nil{
 		t.Error(err)
 	}else{
 		t.Logf("testcase attach volume %s to instance %s success",
+			volumeID, instanceID)
+	}
+}
+
+func TestDetachVolume(t *testing.T){
+	vp:=getvp()
+	volumeID := "vol-fhlkhxpr"
+	instanceID:= "i-msu2th7i"
+	err := vp.DetachVolume(&volumeID, &instanceID)
+	if err != nil{
+		t.Error(err)
+	}else{
+		t.Logf("testcase detach volume %s from instance %s success",
 			volumeID, instanceID)
 	}
 }
