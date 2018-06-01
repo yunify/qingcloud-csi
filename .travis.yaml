@@ -1,0 +1,8 @@
+language: go
+go: 
+  - 1.10
+install:
+  - go get -u github.com/golang/dep/cmd/dep
+  - dep ensure -vendor-only
+script:
+  - make blockplugin
