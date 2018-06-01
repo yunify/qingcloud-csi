@@ -1,12 +1,12 @@
 package block
 
 import (
-	"github.com/kubernetes-csi/drivers/pkg/csi-common"
 	"github.com/container-storage-interface/spec/lib/go/csi/v0"
-	"golang.org/x/net/context"
 	"github.com/golang/glog"
-	"google.golang.org/grpc/status"
+	"github.com/kubernetes-csi/drivers/pkg/csi-common"
+	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type nodeServer struct {
@@ -16,13 +16,13 @@ type nodeServer struct {
 func (ns *nodeServer) NodePublishVolume(
 	ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
 	glog.Infof("NodePublishVolume")
-	return nil,nil
+	return nil, nil
 }
 
 func (ns *nodeServer) NodeUnpublishVolume(
 	ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
 	glog.Infof("NodeUnpublishVolume")
-	return nil,nil
+	return nil, nil
 }
 
 func (ns *nodeServer) NodeStageVolume(

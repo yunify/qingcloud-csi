@@ -7,8 +7,6 @@ import (
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
 )
 
-
-
 type volumeProvisioner struct {
 	volumeService *qcservice.VolumeService
 	jobService    *qcservice.JobService

@@ -2,11 +2,11 @@ package main
 
 import (
 	"flag"
-	"os"
 	"github.com/yunify/qingcloud-csi/pkg/block"
+	"os"
 )
 
-func init(){
+func init() {
 	flag.Set("logtostderr", "true")
 }
 
@@ -22,7 +22,7 @@ func main() {
 	os.Exit(0)
 }
 
-func handle(){
+func handle() {
 	driver := block.GetBlockDriver()
 	driver.Run(*driverName, *nodeID, *endpoint)
 }
