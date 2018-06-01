@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"os"
-	"github.com/wnxn/qingcloud-csi/pkg/block"
+	"github.com/yunify/qingcloud-csi/pkg/block"
 )
 
 func init(){
