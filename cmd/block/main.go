@@ -4,6 +4,8 @@ import (
 	"flag"
 	"github.com/yunify/qingcloud-csi/pkg/block"
 	"os"
+	"path"
+	"github.com/golang/glog"
 )
 
 func init() {
@@ -18,11 +20,20 @@ var (
 
 func main() {
 	flag.Parse()
+
 	handle()
 	os.Exit(0)
 }
 
 func handle() {
+	if err := block.CreatePath(path.Join(block.PluginFolder, "controller")); err != nil {
+		glog.Errorf("failed to create directory for controller %v", err)
+		os.Exit(1)
+	}
+	if err := block.CreatePath(path.Join(block.PluginFolder, "node")); err != nil {
+		glog.Errorf("failed to create directory for node %v", err)
+		os.Exit(1)
+	}
 	driver := block.GetBlockDriver()
 	driver.Run(*driverName, *nodeID, *endpoint)
 }

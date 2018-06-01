@@ -1,6 +1,6 @@
 .PHONY: all blockplugin
 
-BLOCK_IMAGE_NAME=blockplugin
+BLOCK_IMAGE_NAME=csi-qingcloud
 BLOCK_IMAGE_VERSION=v0.2.0
 BLOCK_PLUGIN_NAME=blockplugin
 
