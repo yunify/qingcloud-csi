@@ -7,14 +7,7 @@ import (
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
 )
 
-type volumeClaim struct {
-	VolName string
-	VolID   string
-	// VolSizeRequest: unit GB
-	VolSizeRequest int
-	// VolSizeCapacity: unit GB
-	VolSizeCapacity int
-}
+
 
 type volumeProvisioner struct {
 	volumeService *qcservice.VolumeService
@@ -74,7 +67,7 @@ func (vm *volumeProvisioner) findVolume(id string) (volume *qcservice.Volume, er
 }
 
 // create volume
-func (vm *volumeProvisioner) CreateVolume(opt *volumeClaim) error {
+func (vm *volumeProvisioner) CreateVolume(opt *blockVolume) error {
 	// set input value
 	input := &qcservice.CreateVolumesInput{}
 	// volume provisioner size

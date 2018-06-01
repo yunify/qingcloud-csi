@@ -61,12 +61,12 @@ func TestFindVolume(t *testing.T) {
 func TestCreateVolume(t *testing.T) {
 	// testcase
 	testcase := []struct {
-		vc            volumeClaim
+		vc            blockVolume
 		createSuccess bool
 	}{
-		{volumeClaim{VolName: "pvc-test-", VolSizeRequest: 12}, true},
-		{volumeClaim{VolName: "pvc-test-", VolSizeRequest: 121}, true},
-		{volumeClaim{VolName: "pvc-test-", VolSizeRequest: -1}, true},
+		{blockVolume{VolName: "pvc-test-", VolSizeRequest: 12}, true},
+		{blockVolume{VolName: "pvc-test-", VolSizeRequest: 121}, true},
+		{blockVolume{VolName: "pvc-test-", VolSizeRequest: -1}, true},
 	}
 	vp := getvp()
 	for i, v := range testcase {

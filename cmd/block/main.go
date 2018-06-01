@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"os"
+	"github.com/wnxn/qingcloud-csi/pkg/block"
 )
 
 func init(){
@@ -11,7 +12,7 @@ func init(){
 
 var (
 	endpoint   = flag.String("endpoint", "unix://tmp/csi.sock", "CSI endpoint")
-	driverName = flag.String("drivername", "csi-qingcloud-performance", "name of the driver")
+	driverName = flag.String("drivername", "csi-qingcloud", "name of the driver")
 	nodeID     = flag.String("nodeid", "", "node id")
 )
 
@@ -22,5 +23,6 @@ func main() {
 }
 
 func handle(){
-
+	driver := block.GetBlockDriver()
+	driver.Run(*driverName, *nodeID, *endpoint)
 }
