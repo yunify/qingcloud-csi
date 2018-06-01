@@ -1,28 +1,27 @@
 package block
 
 import (
-	"github.com/kubernetes-csi/drivers/pkg/csi-common"
-	"golang.org/x/net/context"
 	"github.com/container-storage-interface/spec/lib/go/csi/v0"
 	"github.com/golang/glog"
+	"github.com/kubernetes-csi/drivers/pkg/csi-common"
+	"golang.org/x/net/context"
 )
 
-type controllerServer struct{
+type controllerServer struct {
 	*csicommon.DefaultControllerServer
 }
 
-func (cs *controllerServer)CreateVolume(
-	ctx context.Context, req *csi.CreateVolumeRequest)(*csi.CreateVolumeResponse, error){
+func (cs *controllerServer) CreateVolume(
+	ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
 	glog.Infof("CreateVolume")
-	return nil,nil
+	return nil, nil
 }
 
 func (cs *controllerServer) DeleteVolume(
 	ctx context.Context, req *csi.DeleteVolumeRequest) (*csi.DeleteVolumeResponse, error) {
 	glog.Infof("DeleteVolume")
-	return nil,nil
+	return nil, nil
 }
-
 
 func (cs *controllerServer) ValidateVolumeCapabilities(
 	ctx context.Context, req *csi.ValidateVolumeCapabilitiesRequest) (*csi.ValidateVolumeCapabilitiesResponse, error) {

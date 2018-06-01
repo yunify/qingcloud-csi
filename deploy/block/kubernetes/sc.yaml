@@ -1,0 +1,16 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+   name: csi-qingcloud
+provisioner: csi-qingcloud
+parameters:
+    accessKeyId: "XXXXXXX"
+    accessKeySecret: "XXXXXXXXX"
+    zone: "sh1a"
+    host: "api.qingcloud.com"
+    port: 443
+    protocol: "https"
+    volumeType: 0
+    volumeMaxSize: 500
+    volumeMinSize: 10
+reclaimPolicy: Delete 

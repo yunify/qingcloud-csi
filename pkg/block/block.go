@@ -1,9 +1,9 @@
 package block
 
 import (
-	"github.com/kubernetes-csi/drivers/pkg/csi-common"
 	"github.com/container-storage-interface/spec/lib/go/csi/v0"
 	"github.com/golang/glog"
+	"github.com/kubernetes-csi/drivers/pkg/csi-common"
 )
 
 const (
@@ -21,10 +21,10 @@ type block struct {
 	driver *csicommon.CSIDriver
 
 	ids *identityServer
-	ns *nodeServer
-	cs *controllerServer
+	ns  *nodeServer
+	cs  *controllerServer
 
-	cap []*csi.VolumeCapability_AccessMode
+	cap   []*csi.VolumeCapability_AccessMode
 	cscap []*csi.ControllerServiceCapability
 }
 
@@ -37,7 +37,7 @@ type blockVolume struct {
 	VolSizeCapacity int
 }
 
-func GetBlockDriver() *block{
+func GetBlockDriver() *block {
 	return &block{}
 }
 
