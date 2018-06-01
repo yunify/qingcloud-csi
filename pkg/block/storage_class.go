@@ -5,19 +5,47 @@ import (
 	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
 )
 
-type qingStorageClass struct{
-	AccessKeyId string  `json:"accessKeyId"`
+type qingStorageClass struct {
+	AccessKeyId     string `json:"accessKeyId"`
 	AccessKeySecret string `json:"accessKeySecret"`
-	Zone string `json:"zone"`
-	Type string `json:"type"`
-	Host string `json:"host"`
-	Port int `json:"port"`
-	Protocol string `json:"protocol"`
+	Zone            string `json:"zone"`
+	Host            string `json:"host"`
+	Port            int    `json:"port"`
+	Protocol        string `json:"protocol"`
+	VolumeType      int    `json:"type"`
+	VolumeMaxSize   int    `json:"maxSize"`
+	VolumeMinSize   int    `json:"minSize"`
 }
 
-func getConfigFromStorageClass(sc *qingStorageClass)(config *qcconfig.Config){
-	config,err := qcconfig.NewDefault()
-	if err != nil{
+func NewDefaultQingStorageClass() qingStorageClass {
+	return qingStorageClass{
+		AccessKeyId:     "KEY_ID",
+		AccessKeySecret: "KEY_SECRET",
+		Zone:            "sh1a",
+		Host:            "api.qingcloud.com",
+		Port:            443,
+		Protocol:        "https",
+		VolumeType:      0,
+		VolumeMaxSize:   500,
+		VolumeMinSize:   10,
+	}
+}
+
+func (sc qingStorageClass) formatVolumeSize(size int) int {
+	if size <= sc.VolumeMinSize {
+		return sc.VolumeMinSize
+	} else if size >= sc.VolumeMaxSize {
+		return sc.VolumeMaxSize
+	}
+	if size%10 != 0 {
+		size = (size/10 + 1) * 10
+	}
+	return size
+}
+
+func (sc qingStorageClass) getConfig() (config *qcconfig.Config) {
+	config, err := qcconfig.NewDefault()
+	if err != nil {
 		glog.Error(err)
 		return nil
 	}

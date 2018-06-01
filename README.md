@@ -1,4 +1,7 @@
 # QingCloud-CSI
+
+[![Build Status](https://travis-ci.org/yunify/qingcloud-csi.svg?branch=master)](https://travis-ci.org/yunify/qingcloud-csi)
+
 Kubernetes volume plugin based on CSI specification which support block storage of qingcloud
 
 ## Description
