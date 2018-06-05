@@ -66,7 +66,7 @@ func (cs *controllerServer) CreateVolume(
 	if req.GetVolumeCapabilities() != nil{
 		volSizeBytes = int64(req.GetCapacityRange().GetRequiredBytes())
 	}
-	volSizeGB := sc.formatVolumeSize(int(volSizeBytes/gib))
+	volSizeGB := int(volSizeBytes/gib)
 
 	// Create volume
 	err = vp.CreateVolume(volSizeGB, &newVol)
