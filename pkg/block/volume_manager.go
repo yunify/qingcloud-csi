@@ -55,7 +55,7 @@ func (vm *volumeProvisioner) findVolume(id string) (volume *qcservice.Volume, er
 	if *output.RetCode != 0 {
 		return nil, status.Error(codes.Internal,
 			fmt.Sprintf("call DescribeVolumes err: volume id %s in %s",
-				id, vm.volumeService.Config))
+				id, vm.volumeService.Config.Zone))
 	}
 	// not found volumes
 	switch *output.TotalCount {
@@ -86,7 +86,7 @@ func (vm *volumeProvisioner) findVolumeByName(name string) (volume *qcservice.Vo
 	}
 	if *output.RetCode != 0 {
 		return nil, status.Error(codes.Internal,
-			fmt.Sprintf("call DescribeVolumes err: volume name %s in %s", name, vm.volumeService.Config))
+			fmt.Sprintf("call DescribeVolumes err: volume name %s in %s", name, vm.volumeService.Config.Zone))
 	}
 	// Not found volumes
 	switch *output.TotalCount {
@@ -97,7 +97,7 @@ func (vm *volumeProvisioner) findVolumeByName(name string) (volume *qcservice.Vo
 	default:
 		return nil, status.Error(codes.Internal,
 			fmt.Sprintf("call DescribeVolumes err: find duplicate volumes, volume name %s in %s",
-				name, vm.volumeService.Config))
+				name, vm.volumeService.Config.Zone))
 	}
 }
 
