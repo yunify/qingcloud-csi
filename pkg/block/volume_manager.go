@@ -34,7 +34,7 @@ func newVolumeProvisioner(sc *qingStorageClass) (*volumeProvisioner, error) {
 		storageClass:  sc,
 	}
 	glog.Infof("volume provisioner init finish, zone: %s, type: %d",
-		vp.volumeService.Properties.Zone, vp.storageClass.VolumeType)
+		*vp.volumeService.Properties.Zone, vp.storageClass.VolumeType)
 	return &vp, nil
 }
 
@@ -66,7 +66,7 @@ func (vm *volumeProvisioner) findVolume(id string) (volume *qcservice.Volume, er
 	default:
 		return nil, status.Error(codes.Internal,
 			fmt.Sprintf("call DescribeVolumes err: find duplicate volumes, volume id %s in %s",
-				id, vm.volumeService.Config))
+				id, vm.volumeService.Config.Zone))
 	}
 }
 
@@ -118,7 +118,7 @@ func (vm *volumeProvisioner) CreateVolume(requestSize int, opt *blockVolume) err
 	input.VolumeType = &vm.storageClass.VolumeType
 	// create volume
 	glog.Infof("call CreateVolume request size: %d GB, zone: %s, type: %d, count: %d, name: %s",
-		input.Size, vm.volumeService.Properties.Zone, input.VolumeType, input.Count, input.VolumeName)
+		*input.Size, *vm.volumeService.Properties.Zone, *input.VolumeType, *input.Count, *input.VolumeName)
 	output, err := vm.volumeService.CreateVolumes(input)
 	if err != nil {
 		return status.Error(codes.Internal, "Call IaaS SDK error")
