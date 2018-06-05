@@ -40,7 +40,7 @@ func (cs *controllerServer) CreateVolume(
 	}
 	// Need to check for already existing volume name, and if found
 	// check for the requested capacity and already allocated capacity
-	if exVol, err := vp.findVolumeByName(req.GetName()); err == nil {
+	if exVol, err := vp.findVolumeByName(req.GetName()); err == nil&&exVol != nil {
 		// Since err is nil, it means the volume with the same name already exists
 		// need to check if the size of exisiting volume is the same as in new
 		// request
@@ -55,6 +55,9 @@ func (cs *controllerServer) CreateVolume(
 			}, nil
 		}
 		return nil, status.Error(codes.AlreadyExists, fmt.Sprintf("Volume with the same name: %s but with different size already exist", req.GetName()))
+	}else if err != nil{
+		return nil, status.Error(codes.Internal,
+					fmt.Sprintf("Find volume by name error %s, %v", req.GetName(), err.Error()))
 	}
 
 	// Create QingCloud volume
