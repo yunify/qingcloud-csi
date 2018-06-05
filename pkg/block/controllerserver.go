@@ -119,7 +119,7 @@ func (cs *controllerServer) DeleteVolume(
 		return nil, err
 	}
 	delete(blockVolumes, blockVol.VolID)
-	return nil, nil
+	return &csi.DeleteVolumeResponse{}, nil
 }
 
 func (cs *controllerServer) ValidateVolumeCapabilities(
