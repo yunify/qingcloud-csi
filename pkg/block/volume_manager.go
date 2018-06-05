@@ -5,6 +5,8 @@ import (
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
+	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/codes"
 )
 
 type volumeProvisioner struct {
@@ -36,10 +38,10 @@ func newVolumeProvisioner(sc *qingStorageClass) (*volumeProvisioner, error) {
 	return &vp, nil
 }
 
-// find volume by volume ID
-// return: 	nil,	nil: 	not found volumes
+// Find volume by volume ID
+// Return: 	nil,	nil: 	not found volumes
 //			volume, nil: 	found volume
-//			nil, 	error:	error
+//			nil, 	error:	internal error
 func (vm *volumeProvisioner) findVolume(id string) (volume *qcservice.Volume, err error) {
 	// set describe volume input
 	input := qcservice.DescribeVolumesInput{}
@@ -51,7 +53,9 @@ func (vm *volumeProvisioner) findVolume(id string) (volume *qcservice.Volume, er
 		return nil, err
 	}
 	if *output.RetCode != 0 {
-		return nil, fmt.Errorf("call DescribeVolumes return: %d", output.RetCode)
+		return nil, status.Error(codes.Internal,
+			fmt.Sprintf("call DescribeVolumes err: volume id %s in %s",
+				id, vm.volumeService.Config))
 	}
 	// not found volumes
 	switch *output.TotalCount {
@@ -60,16 +64,50 @@ func (vm *volumeProvisioner) findVolume(id string) (volume *qcservice.Volume, er
 	case 1:
 		return output.VolumeSet[0], nil
 	default:
-		return nil, fmt.Errorf("call DescribeVolumes return %d volumesets", output.TotalCount)
+		return nil, status.Error(codes.Internal,
+			fmt.Sprintf("call DescribeVolumes err: find duplicate volumes, volume id %s in %s",
+				id, vm.volumeService.Config))
 	}
 }
 
+// Find volume by volume name
+// Return: 	nil, 		nil: 	not found volumes
+//			volumes,	nil:	found volume
+//			nil,		error:	internal error
+func (vm *volumeProvisioner)findVolumeByName(name string)(volume *qcservice.Volume,err error){
+	// Set input arguements
+	input := qcservice.DescribeVolumesInput{}
+	input.SearchWord = &name
+	// Call DescribeVolumes
+	output, err:=vm.volumeService.DescribeVolumes(&input)
+	// Handle error
+	if err != nil{
+		return nil, err
+	}
+	if *output.RetCode != 0{
+		return nil, status.Error(codes.Internal,
+			fmt.Sprintf("call DescribeVolumes err: volume name %s in %s", name, vm.volumeService.Config))
+	}
+	// Not found volumes
+	switch *output.TotalCount{
+	case 0:
+		return nil,nil
+	case 1:
+		return output.VolumeSet[0], nil
+	default:
+		return nil, status.Error(codes.Internal,
+			fmt.Sprintf("call DescribeVolumes err: find duplicate volumes, volume name %s in %s",
+				name, vm.volumeService.Config))
+	}
+}
+
+
 // create volume
-func (vm *volumeProvisioner) CreateVolume(opt *blockVolume) error {
+func (vm *volumeProvisioner) CreateVolume(requestSize int, opt *blockVolume) error {
 	// set input value
 	input := &qcservice.CreateVolumesInput{}
 	// volume provisioner size
-	size := vm.storageClass.formatVolumeSize(opt.VolSizeRequest)
+	size := vm.storageClass.formatVolumeSize(requestSize)
 	input.Size = &size
 	// volume provisioner count
 	count := 1
@@ -83,7 +121,7 @@ func (vm *volumeProvisioner) CreateVolume(opt *blockVolume) error {
 		input.Size, vm.volumeService.Properties.Zone, input.VolumeType, input.Count, input.VolumeName)
 	output, err := vm.volumeService.CreateVolumes(input)
 	if err != nil {
-		return err
+		return status.Error(codes.Internal, "Call IaaS SDK error")
 	}
 	// check output
 	if *output.RetCode != 0 {
@@ -94,9 +132,10 @@ func (vm *volumeProvisioner) CreateVolume(opt *blockVolume) error {
 	opt.VolID = *output.Volumes[0]
 	volumeInfo, err := vm.findVolume(opt.VolID)
 	if err != nil {
-		return err
+		return status.Error(codes.AlreadyExists,
+			fmt.Sprintf("Volume already exists %s in %s", opt.VolID, opt.Zone))
 	} else {
-		opt.VolSizeCapacity = *volumeInfo.Size
+		opt.VolSize = *volumeInfo.Size
 		return nil
 	}
 }
