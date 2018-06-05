@@ -40,8 +40,14 @@ func TestFormatVolumeSize(t *testing.T) {
 	// new default storageclass
 	sc := NewDefaultQingStorageClass()
 	// get storageclass
-	var winfilepath = "C:\\Users\\wangx\\Documents\\config.json"
-	content, err := ioutil.ReadFile(winfilepath)
+	var filepath string
+	if runtime.GOOS == "windows" {
+		filepath = "C:\\Users\\wangx\\Documents\\config.json"
+	}
+	if runtime.GOOS == "linux" {
+		filepath = "/root/config.json"
+	}
+	content, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		t.Error("Open file error: ", err.Error())
 	}
