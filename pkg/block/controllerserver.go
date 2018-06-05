@@ -113,6 +113,7 @@ func (cs *controllerServer) DeleteVolume(
 	// Delete block volume
 	if err = vp.DeleteVolume(blockVol.VolID); err != nil {
 		glog.Infof("failed to delete block volume: %s in %s with error: %v", blockVol.VolID, blockVol.Zone, err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	// Remove persistent storage file for the unmapped volume
 	if err := deleteVolInfo(blockVol.VolID, path.Join(PluginFolder, "controller")); err != nil {
