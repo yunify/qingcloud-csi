@@ -29,15 +29,6 @@ type block struct {
 	cscap []*csi.ControllerServiceCapability
 }
 
-type blockVolume struct {
-	VolName string
-	VolID   string
-	// VolSizeRequest: unit GB
-	VolSizeRequest int
-	// VolSizeCapacity: unit GB
-	VolSizeCapacity int
-}
-
 func GetBlockDriver() *block {
 	return &block{}
 }
