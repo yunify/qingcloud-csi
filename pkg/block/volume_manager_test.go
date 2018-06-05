@@ -5,18 +5,18 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"runtime"
 	"strconv"
 	"testing"
-	"runtime"
 )
 
 var getvp = func() *volumeProvisioner {
 	// get storage class
 	var filepath string
-	if runtime.GOOS == "windows"{
-		 filepath = "C:\\Users\\wangx\\Documents\\config.json"
+	if runtime.GOOS == "windows" {
+		filepath = "C:\\Users\\wangx\\Documents\\config.json"
 	}
-	if runtime.GOOS == "linux"{
+	if runtime.GOOS == "linux" {
 		filepath = "/root/config.json"
 	}
 	content, err := ioutil.ReadFile(filepath)
@@ -65,9 +65,9 @@ func TestFindVolume(t *testing.T) {
 	}
 }
 
-func TestFindVolumeByName(t *testing.T){
-	testcase := []struct{
-		name string
+func TestFindVolumeByName(t *testing.T) {
+	testcase := []struct {
+		name  string
 		exist bool
 	}{
 		{"hp-test", true},

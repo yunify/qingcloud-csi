@@ -1,9 +1,9 @@
 package block
 
 import (
+	"fmt"
 	"github.com/golang/glog"
 	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
-	"fmt"
 	"strconv"
 )
 
@@ -12,7 +12,7 @@ type qingStorageClass struct {
 	AccessKeySecret string `json:"accessKeySecret"`
 	Zone            string `json:"zone"`
 	Host            string `json:"host"`
-	Uri 			string `json:"uri"`
+	Uri             string `json:"uri"`
 	Port            int    `json:"port"`
 	Protocol        string `json:"protocol"`
 	VolumeType      int    `json:"type"`
@@ -26,7 +26,7 @@ func NewDefaultQingStorageClass() *qingStorageClass {
 		AccessKeySecret: "KEY_SECRET",
 		Zone:            "sh1a",
 		Host:            "api.qingcloud.com",
-		Uri:"/iaas",
+		Uri:             "/iaas",
 		Port:            443,
 		Protocol:        "https",
 		VolumeType:      0,
@@ -35,73 +35,73 @@ func NewDefaultQingStorageClass() *qingStorageClass {
 	}
 }
 
-func NewStorageClassFromMap(opt map[string]string)(*qingStorageClass, error){
+func NewStorageClassFromMap(opt map[string]string) (*qingStorageClass, error) {
 	var ok bool
 	sc := NewDefaultQingStorageClass()
-	sc.AccessKeyId ,ok=opt["accessKeyId"]
-	if !ok{
+	sc.AccessKeyId, ok = opt["accessKeyId"]
+	if !ok {
 		return nil, fmt.Errorf("Missing required parameter accessKeyId")
 	}
-	sc.AccessKeySecret, ok=opt["accessKeySecret"]
-	if !ok{
+	sc.AccessKeySecret, ok = opt["accessKeySecret"]
+	if !ok {
 		return nil, fmt.Errorf("Missing required parameter accessKeySecret")
 	}
 	sc.Zone, ok = opt["zone"]
-	if !ok{
+	if !ok {
 		return nil, fmt.Errorf("Missing required parameter zone")
 	}
 	sc.Host, ok = opt["host"]
-	if !ok{
+	if !ok {
 		return nil, fmt.Errorf("Missing required parameter host")
 	}
 	// port
 	sport, ok := opt["port"]
-	if !ok{
+	if !ok {
 		return nil, fmt.Errorf("Missing required parameter port")
 	}
 	iport, err := strconv.Atoi(sport)
-	if err != nil{
-		return nil,err
-	}else{
+	if err != nil {
+		return nil, err
+	} else {
 		sc.Port = iport
 	}
 	// protocol
 	sc.Protocol, ok = opt["protocol"]
-	if !ok{
+	if !ok {
 		return nil, fmt.Errorf("Missing required parameter protocol")
 	}
 	// volume type
 	sVolType, ok := opt["type"]
-	if !ok{
+	if !ok {
 		return nil, fmt.Errorf("Missing required parameter type")
 	}
 	iVolType, err := strconv.Atoi(sVolType)
-	if err != nil{
-		return nil,err
-	}else{
+	if err != nil {
+		return nil, err
+	} else {
 		sc.VolumeType = iVolType
 	}
 	// Get volume maxsize +optional
 	sMaxSize, ok := opt["maxSize"]
 	iMaxSize, err := strconv.Atoi(sMaxSize)
-	if err != nil{
-		return nil,err
-	}else{
+	if err != nil {
+		return nil, err
+	} else {
 		sc.VolumeMaxSize = iMaxSize
 	}
 	// Get volume minsize +optional
 	sMinSize, ok := opt["minSize"]
 	iMinSize, err := strconv.Atoi(sMinSize)
-	if err != nil{
-		return nil,err
-	}else{
+	if err != nil {
+		return nil, err
+	} else {
 		sc.VolumeMinSize = iMinSize
 	}
 	// Ensure volume minSize less than volume maxSize
-	if sc.VolumeMinSize >= sc.VolumeMaxSize{
+	if sc.VolumeMinSize >= sc.VolumeMaxSize {
 		return nil, fmt.Errorf("Volume minSize must less than volume maxSize")
 	}
-	return sc,nil
+	return sc, nil
 }
 
 func (sc qingStorageClass) formatVolumeSize(size int) int {

@@ -5,8 +5,8 @@ import (
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
-	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type volumeProvisioner struct {
@@ -74,24 +74,24 @@ func (vm *volumeProvisioner) findVolume(id string) (volume *qcservice.Volume, er
 // Return: 	nil, 		nil: 	not found volumes
 //			volumes,	nil:	found volume
 //			nil,		error:	internal error
-func (vm *volumeProvisioner)findVolumeByName(name string)(volume *qcservice.Volume,err error){
+func (vm *volumeProvisioner) findVolumeByName(name string) (volume *qcservice.Volume, err error) {
 	// Set input arguements
 	input := qcservice.DescribeVolumesInput{}
 	input.SearchWord = &name
 	// Call DescribeVolumes
-	output, err:=vm.volumeService.DescribeVolumes(&input)
+	output, err := vm.volumeService.DescribeVolumes(&input)
 	// Handle error
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
-	if *output.RetCode != 0{
+	if *output.RetCode != 0 {
 		return nil, status.Error(codes.Internal,
 			fmt.Sprintf("call DescribeVolumes err: volume name %s in %s", name, vm.volumeService.Config))
 	}
 	// Not found volumes
-	switch *output.TotalCount{
+	switch *output.TotalCount {
 	case 0:
-		return nil,nil
+		return nil, nil
 	case 1:
 		return output.VolumeSet[0], nil
 	default:
@@ -100,7 +100,6 @@ func (vm *volumeProvisioner)findVolumeByName(name string)(volume *qcservice.Volu
 				name, vm.volumeService.Config))
 	}
 }
-
 
 // create volume
 func (vm *volumeProvisioner) CreateVolume(requestSize int, opt *blockVolume) error {

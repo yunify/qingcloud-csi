@@ -3,8 +3,8 @@ package block
 import (
 	"encoding/json"
 	"io/ioutil"
-	"testing"
 	"runtime"
+	"testing"
 )
 
 func Test_getConfigFromQingStorageClass(t *testing.T) {
@@ -12,10 +12,10 @@ func Test_getConfigFromQingStorageClass(t *testing.T) {
 	sc := NewDefaultQingStorageClass()
 	// get storageclass
 	var filepath string
-	if runtime.GOOS == "windows"{
+	if runtime.GOOS == "windows" {
 		filepath = "C:\\Users\\wangx\\Documents\\config.json"
 	}
-	if runtime.GOOS == "linux"{
+	if runtime.GOOS == "linux" {
 		filepath = "/root/config.json"
 	}
 	content, err := ioutil.ReadFile(filepath)
