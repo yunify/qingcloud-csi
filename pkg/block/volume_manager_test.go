@@ -7,12 +7,19 @@ import (
 	"os"
 	"strconv"
 	"testing"
+	"runtime"
 )
 
 var getvp = func() *volumeProvisioner {
 	// get storage class
-	var winfilepath = "C:\\Users\\wangx\\Documents\\config.json"
-	content, err := ioutil.ReadFile(winfilepath)
+	var filepath string
+	if runtime.GOOS == "windows"{
+		 filepath = "C:\\Users\\wangx\\Documents\\config.json"
+	}
+	if runtime.GOOS == "linux"{
+		filepath = "/root/config.json"
+	}
+	content, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		fmt.Errorf("Open file error: %s", err.Error())
 		os.Exit(-1)
