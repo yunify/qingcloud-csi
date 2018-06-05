@@ -12,6 +12,7 @@ type qingStorageClass struct {
 	AccessKeySecret string `json:"accessKeySecret"`
 	Zone            string `json:"zone"`
 	Host            string `json:"host"`
+	Uri 			string `json:"uri"`
 	Port            int    `json:"port"`
 	Protocol        string `json:"protocol"`
 	VolumeType      int    `json:"type"`
@@ -25,6 +26,7 @@ func NewDefaultQingStorageClass() *qingStorageClass {
 		AccessKeySecret: "KEY_SECRET",
 		Zone:            "sh1a",
 		Host:            "api.qingcloud.com",
+		Uri:"/iaas",
 		Port:            443,
 		Protocol:        "https",
 		VolumeType:      0,
