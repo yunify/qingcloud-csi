@@ -146,7 +146,7 @@ func (vm *volumeProvisioner) DeleteVolume(id string) error {
 	input.Volumes = append(input.Volumes, &id)
 	// delete volume
 	glog.Infof("call DeleteVolume request id: %s, zone: %s",
-		id, vm.volumeService.Properties.Zone)
+		id, *vm.volumeService.Properties.Zone)
 	output, err := vm.volumeService.DeleteVolumes(input)
 	if err != nil {
 		return err
