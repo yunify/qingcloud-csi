@@ -2,10 +2,10 @@ package main
 
 import (
 	"flag"
+	"github.com/golang/glog"
 	"github.com/yunify/qingcloud-csi/pkg/block"
 	"os"
 	"path"
-	"github.com/golang/glog"
 )
 
 func init() {
