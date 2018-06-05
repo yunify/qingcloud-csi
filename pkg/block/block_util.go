@@ -9,15 +9,15 @@ import (
 )
 
 type blockVolume struct {
-	VolName string
-	VolID   string
-	VolSize int
-	Zone    string
-	Sc      qingStorageClass
+	VolName string           `json:"volName"`
+	VolID   string           `json:"volID"`
+	VolSize int              `json:"volSize"`
+	Zone    string           `json:"zone"`
+	Sc      qingStorageClass `json:"storageClass"`
 }
 
-func persistVolInfo(image string, persistentStoragePath string, volInfo *blockVolume) error {
-	file := path.Join(persistentStoragePath, image+".json")
+func persistVolInfo(volumeId string, persistentStoragePath string, volInfo *blockVolume) error {
+	file := path.Join(persistentStoragePath, volumeId+".json")
 	fp, err := os.Create(file)
 	if err != nil {
 		glog.Errorf("failed to create persistent storage file %s with error: %v\n", file, err)
@@ -33,8 +33,8 @@ func persistVolInfo(image string, persistentStoragePath string, volInfo *blockVo
 	return nil
 }
 
-func loadVolInfo(image string, persistentStoragePath string, volInfo *blockVolume) error {
-	file := path.Join(persistentStoragePath, image+".json")
+func loadVolInfo(volumeId string, persistentStoragePath string, volInfo *blockVolume) error {
+	file := path.Join(persistentStoragePath, volumeId+".json")
 	fp, err := os.Open(file)
 	if err != nil {
 		return fmt.Errorf("open err %s/%s", file, err)
@@ -49,9 +49,9 @@ func loadVolInfo(image string, persistentStoragePath string, volInfo *blockVolum
 	return nil
 }
 
-func deleteVolInfo(image string, persistentStoragePath string) error {
-	file := path.Join(persistentStoragePath, image+".json")
-	glog.Infof("Deleting file for Volume: %s at: %s resulting path: %+v\n", image, persistentStoragePath, file)
+func deleteVolInfo(volumeId string, persistentStoragePath string) error {
+	file := path.Join(persistentStoragePath, volumeId+".json")
+	glog.Infof("Deleting file for Volume: %s at: %s resulting path: %+v\n", volumeId, persistentStoragePath, file)
 	err := os.Remove(file)
 	if err != nil {
 		if err != os.ErrNotExist {
