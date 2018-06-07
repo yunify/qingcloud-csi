@@ -173,3 +173,25 @@ func (cs *controllerServer) ControllerPublishVolume(
 	}
 	return &csi.ControllerPublishVolumeResponse{}, nil
 }
+
+func (cs *controllerServer)ControllerGetCapabilities(ctx context.Context, req *csi.ControllerGetCapabilitiesRequest)(*csi.ControllerGetCapabilitiesResponse, error){
+	cap := []*csi.ControllerServiceCapability{
+		{
+			&csi.ControllerServiceCapability_Rpc{
+				Rpc: &csi.ControllerServiceCapability_RPC{
+					Type: csi.ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME,
+				},
+			},
+		},
+		{
+			&csi.ControllerServiceCapability_Rpc{
+				Rpc: &csi.ControllerServiceCapability_RPC{
+					Type: csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME,
+				},
+			},
+		},
+	}
+	return &csi.ControllerGetCapabilitiesResponse{
+		Capabilities: cap,
+	}, nil
+}
