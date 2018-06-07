@@ -19,6 +19,9 @@ var getvp = func() *volumeProvisioner {
 	if runtime.GOOS == "linux" {
 		filepath = "/root/config.json"
 	}
+	if runtime.GOOS == "darwin" {
+		filepath = "./config.json"
+	}
 	content, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		fmt.Errorf("Open file error: %s", err.Error())
