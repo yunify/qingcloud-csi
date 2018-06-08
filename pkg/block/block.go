@@ -66,7 +66,6 @@ func (blk *block) Run(driverName, nodeID, endpoint string) {
 		csi.ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME})
 	blk.driver.AddVolumeCapabilityAccessModes([]csi.VolumeCapability_AccessMode_Mode{
 		csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER})
-
 	// Create GRPC servers
 	blk.ids = NewIdentityServer(blk.driver)
 	blk.ns = NewNodeServer(blk.driver)

@@ -123,17 +123,6 @@ func (cs *controllerServer) DeleteVolume(
 	return &csi.DeleteVolumeResponse{}, nil
 }
 
-func (cs *controllerServer) ValidateVolumeCapabilities(
-	ctx context.Context, req *csi.ValidateVolumeCapabilitiesRequest) (*csi.ValidateVolumeCapabilitiesResponse, error) {
-	glog.Infof("ValidateVolumeCapabilities")
-	for _, cap := range req.VolumeCapabilities {
-		if cap.GetAccessMode().GetMode() != csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER {
-			return &csi.ValidateVolumeCapabilitiesResponse{Supported: false, Message: ""}, nil
-		}
-	}
-	return &csi.ValidateVolumeCapabilitiesResponse{Supported: true, Message: ""}, nil
-}
-
 func (cs *controllerServer) ControllerUnpublishVolume(
 	ctx context.Context, req *csi.ControllerUnpublishVolumeRequest) (*csi.ControllerUnpublishVolumeResponse, error) {
 	glog.Infof("ControllerUnpublishVolume")
@@ -172,26 +161,4 @@ func (cs *controllerServer) ControllerPublishVolume(
 		return nil, err
 	}
 	return &csi.ControllerPublishVolumeResponse{}, nil
-}
-
-func (cs *controllerServer)ControllerGetCapabilities(ctx context.Context, req *csi.ControllerGetCapabilitiesRequest)(*csi.ControllerGetCapabilitiesResponse, error){
-	cap := []*csi.ControllerServiceCapability{
-		{
-			&csi.ControllerServiceCapability_Rpc{
-				Rpc: &csi.ControllerServiceCapability_RPC{
-					Type: csi.ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME,
-				},
-			},
-		},
-		{
-			&csi.ControllerServiceCapability_Rpc{
-				Rpc: &csi.ControllerServiceCapability_RPC{
-					Type: csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME,
-				},
-			},
-		},
-	}
-	return &csi.ControllerGetCapabilitiesResponse{
-		Capabilities: cap,
-	}, nil
 }
