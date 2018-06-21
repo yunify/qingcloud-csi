@@ -32,12 +32,6 @@
   revision = "e495cecb9c4027065045a0ea8d628da1b1190f1b"
 
 [[projects]]
-  name = "github.com/pkg/errors"
-  packages = ["."]
-  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
-  version = "v0.8.0"
-
-[[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
@@ -150,9 +144,31 @@
   revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
   version = "v2.2.1"
 
+[[projects]]
+  branch = "release-1.10"
+  name = "k8s.io/apimachinery"
+  packages = ["pkg/util/sets"]
+  revision = "e386b2658ed20923da8cc9250e552f082899a1ee"
+
+[[projects]]
+  name = "k8s.io/kubernetes"
+  packages = [
+    "pkg/util/io",
+    "pkg/util/mount",
+    "pkg/util/nsenter"
+  ]
+  revision = "5ca598b4ba5abb89bb773071ce452e33fb66339d"
+  version = "v1.10.4"
+
+[[projects]]
+  branch = "master"
+  name = "k8s.io/utils"
+  packages = ["exec"]
+  revision = "258e2a2fa64568210fbd6267cf1d8fd87c3cb86e"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "99914f95e1ae094f1b6c45c8a50bb50c3698da2677c847561bb87187f5bf099f"
+  inputs-digest = "ffbfdd9e2652ce07fbcbe58574cab2b4f9b90cd1dc92d25683aa368b710b50f6"
   solver-name = "gps-cdcl"
   solver-version = 1
