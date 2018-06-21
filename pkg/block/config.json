@@ -1,0 +1,11 @@
+{
+	"accessKeyId": "GGIFDKXSMLCNLUGTTHJR",
+	"accesskeySecret": "5S22zZtMdH5CaX0wpDjgD6KnYn1Y35hxGWfmPrTL",
+	"zone": "sh1a",
+	"host": "api.qingcloud.com",
+	"port": 443,
+	"protocol": "https",
+	"type": 0,
+	"maxSize": 300,
+	"minSize": 10
+}

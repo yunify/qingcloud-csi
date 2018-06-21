@@ -1,11 +1,11 @@
 package block
 
 import (
-	"runtime"
-	"io/ioutil"
-	"fmt"
-	"os"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"runtime"
 	"testing"
 )
 
@@ -66,4 +66,3 @@ func TestFindInstance(t *testing.T) {
 		}
 	}
 }
-

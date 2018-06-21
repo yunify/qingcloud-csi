@@ -139,16 +139,16 @@ func (cs *controllerServer) ControllerPublishVolume(
 		return nil, err
 	}
 	// Check sanity of request
-	if len(req.GetVolumeId()) == 0{
+	if len(req.GetVolumeId()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Volume ID cannot be empty")
 	}
-	if len(req.GetNodeId()) == 0{
+	if len(req.GetNodeId()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Node ID cannot be empty")
 	}
 
 	// Create Qingcloud storage class object
 	sc, err := NewStorageClassFromMap(req.GetVolumeAttributes())
-	if err != nil{
+	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	// Create volume provider object
@@ -156,8 +156,8 @@ func (cs *controllerServer) ControllerPublishVolume(
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	err = vp.AttachVolume(req.GetVolumeId(), req.GetNodeId())
-	if err != nil{
+	_, err = vp.AttachVolume(req.GetVolumeId(), req.GetNodeId())
+	if err != nil {
 		return nil, err
 	}
 	return &csi.ControllerPublishVolumeResponse{}, nil

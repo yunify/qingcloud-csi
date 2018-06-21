@@ -1,24 +1,25 @@
 package block
+
 import (
-	qcservice "github.com/yunify/qingcloud-sdk-go/service"
 	"github.com/golang/glog"
-	"google.golang.org/grpc/status"
+	qcservice "github.com/yunify/qingcloud-sdk-go/service"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
-const(
-	Instance_Status_PENDING string = "pending"
-	Instance_Status_RUNNING string = "running"
-	Instance_Status_STOPPED string = "stopped"
-	Instance_Status_SUSPENDED string = "suspended"
+const (
+	Instance_Status_PENDING    string = "pending"
+	Instance_Status_RUNNING    string = "running"
+	Instance_Status_STOPPED    string = "stopped"
+	Instance_Status_SUSPENDED  string = "suspended"
 	Instance_Status_TERMINATED string = "terminated"
-	Instance_Status_CEASED string = "ceased"
+	Instance_Status_CEASED     string = "ceased"
 )
 
 type instanceProvider struct {
 	instanceService *qcservice.InstanceService
-	jobService    *qcservice.JobService
-	storageClass  *qingStorageClass
+	jobService      *qcservice.JobService
+	storageClass    *qingStorageClass
 }
 
 func newInstanceProvider(sc *qingStorageClass) (*instanceProvider, error) {
@@ -36,8 +37,8 @@ func newInstanceProvider(sc *qingStorageClass) (*instanceProvider, error) {
 	// initial volume provider
 	iv := instanceProvider{
 		instanceService: is,
-		jobService:    js,
-		storageClass:  sc,
+		jobService:      js,
+		storageClass:    sc,
 	}
 	glog.Infof("instance provider init finish, zone: %s",
 		*iv.instanceService.Properties.Zone)
@@ -73,4 +74,3 @@ func (iv *instanceProvider) findInstance(id string) (instance *qcservice.Instanc
 			codes.OutOfRange, "find duplicate instances id %s in %s", id, iv.instanceService.Config.Zone)
 	}
 }
-

@@ -8,13 +8,13 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const(
-	BlockVolume_Status_PENDING string = "pending"
+const (
+	BlockVolume_Status_PENDING   string = "pending"
 	BlockVolume_Status_AVAILABLE string = "available"
-	BlockVolume_Status_INUSE string = "in-use"
+	BlockVolume_Status_INUSE     string = "in-use"
 	BlockVolume_Status_SUSPENDED string = "suspended"
-	BlockVolume_Status_DELETED string = "deleted"
-	BlockVolume_Status_CEASED string = "ceased"
+	BlockVolume_Status_DELETED   string = "deleted"
+	BlockVolume_Status_CEASED    string = "ceased"
 )
 
 type volumeProvisioner struct {
@@ -178,19 +178,19 @@ func (vm *volumeProvisioner) isAttachedToInstance(volumeId string, instanceId st
 	zone := vm.storageClass.Zone
 	// Check instance status
 	// Create instance provisioner
-	ip, err :=newInstanceProvider(vm.storageClass)
+	ip, err := newInstanceProvider(vm.storageClass)
 	if err != nil {
 		return false, status.Error(codes.Internal, err.Error())
 	}
 	// Check node exist
 	instance, err := ip.findInstance(instanceId)
-	if err != nil{
+	if err != nil {
 		return false, err
 	}
 	if instance == nil {
 		return false, status.Errorf(codes.NotFound, "node %s not found in %s", instanceId, zone)
 	}
-	if *instance.Status != Instance_Status_RUNNING{
+	if *instance.Status != Instance_Status_RUNNING {
 		return false, status.Errorf(codes.NotFound, "node %s status %s", instanceId, *instance.Status)
 	}
 	// get volume item
@@ -202,9 +202,9 @@ func (vm *volumeProvisioner) isAttachedToInstance(volumeId string, instanceId st
 		return false, status.Errorf(
 			codes.NotFound, "volume %s not found in %s", volumeId, zone)
 	}
-	if volumeItem.Instance == nil{
+	if volumeItem.Instance == nil {
 		return false, nil
-	}else{
+	} else {
 		if *volumeItem.Instance.InstanceID == instanceId {
 			return true, nil
 		} else {
@@ -216,16 +216,21 @@ func (vm *volumeProvisioner) isAttachedToInstance(volumeId string, instanceId st
 }
 
 // attach volume
-func (vm *volumeProvisioner) AttachVolume(volumeId string, instanceId string) error {
+func (vm *volumeProvisioner) AttachVolume(volumeId string, instanceId string) (string, error) {
 	zone := *vm.volumeService.Properties.Zone
 	// check volume status
 	flag, err := vm.isAttachedToInstance(volumeId, instanceId)
-	if err != nil{
-		return err
+	if err != nil {
+		return "", err
 	}
-	if flag{
-		glog.Infof("volume %s has been attached to instance %s in zone %s", volumeId, instanceId, zone)
-		return nil
+	if flag {
+
+		vol, err := vm.findVolume(volumeId)
+		if err == nil && vol.Instance != nil {
+			glog.Infof("volume %s has been attached to instance %s device %s in zone %s", volumeId, instanceId, *vol.Instance.Device, zone)
+			return *vol.Instance.Device, nil
+		}
+		return "", nil
 	}
 	// set input parameter
 	input := &qcservice.AttachVolumesInput{}
@@ -235,13 +240,19 @@ func (vm *volumeProvisioner) AttachVolume(volumeId string, instanceId string) er
 	glog.Infof("call AttachVolume request volume id: %s, instance id: %s, zone: %s", volumeId, instanceId, zone)
 	output, err := vm.volumeService.AttachVolumes(input)
 	if err != nil {
-		return status.Errorf(codes.Internal, err.Error())
+		return "", status.Errorf(codes.Internal, err.Error())
 	}
 	// check output
 	if *output.RetCode != 0 {
-		return status.Errorf(codes.Internal, "call AttachVolume return %d, volume id %s", *output.RetCode, volumeId)
+		return "", status.Errorf(codes.Internal, "call AttachVolume return %d, volume id %s", *output.RetCode, volumeId)
 	}
-	return nil
+	// return device path
+	vol, err := vm.findVolume(volumeId)
+	if err == nil && vol.Instance != nil {
+		glog.Infof("volume %s has been attached to instance %s device %s in zone %s", volumeId, instanceId, *vol.Instance.Device, zone)
+		return *vol.Instance.Device, nil
+	}
+	return "", nil
 }
 
 // detach volume
