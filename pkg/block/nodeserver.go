@@ -11,6 +11,7 @@ import (
 	"k8s.io/kubernetes/pkg/util/mount"
 	"os"
 	"strings"
+	"path"
 )
 
 type nodeServer struct {
@@ -56,6 +57,14 @@ func (ns *nodeServer) NodePublishVolume(
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+	// Store volInfo into a persistent file.
+	blockVol := blockVolume{}
+	blockVol.Zone = sc.Zone
+	blockVol.Sc = *sc
+	if err := persistVolInfo(req.GetVolumeId(), path.Join(PluginFolder, "node"), &blockVol); err != nil {
+		glog.Warningf("failed to store volInfo with error: %v", err)
+	}
+	// Print log
 	glog.Infof("block image: %s in %s was successfully attached at instance %s\n",
 		req.GetVolumeId(), sc.Zone, GetCurrentInstanceId())
 
@@ -81,8 +90,69 @@ func (ns *nodeServer) NodePublishVolume(
 func (ns *nodeServer) NodeUnpublishVolume(
 	ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
 	glog.Infof("NodeUnpublishVolume")
-	return nil, nil
+
+	// Check arguments
+	if len(req.GetVolumeId()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "Volume ID missing in request")
+	}
+	if len(req.GetTargetPath()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "Target path missing in request")
+	}
+	// Get parameter
+	volumeID := req.GetVolumeId()
+	targetPath := req.GetTargetPath()
+
+	// Check targetPath is mounted
+	mounter:= mount.New("")
+	notMnt, err := mounter.IsLikelyNotMountPoint(targetPath)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if notMnt {
+		return nil, status.Error(codes.NotFound, "Volume not mounted")
+	}
+
+	_, cnt, err := mount.GetDeviceNameFromMount(mounter, targetPath)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	// Unmount the image
+	err = mounter.Unmount(targetPath)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	glog.Infof("block image: volume %s/%s has been unmounted.",  targetPath,volumeID)
+	cnt--
+	glog.Infof("block image: mount count: %d", cnt)
+	if cnt != 0{
+		return &csi.NodeUnpublishVolumeResponse{}, nil
+	}
+
+	// Detach block image
+	// Retrieve sc from file
+	blockVol := blockVolume{}
+	if err := loadVolInfo(volumeID, path.Join(PluginFolder, "node"), &blockVol); err != nil {
+		return nil, err
+	}
+	// Create volume provisioner object
+	vp, err := newVolumeProvisioner(&blockVol.Sc)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	// Detach
+	err = vp.DetachVolume(volumeID, GetCurrentInstanceId())
+	if err != nil{
+		glog.Errorf("failed to detach block image: %s from instance %s with error: %v",
+			volumeID, GetCurrentInstanceId(), err)
+		return nil, err
+	}
+
+	glog.Infof("success to detach block image: %s from instance %s", volumeID, GetCurrentInstanceId())
+	return &csi.NodeUnpublishVolumeResponse{},nil
 }
+
 
 func (ns *nodeServer) NodeStageVolume(
 	ctx context.Context,

@@ -77,7 +77,7 @@ func (cs *controllerServer) CreateVolume(
 		return nil, err
 	}
 
-	// Storing volInfo into a persistent file.
+	// Store volInfo into a persistent file.
 	if err := persistVolInfo(newVol.VolID, path.Join(PluginFolder, "controller"), &newVol); err != nil {
 		glog.Warningf("failed to store volInfo with error: %v", err)
 	}
