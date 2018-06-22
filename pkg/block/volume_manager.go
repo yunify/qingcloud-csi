@@ -1,12 +1,12 @@
 package block
 
 import (
+	"errors"
 	"fmt"
 	"github.com/golang/glog"
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"errors"
 )
 
 const (
@@ -189,9 +189,9 @@ func (vm *volumeProvisioner) isAttachedToInstance(volumeId string, instanceId st
 			codes.NotFound, "volume %s not found in %s", volumeId, zone)
 	}
 
-	if volumeItem.Instance != nil && *volumeItem.Instance.InstanceID == instanceId{
-		return true,nil
-	}else{
+	if volumeItem.Instance != nil && *volumeItem.Instance.InstanceID == instanceId {
+		return true, nil
+	} else {
 		return false, nil
 	}
 }
@@ -239,7 +239,7 @@ func (vm *volumeProvisioner) AttachVolume(volumeId string, instanceId string) (s
 // detach volume
 func (vm *volumeProvisioner) DetachVolume(volumeId string, instanceId string) error {
 	// check volume status
-	if ok, _:= vm.isAttachedToInstance(volumeId, instanceId); ok == false {
+	if ok, _ := vm.isAttachedToInstance(volumeId, instanceId); ok == false {
 		return errors.New(
 			fmt.Sprintf("volume %s is not attached to instance %s in zone %s",
 				volumeId, instanceId, *vm.volumeService.Properties.Zone))

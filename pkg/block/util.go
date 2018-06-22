@@ -35,7 +35,7 @@ func ReadCurrentInstanceId() {
 }
 
 func GetCurrentInstanceId() string {
-	if instanceIdFromFile == ""{
+	if instanceIdFromFile == "" {
 		ReadCurrentInstanceId()
 	}
 	return instanceIdFromFile

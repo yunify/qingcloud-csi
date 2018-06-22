@@ -138,17 +138,17 @@ func TestAttachVolume(t *testing.T) {
 	}
 }
 
-func TestAttachedToInstance(t *testing.T){
+func TestAttachedToInstance(t *testing.T) {
 	vp := getvp()
-	volumeID:= "vol-fhlkhxpr"
+	volumeID := "vol-fhlkhxpr"
 	instanceID := "i-msu2th7i"
 	flag, err := vp.isAttachedToInstance(volumeID, instanceID)
-	if err != nil{
+	if err != nil {
 		t.Error(err)
-	}else{
-		if flag == true{
+	} else {
+		if flag == true {
 			t.Logf("volume %s is attached to instance %s", volumeID, instanceID)
-		}else{
+		} else {
 			t.Errorf("volume %s is not attached to instance %s", volumeID, instanceID)
 		}
 	}
