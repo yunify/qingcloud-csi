@@ -6,6 +6,7 @@ import (
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"errors"
 )
 
 const (
@@ -176,47 +177,28 @@ func (vm *volumeProvisioner) DeleteVolume(id string) error {
 func (vm *volumeProvisioner) isAttachedToInstance(volumeId string, instanceId string) (flag bool, err error) {
 	// zone
 	zone := vm.storageClass.Zone
-	// Check instance status
-	// Create instance provisioner
-	ip, err := newInstanceProvider(vm.storageClass)
-	if err != nil {
-		return false, status.Error(codes.Internal, err.Error())
-	}
-	// Check node exist
-	instance, err := ip.findInstance(instanceId)
-	if err != nil {
-		return false, err
-	}
-	if instance == nil {
-		return false, status.Errorf(codes.NotFound, "node %s not found in %s", instanceId, zone)
-	}
-	if *instance.Status != Instance_Status_RUNNING {
-		return false, status.Errorf(codes.NotFound, "node %s status %s", instanceId, *instance.Status)
-	}
+
 	// get volume item
 	volumeItem, err := vm.findVolume(volumeId)
 	if err != nil {
 		return false, status.Errorf(codes.Internal, err.Error())
 	}
+	// check volume exist
 	if volumeItem == nil {
 		return false, status.Errorf(
 			codes.NotFound, "volume %s not found in %s", volumeId, zone)
 	}
-	if volumeItem.Instance == nil {
-		return false, nil
-	} else {
-		if *volumeItem.Instance.InstanceID == instanceId {
-			return true, nil
-		} else {
-			return false, status.Errorf(
-				codes.FailedPrecondition, "volume %s already publish to another node", volumeId)
-		}
-	}
 
+	if volumeItem.Instance != nil && *volumeItem.Instance.InstanceID == instanceId{
+		return true,nil
+	}else{
+		return false, nil
+	}
 }
 
 // attach volume
 func (vm *volumeProvisioner) AttachVolume(volumeId string, instanceId string) (string, error) {
+	glog.Infof("volumeId: %s, instanceId: %s", volumeId, instanceId)
 	zone := *vm.volumeService.Properties.Zone
 	// check volume status
 	flag, err := vm.isAttachedToInstance(volumeId, instanceId)
@@ -224,7 +206,6 @@ func (vm *volumeProvisioner) AttachVolume(volumeId string, instanceId string) (s
 		return "", err
 	}
 	if flag {
-
 		vol, err := vm.findVolume(volumeId)
 		if err == nil && vol.Instance != nil {
 			glog.Infof("volume %s has been attached to instance %s device %s in zone %s", volumeId, instanceId, *vol.Instance.Device, zone)
@@ -248,7 +229,7 @@ func (vm *volumeProvisioner) AttachVolume(volumeId string, instanceId string) (s
 	}
 	// return device path
 	vol, err := vm.findVolume(volumeId)
-	if err == nil && vol.Instance != nil {
+	if err == nil && vol.Instance != nil && *vol.Instance.InstanceID != "" {
 		glog.Infof("volume %s has been attached to instance %s device %s in zone %s", volumeId, instanceId, *vol.Instance.Device, zone)
 		return *vol.Instance.Device, nil
 	}
@@ -256,28 +237,28 @@ func (vm *volumeProvisioner) AttachVolume(volumeId string, instanceId string) (s
 }
 
 // detach volume
-//func (vm *volumeProvisioner) DetachVolume(volumeId string, instanceId string) error {
-//	// check volume status
-//	if vm.isAttachedToInstance(volumeId, instanceId) == false {
-//		return errors.New(
-//			fmt.Sprintf("volume %s is not attached to instance %s in zone %s",
-//				*volumeId, *instanceId, *vm.volumeService.Properties.Zone))
-//	}
-//	// set input parameter
-//	input := &qcservice.DetachVolumesInput{}
-//	input.Volumes = append(input.Volumes, volumeId)
-//	input.Instance = instanceId
-//	// attach volume
-//	glog.Infof("call DetachVolume request volume id: %s, instance id: %s, zone: %s",
-//		*volumeId, *instanceId, *vm.volumeService.Properties.Zone)
-//	output, err := vm.volumeService.DetachVolumes(input)
-//	if err != nil {
-//		return err
-//	}
-//	// check output
-//	if *output.RetCode != 0 {
-//		glog.Errorf("call DetachVolume return %d, volume id %s",
-//			*output.RetCode, *volumeId)
-//	}
-//	return nil
-//}
+func (vm *volumeProvisioner) DetachVolume(volumeId string, instanceId string) error {
+	// check volume status
+	if ok, _:= vm.isAttachedToInstance(volumeId, instanceId); ok == false {
+		return errors.New(
+			fmt.Sprintf("volume %s is not attached to instance %s in zone %s",
+				volumeId, instanceId, *vm.volumeService.Properties.Zone))
+	}
+	// set input parameter
+	input := &qcservice.DetachVolumesInput{}
+	input.Volumes = append(input.Volumes, &volumeId)
+	input.Instance = &instanceId
+	// attach volume
+	glog.Infof("call DetachVolume request volume id: %s, instance id: %s, zone: %s",
+		volumeId, instanceId, *vm.volumeService.Properties.Zone)
+	output, err := vm.volumeService.DetachVolumes(input)
+	if err != nil {
+		return err
+	}
+	// check output
+	if *output.RetCode != 0 {
+		glog.Errorf("call DetachVolume return %d, volume id %s",
+			*output.RetCode, volumeId)
+	}
+	return nil
+}

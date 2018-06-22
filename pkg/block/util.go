@@ -11,7 +11,7 @@ const (
 	InstanceFilepath = "/etc/qingcloud/instance-id"
 )
 
-var instanceID string
+var instanceIdFromFile string
 
 func CreatePath(persistentStoragePath string) error {
 	if _, err := os.Stat(persistentStoragePath); os.IsNotExist(err) {
@@ -29,14 +29,14 @@ func ReadCurrentInstanceId() {
 		glog.Errorf("Getting current instance-id error: %s", err.Error())
 		os.Exit(1)
 	}
-	instanceID = string(bytes[:])
-	instanceID = strings.Replace(instanceID, "\n", "", -1)
-	glog.Infof("Getting current instance-id: \"%s\"", instanceID)
+	instanceIdFromFile = string(bytes[:])
+	instanceIdFromFile = strings.Replace(instanceIdFromFile, "\n", "", -1)
+	glog.Infof("Getting current instance-id: \"%s\"", instanceIdFromFile)
 }
 
 func GetCurrentInstanceId() string {
-	if instanceID == ""{
+	if instanceIdFromFile == ""{
 		ReadCurrentInstanceId()
 	}
-	return instanceID
+	return instanceIdFromFile
 }
