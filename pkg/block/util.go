@@ -4,6 +4,7 @@ import (
 	"github.com/golang/glog"
 	"io/ioutil"
 	"os"
+	"strings"
 )
 
 const (
@@ -25,13 +26,17 @@ func CreatePath(persistentStoragePath string) error {
 func ReadCurrentInstanceId() {
 	bytes, err := ioutil.ReadFile(InstanceFilepath)
 	if err != nil {
-		glog.Errorf("Get instance id error: %s", err.Error())
+		glog.Errorf("Getting current instance-id error: %s", err.Error())
 		os.Exit(1)
 	}
 	instanceID = string(bytes[:])
-	glog.Infof("Current instance id is \"%s\"", instanceID)
+	instanceID = strings.Replace(instanceID, "\n", "", -1)
+	glog.Infof("Getting current instance-id: \"%s\"", instanceID)
 }
 
 func GetCurrentInstanceId() string {
+	if instanceID == ""{
+		ReadCurrentInstanceId()
+	}
 	return instanceID
 }
