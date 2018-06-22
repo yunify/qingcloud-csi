@@ -20,7 +20,7 @@ var (
 
 func main() {
 	flag.Parse()
-
+	block.ReadCurrentInstanceId()
 	handle()
 	os.Exit(0)
 }

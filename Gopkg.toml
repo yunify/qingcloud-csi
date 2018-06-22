@@ -36,3 +36,7 @@
 [prune]
   go-tests = true
   unused-packages = true
+
+[[constraint]]
+  name = "k8s.io/kubernetes"
+  version = "1.10.4"

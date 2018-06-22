@@ -105,6 +105,9 @@ spec:
             - mountPath: /lib/modules
               name: lib-modules
               readOnly: true
+            - mountPath: /etc/qingcloud
+              name: instance-id
+              readOnly: true
       volumes:
         - name: plugin-dir
           hostPath:
@@ -127,3 +130,6 @@ spec:
         - name: lib-modules
           hostPath:
             path: /lib/modules
+        - name: instance-id
+          hostPath:
+            path: /etc/qingcloud

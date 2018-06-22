@@ -19,6 +19,9 @@ var getvp = func() *volumeProvisioner {
 	if runtime.GOOS == "linux" {
 		filepath = "/root/config.json"
 	}
+	if runtime.GOOS == "darwin" {
+		filepath = "./config.json"
+	}
 	content, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		fmt.Errorf("Open file error: %s", err.Error())
@@ -126,7 +129,7 @@ func TestAttachVolume(t *testing.T) {
 	vp := getvp()
 	volumeID := "vol-fhlkhxpr"
 	instanceID := "i-msu2th7i"
-	err := vp.AttachVolume(&volumeID, &instanceID)
+	_, err := vp.AttachVolume(volumeID, instanceID)
 	if err != nil {
 		t.Error(err)
 	} else {
@@ -135,11 +138,27 @@ func TestAttachVolume(t *testing.T) {
 	}
 }
 
+func TestAttachedToInstance(t *testing.T) {
+	vp := getvp()
+	volumeID := "vol-fhlkhxpr"
+	instanceID := "i-msu2th7i"
+	flag, err := vp.isAttachedToInstance(volumeID, instanceID)
+	if err != nil {
+		t.Error(err)
+	} else {
+		if flag == true {
+			t.Logf("volume %s is attached to instance %s", volumeID, instanceID)
+		} else {
+			t.Errorf("volume %s is not attached to instance %s", volumeID, instanceID)
+		}
+	}
+}
+
 func TestDetachVolume(t *testing.T) {
 	vp := getvp()
 	volumeID := "vol-fhlkhxpr"
 	instanceID := "i-msu2th7i"
-	err := vp.DetachVolume(&volumeID, &instanceID)
+	err := vp.DetachVolume(volumeID, instanceID)
 	if err != nil {
 		t.Error(err)
 	} else {
