@@ -126,39 +126,11 @@ func (cs *controllerServer) DeleteVolume(
 func (cs *controllerServer) ControllerUnpublishVolume(
 	ctx context.Context, req *csi.ControllerUnpublishVolumeRequest) (*csi.ControllerUnpublishVolumeResponse, error) {
 	glog.Infof("ControllerUnpublishVolume")
-
 	return &csi.ControllerUnpublishVolumeResponse{}, nil
 }
 
 func (cs *controllerServer) ControllerPublishVolume(
 	ctx context.Context, req *csi.ControllerPublishVolumeRequest) (*csi.ControllerPublishVolumeResponse, error) {
 	glog.Infof("ControllerPublishVolume")
-	// Check RPC request type
-	if err := cs.Driver.ValidateControllerServiceRequest(csi.ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME); err != nil {
-		glog.Warningf("invalid delete volume req: %v", req)
-		return nil, err
-	}
-	// Check sanity of request
-	if len(req.GetVolumeId()) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "Volume ID cannot be empty")
-	}
-	if len(req.GetNodeId()) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "Node ID cannot be empty")
-	}
-
-	// Create Qingcloud storage class object
-	sc, err := NewStorageClassFromMap(req.GetVolumeAttributes())
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-	// Create volume provider object
-	vp, err := newVolumeProvisioner(sc)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	_, err = vp.AttachVolume(req.GetVolumeId(), req.GetNodeId())
-	if err != nil {
-		return nil, err
-	}
 	return &csi.ControllerPublishVolumeResponse{}, nil
 }
