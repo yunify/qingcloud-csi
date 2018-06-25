@@ -21,21 +21,16 @@ func (ns *nodeServer) NodePublishVolume(
 	glog.Infof("NodePublishVolume")
 	// 0. Preflight
 	// check arguments
-	if len(req.GetVolumeId()) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "Volume ID missing in request")
-	}
 	if len(req.GetStagingTargetPath()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Target path missing in request")
 	}
 	// set parameter
-	volumeId := req.GetVolumeId()
 	targetPath := req.GetTargetPath()
-	fsType := req.GetVolumeCapability().GetMount().GetFsType()
 	stagePath := req.GetStagingTargetPath()
+
 	// 1. Mount
-	// if volume already mounted
-	mounter:= mount.New("")
-	notMnt, err := mounter.IsLikelyNotMountPoint(targetPath)
+	// check targetPath is mounted
+	notMnt, err := mount.New("").IsNotMountPoint(targetPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			if err = os.MkdirAll(targetPath, 0750); err != nil {
@@ -49,19 +44,18 @@ func (ns *nodeServer) NodePublishVolume(
 	if !notMnt {
 		return &csi.NodePublishVolumeResponse{}, nil
 	}
-	// get volume device name
-	deviceName, _, err := mount.GetDeviceNameFromMount(mounter, stagePath)
-	if err != nil{
-		return nil, status.Error(codes.Internal, err.Error())
-	}
 	// do mount
-	glog.Infof("Mounting %s with format %s at %s format %s...", volumeId, targetPath, fsType)
-	diskMounter := &mount.SafeFormatAndMount{Interface: mount.New(""), Exec: mount.NewOsExec()}
-	if err := diskMounter.FormatAndMount(deviceName, targetPath, fsType, []string{}); err != nil {
-		return nil, err
+	mounter := mount.New("")
+	// set bind mount options
+	options := []string{"bind"}
+	if req.GetReadonly() == true{
+		options = append(options, "ro")
 	}
-	glog.Infof("Mount %s at %s succeed", volumeId, targetPath)
-
+	glog.Infof("Bind mount %s at %s", stagePath, targetPath)
+	if err := mounter.Mount(stagePath, targetPath, "", options); err != nil{
+		return  nil, status.Error(codes.Internal, err.Error())
+	}
+	glog.Infof("Mount bind %s at %s succeed", stagePath, targetPath)
 	return &csi.NodePublishVolumeResponse{}, nil
 }
 
@@ -70,9 +64,6 @@ func (ns *nodeServer) NodeUnpublishVolume(
 	glog.Infof("NodeUnpublishVolume")
 	// 0. Preflight
 	// check arguments
-	if len(req.GetVolumeId()) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "Volume ID missing in request")
-	}
 	if len(req.GetTargetPath()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Target path missing in request")
 	}
@@ -83,19 +74,19 @@ func (ns *nodeServer) NodeUnpublishVolume(
 	// 1. Unmount
 	// check targetPath is mounted
 	mounter:= mount.New("")
-	notMnt, err := mounter.IsLikelyNotMountPoint(targetPath)
+	notMnt, err := mounter.IsNotMountPoint(targetPath)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if notMnt {
-		return &csi.NodeUnpublishVolumeResponse{},nil
+		return nil, status.Error(codes.NotFound, "Volume not bind mounted")
 	}
 	// do unmount
-	err = mounter.Unmount(targetPath)
-	if err != nil {
+	glog.Info("Unbind mountvolume %s/%s",  targetPath,volumeID)
+	if err = mounter.Unmount(targetPath); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	glog.Infof("block image: volume %s/%s has been unmounted.",  targetPath,volumeID)
+	glog.Infof("Unbound mount volume succeed")
 
 	return &csi.NodeUnpublishVolumeResponse{},nil
 }
