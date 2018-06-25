@@ -55,12 +55,12 @@ func (ns *nodeServer) NodePublishVolume(
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	// do mount
-	glog.Infof("Mounting %s/%s format %s...", req.GetStagingTargetPath(),req.GetVolumeId(), fsType)
+	glog.Infof("Mounting %s with format %s at %s format %s...", volumeId, targetPath, fsType)
 	diskMounter := &mount.SafeFormatAndMount{Interface: mount.New(""), Exec: mount.NewOsExec()}
 	if err := diskMounter.FormatAndMount(deviceName, targetPath, fsType, []string{}); err != nil {
 		return nil, err
 	}
-	glog.Infof("Mount %s/%s succeed", targetPath, volumeId)
+	glog.Infof("Mount %s at %s succeed", volumeId, targetPath)
 
 	return &csi.NodePublishVolumeResponse{}, nil
 }
