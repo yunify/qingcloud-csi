@@ -34,7 +34,8 @@ func (ns *nodeServer) NodePublishVolume(
 	stagePath := req.GetStagingTargetPath()
 	// 1. Mount
 	// if volume already mounted
-	notMnt, err := mount.New("").IsLikelyNotMountPoint(targetPath)
+	mounter:= mount.New("")
+	notMnt, err := mounter.IsLikelyNotMountPoint(targetPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			if err = os.MkdirAll(targetPath, 0750); err != nil {
@@ -48,10 +49,15 @@ func (ns *nodeServer) NodePublishVolume(
 	if !notMnt {
 		return &csi.NodePublishVolumeResponse{}, nil
 	}
+	// get volume device name
+	deviceName, _, err := mount.GetDeviceNameFromMount(mounter, stagePath)
+	if err != nil{
+		return nil, status.Error(codes.Internal, err.Error())
+	}
 	// do mount
 	glog.Infof("Mounting %s/%s format %s...", req.GetStagingTargetPath(),req.GetVolumeId(), fsType)
 	diskMounter := &mount.SafeFormatAndMount{Interface: mount.New(""), Exec: mount.NewOsExec()}
-	if err := diskMounter.FormatAndMount(stagePath, targetPath, fsType, []string{}); err != nil {
+	if err := diskMounter.FormatAndMount(deviceName, targetPath, fsType, []string{}); err != nil {
 		return nil, err
 	}
 	glog.Infof("Mount %s/%s succeed", targetPath, volumeId)
@@ -129,7 +135,7 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	glog.Infof("Attaching volume %s succeed.", volumeId, instanceId, sc.Zone )
+	glog.Infof("Attaching volume %s succeed.", volumeId)
 	// save volInfo into a file.
 	glog.Infof("Save volume %s info to a file...", volumeId)
 	blockVol := blockVolume{}
@@ -157,12 +163,12 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 		return &csi.NodeStageVolumeResponse{}, nil
 	}
 	// do mount
-	glog.Infof("Mounting %s/%s format %s...", req.GetStagingTargetPath(),req.GetVolumeId(), fsType)
+	glog.Infof("Mounting %s to %s format %s...", volumeId, targetPath, fsType)
 	diskMounter := &mount.SafeFormatAndMount{Interface: mount.New(""), Exec: mount.NewOsExec()}
 	if err := diskMounter.FormatAndMount(devicePath, targetPath, fsType, []string{}); err != nil {
 		return nil, err
 	}
-	glog.Infof("Mount %s/%s succeed", targetPath, volumeId)
+	glog.Infof("Mount %s to %s succeed",volumeId, targetPath)
 	return &csi.NodeStageVolumeResponse{}, nil
 }
 
@@ -200,7 +206,7 @@ func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstag
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	glog.Infof("block image: volume %s/%s has been unmounted.",  targetPath,volumeID)
+	glog.Infof("block image: volume %s has been unmounted.", volumeID)
 	cnt--
 	glog.Infof("block image: mount count: %d", cnt)
 	if cnt > 0{
