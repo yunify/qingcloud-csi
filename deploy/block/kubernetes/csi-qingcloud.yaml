@@ -98,6 +98,8 @@ spec:
             - name: pods-mount-dir
               mountPath: /var/lib/kubelet/pods
               mountPropagation: "Bidirectional"
+            - name: stage-mount-dir
+              mountPath: /var/lib/kubelet/plugins/kubernetes.io/csi
             - mountPath: /dev
               name: host-dev
             - mountPath: /sys
@@ -120,6 +122,10 @@ spec:
         - name: socket-dir
           hostPath:
             path: /var/lib/kubelet/plugins/csi-qingcloud
+            type: DirectoryOrCreate
+        - name: stage-mount-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/kubernetes.io/csi
             type: DirectoryOrCreate
         - name: host-dev
           hostPath:
