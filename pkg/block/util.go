@@ -3,7 +3,6 @@ package block
 import (
 	"github.com/golang/glog"
 	"io/ioutil"
-	"k8s.io/kubernetes/pkg/util/mount"
 	"os"
 	"strings"
 )
@@ -40,16 +39,4 @@ func GetCurrentInstanceId() string {
 		ReadCurrentInstanceId()
 	}
 	return instanceIdFromFile
-}
-
-func BindMount(source string, target string) error {
-	mounter := mount.New("")
-
-	options := []string{"bind"}
-	glog.Infof("Mount bind %s at %s", source, target)
-	if err := mounter.Mount(source, target, "", options); err != nil {
-		return err
-	}
-	glog.Infof("Mount bind %s at %s succeed", source, target)
-	return nil
 }
