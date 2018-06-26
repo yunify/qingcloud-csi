@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/kubernetes/pkg/util/mount"
 	"os"
-	"path"
+	"fmt"
 )
 
 type nodeServer struct {
@@ -103,7 +103,6 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	}
 	// set parameter
 	volumeId := req.GetVolumeId()
-	instanceId := GetCurrentInstanceId()
 	targetPath := req.GetStagingTargetPath()
 	fsType := req.GetVolumeCapability().GetMount().GetFsType()
 
@@ -119,23 +118,17 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	// attach volume
-	glog.Infof("Attaching volume %s to instance %s in zone %s...", volumeId, instanceId, sc.Zone)
-	devicePath, err := vp.AttachVolume(volumeId, instanceId)
-	if err != nil {
+	// find volume
+	volumeObj, err := vp.findVolume(volumeId)
+	if err != nil{
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	glog.Infof("Attaching volume %s succeed.", volumeId)
-	// save volInfo into a file.
-	glog.Infof("Save volume %s info to a file...", volumeId)
-	blockVol := blockVolume{}
-	blockVol.Zone = sc.Zone
-	blockVol.Sc = *sc
-	if err := persistVolInfo(volumeId, path.Join(PluginFolder, "node"), &blockVol); err != nil {
-		glog.Warningf("Failed to store volInfo with error: %v", err)
+	devicePath := ""
+	if volumeObj.Instance != nil && *volumeObj.Instance.Device != ""{
+		devicePath = *volumeObj.Instance.Device
+	}else{
+		return nil, status.Error(codes.Internal, fmt.Sprintf("Volume %s has not been attached", volumeId))
 	}
-	glog.Infof("Save volume %s info succeed", volumeId)
-
 	// 2. Mount
 	// if volume already mounted
 	notMnt, err := mount.New("").IsLikelyNotMountPoint(targetPath)
@@ -202,25 +195,6 @@ func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstag
 	if cnt > 0 {
 		glog.Errorf("image %s still mounted in instance %s", volumeID, GetCurrentInstanceId())
 		return nil, status.Error(codes.Internal, "unmount failed")
-	}
-
-	// 2. Detach
-	// retrieve sc from file
-	blockVol := blockVolume{}
-	if err := loadVolInfo(volumeID, path.Join(PluginFolder, "node"), &blockVol); err != nil {
-		return nil, err
-	}
-	// create volume provisioner object
-	vp, err := newVolumeProvisioner(&blockVol.Sc)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	// do detach
-	err = vp.DetachVolume(volumeID, GetCurrentInstanceId())
-	if err != nil {
-		glog.Errorf("failed to detach block image: %s from instance %s with error: %v",
-			volumeID, GetCurrentInstanceId(), err)
-		return nil, err
 	}
 
 	return &csi.NodeUnstageVolumeResponse{}, nil
