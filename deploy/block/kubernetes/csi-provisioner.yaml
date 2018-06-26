@@ -10,13 +10,13 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: csi-provisioner
+  name: csi-provisioner-qingcloud
 
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: external-provisioner-runner
+  name: csi-provisioner-qingcloud
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
@@ -41,26 +41,26 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: csi-provisioner-role
+  name: csi-provisioner-qingcloud
 subjects:
   - kind: ServiceAccount
-    name: csi-provisioner
+    name: csi-provisioner-qingcloud
     namespace: default
 roleRef:
   kind: ClusterRole
-  name: external-provisioner-runner
+  name: csi-provisioner-qingcloud
   apiGroup: rbac.authorization.k8s.io
 
 ---
 kind: Service
 apiVersion: v1
 metadata:
-  name: csi-provisioner
+  name: csi-provisioner-qingcloud
   labels:
-    app: csi-provisioner
+    app: csi-provisioner-qingcloud
 spec:
   selector:
-    app: csi-provisioner
+    app: csi-provisioner-qingcloud
   ports:
     - name: dummy
       port: 12345
@@ -69,16 +69,16 @@ spec:
 kind: StatefulSet
 apiVersion: apps/v1beta1
 metadata:
-  name: csi-provisioner
+  name: csi-provisioner-qingcloud
 spec:
-  serviceName: "csi-provisioner"
+  serviceName: "csi-provisioner-qingcloud"
   replicas: 1
   template:
     metadata:
       labels:
-        app: csi-provisioner
+        app: csi-provisioner-qingcloud
     spec:
-      serviceAccount: csi-provisioner
+      serviceAccount: csi-provisioner-qingcloud
       containers:
         - name: csi-provisioner
           image: quay.io/k8scsi/csi-provisioner:v0.2.1

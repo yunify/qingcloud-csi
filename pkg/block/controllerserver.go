@@ -15,8 +15,8 @@ type controllerServer struct {
 	*csicommon.DefaultControllerServer
 }
 
-func (cs *controllerServer) CreateVolume(
-	ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
+func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
+	glog.Info("Run CreateVolume")
 	if err := cs.Driver.ValidateControllerServiceRequest(csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME); err != nil {
 		glog.V(3).Infof("Invalid create volume req: %v", req)
 		return nil, err
@@ -93,8 +93,8 @@ func (cs *controllerServer) CreateVolume(
 	}, nil
 }
 
-func (cs *controllerServer) DeleteVolume(
-	ctx context.Context, req *csi.DeleteVolumeRequest) (*csi.DeleteVolumeResponse, error) {
+func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVolumeRequest) (*csi.DeleteVolumeResponse, error) {
+	glog.Info("Run DeleteVolume")
 	if err := cs.Driver.ValidateControllerServiceRequest(csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME); err != nil {
 		glog.Warningf("invalid delete volume req: %v", req)
 		return nil, err
@@ -126,7 +126,7 @@ func (cs *controllerServer) DeleteVolume(
 }
 
 func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *csi.ControllerPublishVolumeRequest) (*csi.ControllerPublishVolumeResponse, error) {
-	glog.Infof("ControllerPublishVolume")
+	glog.Infof("Run ControllerPublishVolume")
 	// 0. Preflight
 	// check arguments
 	if len(req.GetVolumeId()) == 0 {
@@ -162,7 +162,7 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 }
 
 func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *csi.ControllerUnpublishVolumeRequest) (*csi.ControllerUnpublishVolumeResponse, error) {
-	glog.Infof("ControllerUnpublishVolume")
+	glog.Infof("Run ControllerUnpublishVolume")
 	// 0. Preflight
 	// check arguments
 	if len(req.GetVolumeId()) == 0 {
