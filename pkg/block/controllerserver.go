@@ -122,3 +122,15 @@ func (cs *controllerServer) DeleteVolume(
 	delete(blockVolumes, blockVol.VolID)
 	return &csi.DeleteVolumeResponse{}, nil
 }
+
+func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *csi.ControllerPublishVolumeRequest) (*csi.ControllerPublishVolumeResponse, error) {
+	glog.Infof("ControllerPublishVolume")
+	glog.Infof("ARGS=%v", req)
+	return &csi.ControllerPublishVolumeResponse{}, nil
+}
+
+func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *csi.ControllerUnpublishVolumeRequest) (*csi.ControllerUnpublishVolumeResponse, error) {
+	glog.Infof("ControllerUnpublishVolume")
+	glog.Infof("ARGS=%v", req)
+	return &csi.ControllerUnpublishVolumeResponse{}, nil
+}
