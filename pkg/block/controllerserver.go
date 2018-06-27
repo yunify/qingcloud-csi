@@ -123,14 +123,14 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	nodeId := req.GetNodeId()
 
 	// 1. Attach
-	// create volume provisioner object
+	// create volume manager object
 	vm, err := NewVolumeManager()
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	// attach volume
 	glog.Infof("Attaching volume %s to instance %s in zone %s...", volumeId, nodeId, vm.volumeService.Config.Zone)
-	 err = vm.AttachVolume(volumeId, nodeId)
+	err = vm.AttachVolume(volumeId, nodeId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
