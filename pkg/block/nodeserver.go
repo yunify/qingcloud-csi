@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/kubernetes/pkg/util/mount"
 	"os"
-	"path"
+	"fmt"
 )
 
 type nodeServer struct {
@@ -18,7 +18,7 @@ type nodeServer struct {
 
 func (ns *nodeServer) NodePublishVolume(
 	ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
-	glog.Infof("NodePublishVolume")
+	glog.Infof("Run NodePublishVolume")
 	// 0. Preflight
 	// check arguments
 	if len(req.GetStagingTargetPath()) == 0 {
@@ -61,14 +61,14 @@ func (ns *nodeServer) NodePublishVolume(
 
 func (ns *nodeServer) NodeUnpublishVolume(
 	ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
-	glog.Infof("NodeUnpublishVolume")
+	glog.Infof("Run NodeUnpublishVolume")
 	// 0. Preflight
 	// check arguments
 	if len(req.GetTargetPath()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Target path missing in request")
 	}
 	// set parameter
-	volumeID := req.GetVolumeId()
+	volumeId := req.GetVolumeId()
 	targetPath := req.GetTargetPath()
 
 	// 1. Unmount
@@ -79,10 +79,11 @@ func (ns *nodeServer) NodeUnpublishVolume(
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if notMnt {
-		return nil, status.Error(codes.NotFound, "Volume not bind mounted")
+		glog.Warningf("Volume %s has not mount point", volumeId)
+		return &csi.NodeUnpublishVolumeResponse{},nil
 	}
 	// do unmount
-	glog.Infof("Unbind mountvolume %s/%s", targetPath, volumeID)
+	glog.Infof("Unbind mountvolume %s/%s", targetPath, volumeId)
 	if err = mounter.Unmount(targetPath); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -92,7 +93,7 @@ func (ns *nodeServer) NodeUnpublishVolume(
 }
 
 func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRequest) (*csi.NodeStageVolumeResponse, error) {
-	glog.Infof("NodeStageVolume")
+	glog.Infof("Run NodeStageVolume")
 	// 0. Preflight
 	// check arguments
 	if len(req.GetVolumeId()) == 0 {
@@ -103,40 +104,10 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	}
 	// set parameter
 	volumeId := req.GetVolumeId()
-	instanceId := GetCurrentInstanceId()
 	targetPath := req.GetStagingTargetPath()
 	fsType := req.GetVolumeCapability().GetMount().GetFsType()
 
-	// 1. Attach
-	// create StorageClass
-	sc, err := NewStorageClassFromMap(req.VolumeAttributes)
-	if err != nil {
-		glog.Error(err.Error())
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-	// create volume provisioner object
-	vp, err := newVolumeProvisioner(sc)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	// attach volume
-	glog.Infof("Attaching volume %s to instance %s in zone %s...", volumeId, instanceId, sc.Zone)
-	devicePath, err := vp.AttachVolume(volumeId, instanceId)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	glog.Infof("Attaching volume %s succeed.", volumeId)
-	// save volInfo into a file.
-	glog.Infof("Save volume %s info to a file...", volumeId)
-	blockVol := blockVolume{}
-	blockVol.Zone = sc.Zone
-	blockVol.Sc = *sc
-	if err := persistVolInfo(volumeId, path.Join(PluginFolder, "node"), &blockVol); err != nil {
-		glog.Warningf("Failed to store volInfo with error: %v", err)
-	}
-	glog.Infof("Save volume %s info succeed", volumeId)
-
-	// 2. Mount
+	// 1. Mount
 	// if volume already mounted
 	notMnt, err := mount.New("").IsLikelyNotMountPoint(targetPath)
 	if err != nil {
@@ -152,18 +123,38 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	if !notMnt {
 		return &csi.NodeStageVolumeResponse{}, nil
 	}
+	// create volume manager object
+	vm, err := NewVolumeManager()
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	// find volume devicePath
+	volumeObj, err := vm.FindVolume(volumeId)
+	if err != nil{
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if volumeObj == nil{
+		return nil, status.Error(codes.Internal, fmt.Sprintf("Cannot find volume %s", volumeId))
+	}
+	devicePath := ""
+	if volumeObj.Instance != nil && volumeObj.Instance.Device != nil && *volumeObj.Instance.Device != ""{
+		devicePath = *volumeObj.Instance.Device
+		glog.Infof("Find volume %s's device path is %s", volumeId, devicePath)
+	}else{
+		return nil, status.Error(codes.Internal, fmt.Sprintf("Cannot find device path of volume %s", volumeId))
+	}
 	// do mount
 	glog.Infof("Mounting %s to %s format %s...", volumeId, targetPath, fsType)
 	diskMounter := &mount.SafeFormatAndMount{Interface: mount.New(""), Exec: mount.NewOsExec()}
 	if err := diskMounter.FormatAndMount(devicePath, targetPath, fsType, []string{}); err != nil {
-		return nil, err
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	glog.Infof("Mount %s to %s succeed", volumeId, targetPath)
 	return &csi.NodeStageVolumeResponse{}, nil
 }
 
 func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.NodeUnstageVolumeResponse, error) {
-	glog.Infof("NodeUnstageVolume")
+	glog.Infof("Run NodeUnstageVolume")
 	// 0. Preflight
 	// check arguments
 	if len(req.GetVolumeId()) == 0 {
@@ -204,29 +195,11 @@ func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstag
 		return nil, status.Error(codes.Internal, "unmount failed")
 	}
 
-	// 2. Detach
-	// retrieve sc from file
-	blockVol := blockVolume{}
-	if err := loadVolInfo(volumeID, path.Join(PluginFolder, "node"), &blockVol); err != nil {
-		return nil, err
-	}
-	// create volume provisioner object
-	vp, err := newVolumeProvisioner(&blockVol.Sc)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	// do detach
-	err = vp.DetachVolume(volumeID, GetCurrentInstanceId())
-	if err != nil {
-		glog.Errorf("failed to detach block image: %s from instance %s with error: %v",
-			volumeID, GetCurrentInstanceId(), err)
-		return nil, err
-	}
-
 	return &csi.NodeUnstageVolumeResponse{}, nil
 }
 
 func (ns *nodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetCapabilitiesRequest) (*csi.NodeGetCapabilitiesResponse, error) {
+	glog.Infof("Run NodeGetCapabilities")
 	return &csi.NodeGetCapabilitiesResponse{
 		Capabilities: []*csi.NodeServiceCapability{
 			{
@@ -237,5 +210,12 @@ func (ns *nodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetC
 				},
 			},
 		},
+	}, nil
+}
+
+func (ns *nodeServer) NodeGetId(ctx context.Context, req *csi.NodeGetIdRequest) (*csi.NodeGetIdResponse, error) {
+	glog.V(5).Infof("Run NodeGetId")
+	return &csi.NodeGetIdResponse{
+		NodeId: GetCurrentInstanceId(),
 	}, nil
 }

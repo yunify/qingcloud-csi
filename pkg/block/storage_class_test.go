@@ -30,10 +30,6 @@ func Test_getConfigFromQingStorageClass(t *testing.T) {
 	// print storage class
 	bytes, _ := json.Marshal(sc)
 	t.Log("storage class:", string(bytes[:]))
-	// get config
-	config := sc.getConfig()
-	// print config
-	t.Log("config:", config)
 }
 
 func TestFormatVolumeSize(t *testing.T) {

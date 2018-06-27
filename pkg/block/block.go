@@ -15,7 +15,6 @@ const (
 	tib100 int64 = tib * 100
 )
 
-const PluginFolder = "/var/lib/kubelet/plugins/csi-qingcloud"
 const version = "0.2.0"
 
 var blockVolumes map[string]blockVolume
@@ -62,7 +61,8 @@ func (blk *block) Run(driverName, nodeID, endpoint string) {
 		glog.Fatalln("Failed to initialize CSI Driver.")
 	}
 	blk.driver.AddControllerServiceCapabilities([]csi.ControllerServiceCapability_RPC_Type{
-		csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME})
+		csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME,
+		csi.ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME})
 	blk.driver.AddVolumeCapabilityAccessModes([]csi.VolumeCapability_AccessMode_Mode{
 		csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER})
 	// Create GRPC servers

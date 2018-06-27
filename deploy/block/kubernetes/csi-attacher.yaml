@@ -2,13 +2,13 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: csi-attacher
+  name: csi-attacher-qingcloud
 
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: external-attacher-runner
+  name: csi-attacher-qingcloud
 rules:
   - apiGroups: [""]
     resources: ["events"]
@@ -27,26 +27,26 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: csi-attacher-role
+  name: csi-attacher-qingcloud
 subjects:
   - kind: ServiceAccount
-    name: csi-attacher
+    name: csi-attacher-qingcloud
     namespace: default
 roleRef:
   kind: ClusterRole
-  name: external-attacher-runner
+  name: csi-attacher-qingcloud
   apiGroup: rbac.authorization.k8s.io
 ---
 
 kind: Service
 apiVersion: v1
 metadata:
-  name: csi-attacher
+  name: csi-attacher-qingcloud
   labels:
-    app: csi-attacher
+    app: csi-attacher-qingcloud
 spec:
   selector:
-    app: csi-attacher
+    app: csi-attacher-qingcloud
   ports:
     - name: dummy
       port: 12345
@@ -55,16 +55,16 @@ spec:
 kind: StatefulSet
 apiVersion: apps/v1beta1
 metadata:
-  name: csi-attacher
+  name: csi-attacher-qingcloud
 spec:
-  serviceName: "csi-attacher"
+  serviceName: "csi-attacher-qingcloud"
   replicas: 1
   template:
     metadata:
       labels:
-        app: csi-attacher
+        app: csi-attacher-qingcloud
     spec:
-      serviceAccount: csi-attacher
+      serviceAccount: csi-attacher-qingcloud
       containers:
         - name: csi-attacher
           image: quay.io/k8scsi/csi-attacher:v0.2.0

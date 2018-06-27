@@ -5,10 +5,12 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
 )
 
 const (
-	InstanceFilepath = "/etc/qingcloud/instance-id"
+	InstanceFilePath = "/etc/qingcloud/instance-id"
+	ConfigFilePath = "/root/config.yaml"
 )
 
 var instanceIdFromFile string
@@ -24,7 +26,7 @@ func CreatePath(persistentStoragePath string) error {
 }
 
 func ReadCurrentInstanceId() {
-	bytes, err := ioutil.ReadFile(InstanceFilepath)
+	bytes, err := ioutil.ReadFile(InstanceFilePath)
 	if err != nil {
 		glog.Errorf("Getting current instance-id error: %s", err.Error())
 		os.Exit(1)
@@ -39,4 +41,15 @@ func GetCurrentInstanceId() string {
 		ReadCurrentInstanceId()
 	}
 	return instanceIdFromFile
+}
+
+func ReadConfigFromFile(filePath string) (*qcconfig.Config, error) {
+	config, err := qcconfig.NewDefault()
+	if err != nil {
+		return nil, err
+	}
+	if err = config.LoadConfigFromFilepath(filePath); err != nil{
+		return nil, err
+	}
+	return config, nil
 }

@@ -23,6 +23,7 @@ rules:
   - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments"]
     verbs: ["get", "list", "watch", "update"]
+
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -36,6 +37,23 @@ roleRef:
   kind: ClusterRole
   name: csi-qingcloud
   apiGroup: rbac.authorization.k8s.io          
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: csi-qingcloud
+data:
+  config.yaml: |
+    qy_access_key_id: 'ACCESS_KEY_ID'
+    qy_secret_access_key: 'SECRET_ACCESS_KEY'
+    zone: 'ZONE'
+    host: 'api.qingcloud.com'
+    port: 443
+    protocol: 'https'
+    uri: '/iaas'
+    connection_retries: 3
+    connection_timeout: 30
 
 ---
 # This YAML file contains driver-registrar & csi driver nodeplugin API objects,
@@ -110,6 +128,8 @@ spec:
             - mountPath: /etc/qingcloud
               name: instance-id
               readOnly: true
+            - mountPath: /root
+              name: server-config
       volumes:
         - name: plugin-dir
           hostPath:
@@ -139,3 +159,6 @@ spec:
         - name: instance-id
           hostPath:
             path: /etc/qingcloud
+        - name: server-config
+          configMap:
+            name: csi-qingcloud
