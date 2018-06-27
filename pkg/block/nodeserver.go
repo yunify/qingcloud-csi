@@ -68,7 +68,7 @@ func (ns *nodeServer) NodeUnpublishVolume(
 		return nil, status.Error(codes.InvalidArgument, "Target path missing in request")
 	}
 	// set parameter
-	volumeID := req.GetVolumeId()
+	volumeId := req.GetVolumeId()
 	targetPath := req.GetTargetPath()
 
 	// 1. Unmount
@@ -79,10 +79,11 @@ func (ns *nodeServer) NodeUnpublishVolume(
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if notMnt {
-		return nil, status.Error(codes.NotFound, "Volume not bind mounted")
+		glog.Warningf("Volume %s has not mount point", volumeId)
+		return &csi.NodeUnpublishVolumeResponse{},nil
 	}
 	// do unmount
-	glog.Infof("Unbind mountvolume %s/%s", targetPath, volumeID)
+	glog.Infof("Unbind mountvolume %s/%s", targetPath, volumeId)
 	if err = mounter.Unmount(targetPath); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -122,19 +123,13 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	if !notMnt {
 		return &csi.NodeStageVolumeResponse{}, nil
 	}
-	// create StorageClass
-	sc, err := NewStorageClassFromMap(req.VolumeAttributes)
-	if err != nil {
-		glog.Error(err.Error())
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-	// create volume provisioner object
-	vp, err := newVolumeProvisioner(sc)
+	// create volume manager object
+	vm, err := NewVolumeManager()
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	// find volume devicePath
-	volumeObj, err := vp.findVolume(volumeId)
+	volumeObj, err := vm.FindVolume(volumeId)
 	if err != nil{
 		return nil, status.Error(codes.Internal, err.Error())
 	}

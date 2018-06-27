@@ -3,6 +3,7 @@ package block
 import (
 	"github.com/golang/glog"
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
+	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -16,15 +17,36 @@ const (
 	Instance_Status_CEASED     string = "ceased"
 )
 
-type instanceProvider struct {
+type instanceManager struct {
 	instanceService *qcservice.InstanceService
 	jobService      *qcservice.JobService
-	storageClass    *qingStorageClass
 }
 
-func newInstanceProvider(sc *qingStorageClass) (*instanceProvider, error) {
+func NewInstanceManagerWithConfig(config *qcconfig.Config) ( *instanceManager, error) {
+	// initial qingcloud iaas service
+	qs, err := qcservice.Init(config)
+	if err != nil {
+		return nil, err
+	}
+	// create volume service
+	is, _ := qs.Instance(config.Zone)
+	// create job service
+	js, _ := qs.Job(config.Zone)
+	// initial volume provisioner
+	im := instanceManager{
+		instanceService: is,
+		jobService:    js,
+	}
+	glog.Infof("Finish initial volume manager")
+	return &im, nil
+}
+
+func newInstanceManager() (*instanceManager, error) {
 	// create config
-	config := sc.getConfig()
+	config, err := ReadConfigFromFile(ConfigFilePath)
+	if err != nil {
+		return nil, err
+	}
 	// initial Qingcloud iaas service
 	qs, err := qcservice.Init(config)
 	if err != nil {
@@ -35,21 +57,20 @@ func newInstanceProvider(sc *qingStorageClass) (*instanceProvider, error) {
 	// create job service
 	js, _ := qs.Job(config.Zone)
 	// initial volume provider
-	iv := instanceProvider{
+	im := instanceManager{
 		instanceService: is,
 		jobService:      js,
-		storageClass:    sc,
 	}
 	glog.Infof("instance provider init finish, zone: %s",
-		*iv.instanceService.Properties.Zone)
-	return &iv, nil
+		*im.instanceService.Properties.Zone)
+	return &im, nil
 }
 
 // Find instance by instance ID
 // Return: 	nil,	nil: 	not found instance
 //			instance, nil: 	found instance
 //			nil, 	error:	internal error
-func (iv *instanceProvider) findInstance(id string) (instance *qcservice.Instance, err error) {
+func (iv *instanceManager) findInstance(id string) (instance *qcservice.Instance, err error) {
 	// set describe instance input
 	input := qcservice.DescribeInstancesInput{}
 	input.Instances = append(input.Instances, &id)

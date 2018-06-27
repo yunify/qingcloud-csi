@@ -1,10 +1,10 @@
 package block
 
 import (
-	"errors"
 	"fmt"
 	"github.com/golang/glog"
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
+	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -18,15 +18,12 @@ const (
 	BlockVolume_Status_CEASED    string = "ceased"
 )
 
-type volumeProvisioner struct {
+type volumeManager struct {
 	volumeService *qcservice.VolumeService
 	jobService    *qcservice.JobService
-	storageClass  *qingStorageClass
 }
 
-func newVolumeProvisioner(sc *qingStorageClass) (*volumeProvisioner, error) {
-	// create config
-	config := sc.getConfig()
+func NewVolumeManagerWithConfig(config *qcconfig.Config) (*volumeManager, error) {
 	// initial qingcloud iaas service
 	qs, err := qcservice.Init(config)
 	if err != nil {
@@ -37,13 +34,34 @@ func newVolumeProvisioner(sc *qingStorageClass) (*volumeProvisioner, error) {
 	// create job service
 	js, _ := qs.Job(config.Zone)
 	// initial volume provisioner
-	vp := volumeProvisioner{
+	vp := volumeManager{
 		volumeService: vs,
 		jobService:    js,
-		storageClass:  sc,
 	}
-	glog.Infof("volume provisioner init finish, zone: %s, type: %d",
-		*vp.volumeService.Properties.Zone, vp.storageClass.VolumeType)
+	glog.Infof("Finished new volume manager")
+	return &vp, nil
+}
+
+func NewVolumeManager() (*volumeManager, error) {
+	config, err := ReadConfigFromFile(ConfigFilePath)
+	if err != nil{
+		return nil, err
+	}
+	// initial qingcloud iaas service
+	qs, err := qcservice.Init(config)
+	if err != nil {
+		return nil, err
+	}
+	// create volume service
+	vs, _ := qs.Volume(config.Zone)
+	// create job service
+	js, _ := qs.Job(config.Zone)
+	// initial volume provisioner
+	vp := volumeManager{
+		volumeService: vs,
+		jobService:    js,
+	}
+	glog.Infof("Finished new volume manager")
 	return &vp, nil
 }
 
@@ -51,7 +69,7 @@ func newVolumeProvisioner(sc *qingStorageClass) (*volumeProvisioner, error) {
 // Return: 	nil,	nil: 	not found volumes
 //			volume, nil: 	found volume
 //			nil, 	error:	internal error
-func (vm *volumeProvisioner) findVolume(id string) (volume *qcservice.Volume, err error) {
+func (vm *volumeManager) FindVolume(id string) (volume *qcservice.Volume, err error) {
 	// Set DescribeVolumes input
 	input := qcservice.DescribeVolumesInput{}
 	input.Volumes = append(input.Volumes, &id)
@@ -64,9 +82,8 @@ func (vm *volumeProvisioner) findVolume(id string) (volume *qcservice.Volume, er
 	}
 	// 2. Return code is not equal to 0.
 	if *output.RetCode != 0 {
-		return nil, status.Error(codes.Internal,
-			fmt.Sprintf("call DescribeVolumes err: volume id %s in %s",
-				id, vm.volumeService.Config.Zone))
+		return nil,
+			fmt.Errorf("call DescribeVolumes err: volume id %s in %s", id, vm.volumeService.Config.Zone)
 	}
 	switch *output.TotalCount {
 	// Not found volumes
@@ -77,9 +94,8 @@ func (vm *volumeProvisioner) findVolume(id string) (volume *qcservice.Volume, er
 		return output.VolumeSet[0], nil
 	// Found duplicate volumes
 	default:
-		return nil, status.Error(codes.Internal,
-			fmt.Sprintf("call DescribeVolumes err: find duplicate volumes, volume id %s in %s",
-				id, vm.volumeService.Config.Zone))
+		return nil,
+			fmt.Errorf("call DescribeVolumes err: find duplicate volumes, volume id %s in %s", id, vm.volumeService.Config.Zone)
 	}
 }
 
@@ -87,7 +103,7 @@ func (vm *volumeProvisioner) findVolume(id string) (volume *qcservice.Volume, er
 // Return: 	nil, 		nil: 	not found volumes
 //			volumes,	nil:	found volume
 //			nil,		error:	internal error
-func (vm *volumeProvisioner) findVolumeByName(name string) (volume *qcservice.Volume, err error) {
+func (vm *volumeManager) FindVolumeByName(name string) (volume *qcservice.Volume, err error) {
 	// Set input arguements
 	input := qcservice.DescribeVolumesInput{}
 	input.SearchWord = &name
@@ -98,8 +114,8 @@ func (vm *volumeProvisioner) findVolumeByName(name string) (volume *qcservice.Vo
 		return nil, err
 	}
 	if *output.RetCode != 0 {
-		return nil, status.Error(codes.Internal,
-			fmt.Sprintf("call DescribeVolumes err: volume name %s in %s", name, vm.volumeService.Config.Zone))
+		return nil,
+		fmt.Errorf("call DescribeVolumes err: volume name %s in %s", name, vm.volumeService.Config.Zone)
 	}
 	// Not found volumes
 	switch *output.TotalCount {
@@ -108,78 +124,75 @@ func (vm *volumeProvisioner) findVolumeByName(name string) (volume *qcservice.Vo
 	case 1:
 		return output.VolumeSet[0], nil
 	default:
-		return nil, status.Error(codes.Internal,
-			fmt.Sprintf("call DescribeVolumes err: find duplicate volumes, volume name %s in %s",
-				name, vm.volumeService.Config.Zone))
+		return nil,
+		fmt.Errorf("call DescribeVolumes err: find duplicate volumes, volume name %s in %s", name, vm.volumeService.Config.Zone)
 	}
 }
 
 // create volume
-func (vm *volumeProvisioner) CreateVolume(requestSize int, opt *blockVolume) error {
+func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc qingStorageClass) ( volumeId string, err error) {
+	// 0. Set CreateVolume args
 	// set input value
 	input := &qcservice.CreateVolumesInput{}
-	// volume provisioner size
-	size := vm.storageClass.formatVolumeSize(requestSize)
-	input.Size = &size
-	// volume provisioner count
+	// create volume count
 	count := 1
 	input.Count = &count
-	// volume provisioner name
-	input.VolumeName = &opt.VolName
+	// volume provisioner size
+	size := sc.formatVolumeSize(requestSize)
+	input.Size = &size
+	// create volume name
+	input.VolumeName = &volumeName
 	// volume provisioner type
-	input.VolumeType = &vm.storageClass.VolumeType
-	// create volume
-	glog.Infof("call CreateVolume request size: %d GB, zone: %s, type: %d, count: %d, name: %s",
+	input.VolumeType = &sc.VolumeType
+
+	// 1. Create volume
+	glog.Infof("CreateVolume request size: %d GB, zone: %s, type: %d, count: %d, name: %s",
 		*input.Size, *vm.volumeService.Properties.Zone, *input.VolumeType, *input.Count, *input.VolumeName)
 	output, err := vm.volumeService.CreateVolumes(input)
 	if err != nil {
-		return status.Error(codes.Internal, "Call IaaS SDK error")
+		return "", err
 	}
 	// check output
 	if *output.RetCode != 0 {
 		glog.Warningf("call CreateVolumes return %d, name %s",
-			*output.RetCode, opt.VolName)
+			*output.RetCode, volumeName)
+	}else{
+		volumeId = *output.Volumes[0]
+		glog.Info("call CreateVolume name %s id %s succeed", volumeName, volumeId)
 	}
-	// check volume exist
-	opt.VolID = *output.Volumes[0]
-	volumeInfo, err := vm.findVolume(opt.VolID)
-	if err != nil {
-		return status.Error(codes.AlreadyExists,
-			fmt.Sprintf("Volume already exists %s in %s", opt.VolID, opt.Zone))
-	} else {
-		opt.VolSize = *volumeInfo.Size
-		return nil
-	}
+
+	return *output.Volumes[0], nil
 }
 
 // delete volume
-func (vm *volumeProvisioner) DeleteVolume(id string) error {
+func (vm *volumeManager) DeleteVolume(id string) error {
 	// set input value
 	input := &qcservice.DeleteVolumesInput{}
 	input.Volumes = append(input.Volumes, &id)
 	// delete volume
-	glog.Infof("call DeleteVolume request id: %s, zone: %s",
+	glog.Infof("DeleteVolume request id: %s, zone: %s",
 		id, *vm.volumeService.Properties.Zone)
 	output, err := vm.volumeService.DeleteVolumes(input)
 	if err != nil {
 		return err
 	}
-
 	// check output
 	if *output.RetCode != 0 {
-		glog.Errorf("call DeleteVolumes return %d, id %s",
-			*output.RetCode, id)
+		glog.Errorf("call DeleteVolumes %s failed, return %d",
+			id, *output.RetCode)
+	}else{
+		glog.Infof("call DeleteVolume %s succeed", id)
 	}
 	return nil
 }
 
 // check volume attaching to instance
-func (vm *volumeProvisioner) isAttachedToInstance(volumeId string, instanceId string) (flag bool, err error) {
+func (vm *volumeManager) IsAttachedToInstance(volumeId string, instanceId string) (flag bool, err error) {
 	// zone
-	zone := vm.storageClass.Zone
+	zone := vm.volumeService.Config.Zone
 
 	// get volume item
-	volumeItem, err := vm.findVolume(volumeId)
+	volumeItem, err := vm.FindVolume(volumeId)
 	if err != nil {
 		return false, status.Errorf(codes.Internal, err.Error())
 	}
@@ -197,21 +210,21 @@ func (vm *volumeProvisioner) isAttachedToInstance(volumeId string, instanceId st
 }
 
 // attach volume
-func (vm *volumeProvisioner) AttachVolume(volumeId string, instanceId string) (string, error) {
+func (vm *volumeManager) AttachVolume(volumeId string, instanceId string) error{
 	glog.Infof("volumeId: %s, instanceId: %s", volumeId, instanceId)
 	zone := *vm.volumeService.Properties.Zone
 	// check volume status
-	flag, err := vm.isAttachedToInstance(volumeId, instanceId)
+	flag, err := vm.IsAttachedToInstance(volumeId, instanceId)
 	if err != nil {
-		return "", err
+		return  err
 	}
 	if flag {
-		vol, err := vm.findVolume(volumeId)
+		vol, err := vm.FindVolume(volumeId)
 		if err == nil && vol.Instance != nil {
 			glog.Infof("volume %s has been attached to instance %s device %s in zone %s", volumeId, instanceId, *vol.Instance.Device, zone)
-			return *vol.Instance.Device, nil
+			return nil
 		}
-		return "", nil
+		return nil
 	}
 	// set input parameter
 	input := &qcservice.AttachVolumesInput{}
@@ -221,28 +234,21 @@ func (vm *volumeProvisioner) AttachVolume(volumeId string, instanceId string) (s
 	glog.Infof("call AttachVolume request volume id: %s, instance id: %s, zone: %s", volumeId, instanceId, zone)
 	output, err := vm.volumeService.AttachVolumes(input)
 	if err != nil {
-		return "", status.Errorf(codes.Internal, err.Error())
+		return err
 	}
 	// check output
 	if *output.RetCode != 0 {
-		return "", status.Errorf(codes.Internal, "call AttachVolume return %d, volume id %s", *output.RetCode, volumeId)
+		return fmt.Errorf("call AttachVolume return %d, volume id %s", *output.RetCode, volumeId)
 	}
-	// return device path
-	vol, err := vm.findVolume(volumeId)
-	if err == nil && vol.Instance != nil && *vol.Instance.InstanceID != "" {
-		glog.Infof("volume %s has been attached to instance %s device %s in zone %s", volumeId, instanceId, *vol.Instance.Device, zone)
-		return *vol.Instance.Device, nil
-	}
-	return "", nil
+	return  nil
 }
 
 // detach volume
-func (vm *volumeProvisioner) DetachVolume(volumeId string, instanceId string) error {
+func (vm *volumeManager) DetachVolume(volumeId string, instanceId string) error {
 	// check volume status
-	if ok, _ := vm.isAttachedToInstance(volumeId, instanceId); ok == false {
-		return errors.New(
-			fmt.Sprintf("volume %s is not attached to instance %s in zone %s",
-				volumeId, instanceId, *vm.volumeService.Properties.Zone))
+	if ok, _ := vm.IsAttachedToInstance(volumeId, instanceId); ok == false {
+		return fmt.Errorf("volume %s is not attached to instance %s in zone %s",
+				volumeId, instanceId, *vm.volumeService.Properties.Zone)
 	}
 	// set input parameter
 	input := &qcservice.DetachVolumesInput{}

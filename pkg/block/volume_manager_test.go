@@ -1,16 +1,12 @@
 package block
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"os"
 	"runtime"
 	"strconv"
 	"testing"
 )
 
-var getvp = func() *volumeProvisioner {
+var getvp = func() *volumeManager {
 	// get storage class
 	var filepath string
 	if runtime.GOOS == "windows" {
@@ -20,27 +16,18 @@ var getvp = func() *volumeProvisioner {
 		filepath = "/root/config.json"
 	}
 	if runtime.GOOS == "darwin" {
-		filepath = "./config.json"
+		filepath = "./config.yaml"
 	}
-	content, err := ioutil.ReadFile(filepath)
+	qcConfig, err := ReadConfigFromFile(filepath)
 	if err != nil {
-		fmt.Errorf("Open file error: %s", err.Error())
-		os.Exit(-1)
+		return nil
 	}
-	sc := qingStorageClass{}
-	err = json.Unmarshal(content, &sc)
-	if err != nil {
-		fmt.Errorf("get storage class error: %s", err.Error())
-		os.Exit(-1)
+	vm, err := NewVolumeManagerWithConfig(qcConfig)
+	if err != nil{
+		return nil
 	}
 
-	// get volume provisioner
-	vp, err := newVolumeProvisioner(&sc)
-	if err != nil {
-		fmt.Errorf("new volume provisioner error: %s", err.Error())
-		os.Exit(-1)
-	}
-	return vp
+	return vm
 }
 
 func TestFindVolume(t *testing.T) {
@@ -56,7 +43,7 @@ func TestFindVolume(t *testing.T) {
 	vp := getvp()
 	// test findVolume
 	for _, v := range testcase {
-		flag, err := vp.findVolume(v.id)
+		flag, err := vp.FindVolume(v.id)
 		if err != nil {
 			t.Error("find volume error: ", err.Error())
 		}
@@ -80,7 +67,7 @@ func TestFindVolumeByName(t *testing.T) {
 	vp := getvp()
 	// test findVolume
 	for _, v := range testcase {
-		flag, err := vp.findVolumeByName(v.name)
+		flag, err := vp.FindVolumeByName(v.name)
 		if err != nil {
 			t.Error("find volume error: ", err.Error())
 		}
@@ -93,6 +80,8 @@ func TestFindVolumeByName(t *testing.T) {
 }
 
 func TestCreateVolume(t *testing.T) {
+	// storageclass
+	sc := NewDefaultQingStorageClass()
 	// testcase
 	testcase := []struct {
 		vc            blockVolume
@@ -105,9 +94,9 @@ func TestCreateVolume(t *testing.T) {
 	vp := getvp()
 	for i, v := range testcase {
 		v.vc.VolName += strconv.Itoa(i)
-		err := vp.CreateVolume(testcase[i].vc.VolSize, &v.vc)
+		volId, err := vp.CreateVolume(v.vc.VolName, v.vc.VolSize, *sc)
 		if (err == nil) == v.createSuccess {
-			t.Logf("testcase passed, %v", v)
+			t.Logf("testcase passed, %s", volId)
 		} else {
 			t.Error(err)
 		}
@@ -116,7 +105,7 @@ func TestCreateVolume(t *testing.T) {
 
 func TestDeleteVolume(t *testing.T) {
 	vp := getvp()
-	volumeID := "vol-vhvb1il0"
+	volumeID := "vol-sx5ugkl2"
 	err := vp.DeleteVolume(volumeID)
 	if err != nil {
 		t.Error(err)
@@ -138,11 +127,11 @@ func TestAttachVolume(t *testing.T) {
 	}
 }
 
-func TestAttachedToInstance(t *testing.T) {
+func TestIsAttachedToInstance(t *testing.T) {
 	vp := getvp()
 	volumeID := "vol-fhlkhxpr"
 	instanceID := "i-msu2th7i"
-	flag, err := vp.isAttachedToInstance(volumeID, instanceID)
+	flag, err := vp.IsAttachedToInstance(volumeID, instanceID)
 	if err != nil {
 		t.Error(err)
 	} else {

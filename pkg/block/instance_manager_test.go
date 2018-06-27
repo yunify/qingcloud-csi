@@ -1,45 +1,31 @@
 package block
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"os"
 	"runtime"
 	"testing"
 )
 
-var getip = func() *instanceProvider {
+var getim = func() *instanceManager {
 	// get storage class
 	var filepath string
 	if runtime.GOOS == "windows" {
-		filepath = "C:\\Users\\wangx\\Documents\\config.json"
+		filepath = "C:\\Users\\wangx\\Documents\\config.yaml"
 	}
 	if runtime.GOOS == "linux" {
-		filepath = "/root/config.json"
+		filepath = "/root/config.yaml"
 	}
 	if runtime.GOOS == "darwin" {
-		filepath = "./config.json"
+		filepath = "./config.yaml"
 	}
-	content, err := ioutil.ReadFile(filepath)
-	if err != nil {
-		fmt.Errorf("Open file error: %s", err.Error())
-		os.Exit(-1)
+	config , err:=ReadConfigFromFile(filepath)
+	if err != nil{
+		return nil
 	}
-	sc := qingStorageClass{}
-	err = json.Unmarshal(content, &sc)
-	if err != nil {
-		fmt.Errorf("get storage class error: %s", err.Error())
-		os.Exit(-1)
+	im, err := NewInstanceManagerWithConfig(config)
+	if err != nil{
+		return nil
 	}
-
-	// get volume vendor
-	ip, err := newInstanceProvider(&sc)
-	if err != nil {
-		fmt.Errorf("new volume provider error: %s", err.Error())
-		os.Exit(-1)
-	}
-	return ip
+	return im
 }
 
 func TestFindInstance(t *testing.T) {
@@ -52,10 +38,10 @@ func TestFindInstance(t *testing.T) {
 		{"i-hgz8mri3", false},
 	}
 
-	ip := getip()
+	im := getim()
 	// test findVolume
 	for _, v := range testcase {
-		flag, err := ip.findInstance(v.id)
+		flag, err := im.findInstance(v.id)
 		if err != nil {
 			t.Error("find instance error: ", err.Error())
 		}

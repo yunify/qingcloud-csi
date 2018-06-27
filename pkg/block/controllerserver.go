@@ -17,6 +17,7 @@ type controllerServer struct {
 
 func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
 	glog.Info("Run CreateVolume")
+	// 0. Prepare
 	if err := cs.Driver.ValidateControllerServiceRequest(csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME); err != nil {
 		glog.V(3).Infof("Invalid create volume req: %v", req)
 		return nil, err
@@ -28,21 +29,22 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	if req.VolumeCapabilities == nil {
 		return nil, status.Error(codes.InvalidArgument, "Volume Capabilities cannot be empty")
 	}
-	volumeId := req.GetName()
+	volumeName := req.GetName()
 
-	// Create QingCloud storage class object
-	sc, err := NewStorageClassFromMap(req.GetParameters())
+	// create StorageClass object
+	sc, err := NewQingStorageClassFromMap(req.GetParameters())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	// Create volume provisioner object
-	vp, err := newVolumeProvisioner(sc)
+	// create VolumeManager object
+	vm, err := NewVolumeManager()
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+
 	// Need to check for already existing volume name, and if found
 	// check for the requested capacity and already allocated capacity
-	if exVol, err := vp.findVolumeByName(volumeId); err == nil && exVol != nil {
+	if exVol, err := vm.FindVolumeByName(volumeName); err == nil && exVol != nil {
 		// Since err is nil, it means the volume with the same name already exists
 		// need to check if the size of exisiting volume is the same as in new
 		// request
@@ -57,15 +59,11 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 			}, nil
 		}
 		return nil, status.Error(codes.AlreadyExists,
-			fmt.Sprintf("Volume with the same name: %s but with different size already exist", volumeId))
+			fmt.Sprintf("Volume with the same name: %s but with different size already exist", volumeName))
 	} else if err != nil {
 		return nil, status.Error(codes.Internal,
-			fmt.Sprintf("Find volume by name error %s, %s", volumeId, err.Error()))
+			fmt.Sprintf("Find volume by name error %s, %s", volumeName, err.Error()))
 	}
-
-	// Create QingCloud volume
-	newVol := blockVolume{req.Name, "", 0, sc.Zone, *sc}
-
 	// Get volume size
 	volSizeBytes := int64(gib)
 	if req.GetVolumeCapabilities() != nil {
@@ -74,20 +72,15 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	volSizeGB := int(volSizeBytes / gib)
 
 	// Create volume
-	err = vp.CreateVolume(volSizeGB, &newVol)
+	volumeId, err := vm.CreateVolume(volumeName, volSizeGB, *sc)
 	if err != nil {
 		return nil, err
 	}
 
-	// Store volInfo into a persistent file.
-	if err := persistVolInfo(newVol.VolID, path.Join(PluginFolder, "controller"), &newVol); err != nil {
-		glog.Warningf("failed to store volInfo with error: %v", err)
-	}
-	blockVolumes[newVol.VolID] = newVol
 	return &csi.CreateVolumeResponse{
 		Volume: &csi.Volume{
-			Id:            newVol.VolID,
-			CapacityBytes: int64(newVol.VolSize) * gib,
+			Id:            volumeId,
+			CapacityBytes: int64(volSizeGB) * gib,
 			Attributes:    req.GetParameters(),
 		},
 	}, nil
@@ -101,27 +94,19 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 	}
 	// For now the image get unconditionally deleted, but here retention policy can be checked
 	volumeId := req.GetVolumeId()
-	blockVol := &blockVolume{}
-	if err := loadVolInfo(volumeId, path.Join(PluginFolder, "controller"), blockVol); err != nil {
-		return nil, err
-	}
+
 	// Deleting block image
-	glog.Infof("deleting volume %s", blockVol.VolName)
-	// Create volume provisioner object
-	vp, err := newVolumeProvisioner(&blockVol.Sc)
+	glog.Infof("deleting volume %s", volumeId)
+	// Create VolumeManager object
+	vm, err := NewVolumeManager()
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	// Delete block volume
-	if err = vp.DeleteVolume(blockVol.VolID); err != nil {
-		glog.Infof("Failed to delete block volume: %s in %s with error: %v", blockVol.VolID, blockVol.Zone, err)
+	if err = vm.DeleteVolume(volumeId); err != nil {
+		glog.Infof("Failed to delete block volume: %s in %s with error: %v", volumeId, vm.volumeService.Config.Zone, err)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	// Remove persistent storage file for the unmapped volume
-	if err := deleteVolInfo(blockVol.VolID, path.Join(PluginFolder, "controller")); err != nil {
-		return nil, err
-	}
-	delete(blockVolumes, blockVol.VolID)
 	return &csi.DeleteVolumeResponse{}, nil
 }
 
@@ -139,20 +124,14 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	nodeId := req.GetNodeId()
 
 	// 1. Attach
-	// create StorageClass
-	sc, err := NewStorageClassFromMap(req.VolumeAttributes)
-	if err != nil {
-		glog.Error(err.Error())
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
 	// create volume provisioner object
-	vp, err := newVolumeProvisioner(sc)
+	vm, err := NewVolumeManager()
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	// attach volume
-	glog.Infof("Attaching volume %s to instance %s in zone %s...", volumeId, nodeId, sc.Zone)
-	_ , err = vp.AttachVolume(volumeId, nodeId)
+	glog.Infof("Attaching volume %s to instance %s in zone %s...", volumeId, nodeId, vm.volumeService.Config.Zone)
+	 err = vm.AttachVolume(volumeId, nodeId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -181,7 +160,7 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 		return nil, err
 	}
 	// create volume provisioner object
-	vp, err := newVolumeProvisioner(&blockVol.Sc)
+	vp, err := NewVolumeManager()
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
