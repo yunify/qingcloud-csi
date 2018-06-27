@@ -8,7 +8,6 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"path"
 )
 
 type controllerServer struct {
@@ -154,18 +153,13 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 	nodeId := req.GetNodeId()
 
 	// 1. Detach
-	// retrieve sc from file
-	blockVol := blockVolume{}
-	if err := loadVolInfo(volumeId, path.Join(PluginFolder, "controller"), &blockVol); err != nil {
-		return nil, err
-	}
 	// create volume provisioner object
-	vp, err := NewVolumeManager()
+	vm, err := NewVolumeManager()
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	// do detach
-	err = vp.DetachVolume(volumeId, nodeId)
+	err = vm.DetachVolume(volumeId, nodeId)
 	if err != nil {
 		glog.Errorf("failed to detach block image: %s from instance %s with error: %v",
 			volumeId,nodeId, err)

@@ -158,7 +158,7 @@ func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc qin
 			*output.RetCode, volumeName)
 	}else{
 		volumeId = *output.Volumes[0]
-		glog.Info("call CreateVolume name %s id %s succeed", volumeName, volumeId)
+		glog.Infof("call CreateVolume name %s id %s succeed", volumeName, volumeId)
 	}
 
 	return *output.Volumes[0], nil

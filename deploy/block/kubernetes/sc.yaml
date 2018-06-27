@@ -4,13 +4,6 @@ metadata:
   name: csi-qingcloud
 provisioner: csi-qingcloud
 parameters:
-  accessKeyId: XXX
-  accessKeySecret: XXX
-  zone: ap2a
-  host: api.qingcloud.com
-  uri: /iaas
-  port: "443"
-  protocol: https
   type: "0"
   maxSize: "500"
   minSize: "10"

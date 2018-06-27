@@ -15,7 +15,6 @@ const (
 	tib100 int64 = tib * 100
 )
 
-const PluginFolder = "/var/lib/kubelet/plugins/csi-qingcloud"
 const version = "0.2.0"
 
 var blockVolumes map[string]blockVolume
