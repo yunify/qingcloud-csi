@@ -211,60 +211,72 @@ func (vm *volumeManager) IsAttachedToInstance(volumeId string, instanceId string
 
 // attach volume
 func (vm *volumeManager) AttachVolume(volumeId string, instanceId string) error{
-	glog.Infof("volumeId: %s, instanceId: %s", volumeId, instanceId)
 	zone := *vm.volumeService.Properties.Zone
 	// check volume status
-	flag, err := vm.IsAttachedToInstance(volumeId, instanceId)
-	if err != nil {
-		return  err
-	}
-	if flag {
-		vol, err := vm.FindVolume(volumeId)
-		if err == nil && vol.Instance != nil {
-			glog.Infof("volume %s has been attached to instance %s device %s in zone %s", volumeId, instanceId, *vol.Instance.Device, zone)
-			return nil
-		}
-		return nil
-	}
-	// set input parameter
-	input := &qcservice.AttachVolumesInput{}
-	input.Volumes = append(input.Volumes, &volumeId)
-	input.Instance = &instanceId
-	// attach volume
-	glog.Infof("call AttachVolume request volume id: %s, instance id: %s, zone: %s", volumeId, instanceId, zone)
-	output, err := vm.volumeService.AttachVolumes(input)
-	if err != nil {
+	vol, err := vm.FindVolume(volumeId)
+	if err != nil{
 		return err
 	}
-	// check output
-	if *output.RetCode != 0 {
-		return fmt.Errorf("call AttachVolume return %d, volume id %s", *output.RetCode, volumeId)
+	if vol == nil{
+		return fmt.Errorf("Cannot found volume %s", volumeId)
 	}
-	return  nil
+	if *vol.Instance.InstanceID == "" {
+		// set input parameter
+		input := &qcservice.AttachVolumesInput{}
+		input.Volumes = append(input.Volumes, &volumeId)
+		input.Instance = &instanceId
+		// attach volume
+		glog.Infof("call AttachVolume request volume id: %s, instance id: %s, zone: %s", volumeId, instanceId, zone)
+		output, err := vm.volumeService.AttachVolumes(input)
+		if err != nil {
+			return err
+		}
+		// check output
+		if *output.RetCode != 0 {
+			return fmt.Errorf("call AttachVolume return %d, volume id %s", *output.RetCode, volumeId)
+		}
+		return nil
+	}else{
+		if *vol.Instance.InstanceID == instanceId{
+			return nil
+		}else{
+			return fmt.Errorf("Volume %s has been attached to another instance %s", volumeId, *vol.Instance.InstanceID)
+		}
+	}
 }
 
 // detach volume
 func (vm *volumeManager) DetachVolume(volumeId string, instanceId string) error {
+	zone := *vm.volumeService.Properties.Zone
 	// check volume status
-	if ok, _ := vm.IsAttachedToInstance(volumeId, instanceId); ok == false {
-		return fmt.Errorf("volume %s is not attached to instance %s in zone %s",
-				volumeId, instanceId, *vm.volumeService.Properties.Zone)
-	}
-	// set input parameter
-	input := &qcservice.DetachVolumesInput{}
-	input.Volumes = append(input.Volumes, &volumeId)
-	input.Instance = &instanceId
-	// attach volume
-	glog.Infof("call DetachVolume request volume id: %s, instance id: %s, zone: %s",
-		volumeId, instanceId, *vm.volumeService.Properties.Zone)
-	output, err := vm.volumeService.DetachVolumes(input)
-	if err != nil {
+	vol, err := vm.FindVolume(volumeId)
+	if err != nil{
 		return err
 	}
-	// check output
-	if *output.RetCode != 0 {
-		glog.Errorf("call DetachVolume return %d, volume id %s",
-			*output.RetCode, volumeId)
+	if vol == nil{
+		return fmt.Errorf("Cannot found volume %s", volumeId)
 	}
-	return nil
+	if *vol.Instance.InstanceID == ""{
+		return nil
+	}else{
+		if *vol.Instance.InstanceID == instanceId {
+			// set input parameter
+			input := &qcservice.DetachVolumesInput{}
+			input.Volumes = append(input.Volumes, &volumeId)
+			input.Instance = &instanceId
+			// attach volume
+			glog.Infof("call DetachVolume request volume id: %s, instance id: %s, zone: %s", volumeId, instanceId, zone)
+			output, err := vm.volumeService.DetachVolumes(input)
+			if err != nil {
+				return err
+			}
+			// check output
+			if *output.RetCode != 0 {
+				return fmt.Errorf("call DetachVolume return %d, volume id %s", *output.RetCode, volumeId)
+			}
+			return nil
+		}else{
+			return fmt.Errorf("Volume %s has been attached to another instance %s", volumeId, *vol.Instance.InstanceID)
+		}
+	}
 }
