@@ -116,15 +116,23 @@ func TestDeleteVolume(t *testing.T) {
 
 func TestAttachVolume(t *testing.T) {
 	vp := getvp()
-	volumeID := "vol-fhlkhxpr"
-	instanceID := "i-msu2th7i"
-	_, err := vp.AttachVolume(volumeID, instanceID)
-	if err != nil {
-		t.Error(err)
-	} else {
-		t.Logf("testcase attach volume %s to instance %s success",
-			volumeID, instanceID)
+	// testcase
+	testcases := []struct {
+		volumeId 	string
+		instanceId	string
+		result 		bool
+	}{
+		{"vol-fhlkhxpr", "i-msu2th7i", true},
 	}
+	for _, v:=range testcases{
+		err := vp.AttachVolume(v.volumeId, v.instanceId)
+		if err != nil {
+			t.Error(err)
+		} else {
+			t.Logf("testcase attach volume %s to instance %s success", v.volumeId, v.instanceId)
+		}
+	}
+
 }
 
 func TestIsAttachedToInstance(t *testing.T) {
