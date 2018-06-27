@@ -137,7 +137,7 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 		return nil, status.Error(codes.Internal, fmt.Sprintf("Cannot find volume %s", volumeId))
 	}
 	devicePath := ""
-	if volumeObj.Instance != nil && *volumeObj.Instance.Device != ""{
+	if volumeObj.Instance != nil && volumeObj.Instance.Device != nil && *volumeObj.Instance.Device != ""{
 		devicePath = *volumeObj.Instance.Device
 		glog.Infof("Find volume %s's device path is %s", volumeId, devicePath)
 	}else{
