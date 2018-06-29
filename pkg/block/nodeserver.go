@@ -29,6 +29,14 @@ func (ns *nodeServer) NodePublishVolume(
 	stagePath := req.GetStagingTargetPath()
 
 	// 1. Mount
+	// Make dir if dir not presents
+	_, err := os.Stat(targetPath)
+	if os.IsNotExist(err) {
+		if err = os.MkdirAll(targetPath, 0750); err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+	}
+
 	// check targetPath is mounted
 	notMnt, err := mount.New("").IsNotMountPoint(targetPath)
 	if err != nil {
