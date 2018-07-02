@@ -131,6 +131,14 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *csi.ControllerPublishVolumeRequest) (*csi.ControllerPublishVolumeResponse, error) {
 	glog.Infof("Run ControllerPublishVolume")
 	// 0. Preflight
+	// check volume id arguments
+	if len(req.GetVolumeId()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "Volume ID missing in request")
+	}
+	// check nodeId arguments
+	if len(req.GetNodeId()) == 0{
+		return nil, status.Error(codes.InvalidArgument, "Node ID missing in request")
+	}
 	// create volume manager object
 	vm, err := NewVolumeManager()
 	if err != nil {
@@ -142,27 +150,18 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	// check volume id arguments
-	if len(req.GetVolumeId()) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "Volume ID missing in request")
-	}
-	volumeId := req.GetVolumeId()
 	// if volume id not exist
+	volumeId := req.GetVolumeId()
 	exVol, err :=vm.FindVolume(volumeId)
 	if err == nil && exVol == nil{
 		return nil, status.Error(codes.NotFound, fmt.Sprintf("Volume %s does not exist", volumeId))
 	}
 
-	// check nodeId arguments
-	if len(req.GetNodeId()) == 0{
-		return nil, status.Error(codes.InvalidArgument, "Node ID missing in request")
-	}
-	nodeId := req.GetNodeId()
 	// if instance id not exist
+	nodeId := req.GetNodeId()
 	if exIns, err := im.FindInstance(nodeId) ; err == nil && exIns == nil{
 		return nil, status.Error(codes.NotFound, fmt.Sprintf("Instance %s does not exist", nodeId))
 	}
-
 	// Volume published to another node
 	if len(*exVol.Instance.InstanceID) != 0 && *exVol.Instance.InstanceID != nodeId{
 		return nil, status.Error(codes.FailedPrecondition, "Volume published to another node")
