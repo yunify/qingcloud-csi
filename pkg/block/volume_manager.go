@@ -153,6 +153,10 @@ func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc qin
 	if err != nil {
 		return "", err
 	}
+	// wait job
+	if err := vm.waitJob(*output.JobID); err != nil{
+		return "", err
+	}
 	// check output
 	if *output.RetCode != 0 {
 		glog.Warningf("call CreateVolumes return %d, name %s",
@@ -161,7 +165,6 @@ func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc qin
 		volumeId = *output.Volumes[0]
 		glog.Infof("call CreateVolume name %s id %s succeed", volumeName, volumeId)
 	}
-
 	return *output.Volumes[0], nil
 }
 
@@ -175,6 +178,10 @@ func (vm *volumeManager) DeleteVolume(id string) error {
 		id, *vm.volumeService.Properties.Zone)
 	output, err := vm.volumeService.DeleteVolumes(input)
 	if err != nil {
+		return err
+	}
+	// wait job
+	if err := vm.waitJob(*output.JobID); err != nil{
 		return err
 	}
 	// check output
@@ -236,6 +243,10 @@ func (vm *volumeManager) AttachVolume(volumeId string, instanceId string) error{
 		if *output.RetCode != 0 {
 			return fmt.Errorf("call AttachVolume return %d, volume id %s", *output.RetCode, volumeId)
 		}
+		// wait job
+		if err := vm.waitJob(*output.JobID); err != nil{
+			return  err
+		}
 		return nil
 	}else{
 		if *vol.Instance.InstanceID == instanceId{
@@ -274,6 +285,10 @@ func (vm *volumeManager) DetachVolume(volumeId string, instanceId string) error 
 			// check output
 			if *output.RetCode != 0 {
 				return fmt.Errorf("call DetachVolume return %d, volume id %s", *output.RetCode, volumeId)
+			}
+			// wait job
+			if err := vm.waitJob(*output.JobID); err != nil{
+				return  err
 			}
 			return nil
 		}else{

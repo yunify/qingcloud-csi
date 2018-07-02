@@ -105,12 +105,21 @@ func TestCreateVolume(t *testing.T) {
 
 func TestDeleteVolume(t *testing.T) {
 	vp := getvp()
-	volumeID := "vol-sx5ugkl2"
-	err := vp.DeleteVolume(volumeID)
-	if err != nil {
-		t.Error(err)
-	} else {
-		t.Logf("testcase delete %s success", volumeID)
+	// testcase
+	testcase := []struct {
+		id           string
+	}{
+		{"vol-bq8djujd"},
+		{"vol-olbvqsex"},
+		{"vol-cawpw9lu"},
+	}
+	for _, v:= range testcase{
+		err := vp.DeleteVolume(v.id)
+		if err != nil{
+			t.Error(err)
+		}else{
+			t.Logf("testcase delete %s success", v.id)
+		}
 	}
 }
 
