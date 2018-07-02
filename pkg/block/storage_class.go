@@ -3,7 +3,6 @@ package block
 import (
 	"fmt"
 	"strconv"
-	"github.com/golang/glog"
 )
 
 type qingStorageClass struct {
@@ -22,18 +21,14 @@ func NewDefaultQingStorageClass() *qingStorageClass {
 }
 
 func NewQingStorageClassFromMap(opt map[string]string) (*qingStorageClass, error) {
-	var ok bool
 	sc := NewDefaultQingStorageClass()
 	// volume type
-	sVolType, ok := opt["type"]
-	if !ok {
-		glog.Warning("Missing required parameter type")
-	}
-	iVolType, err := strconv.Atoi(sVolType)
-	if err != nil {
-		return nil, err
-	} else {
-		sc.VolumeType = iVolType
+	if sVolType, ok := opt["type"]; ok{
+		if iVolType, err := strconv.Atoi(sVolType); err != nil {
+			return nil, err
+		} else {
+			sc.VolumeType = iVolType
+		}
 	}
 
 	// Get volume maxsize +optional
