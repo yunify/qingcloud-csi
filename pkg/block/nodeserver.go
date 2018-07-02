@@ -29,6 +29,14 @@ func (ns *nodeServer) NodePublishVolume(
 	stagePath := req.GetStagingTargetPath()
 
 	// 1. Mount
+	// Make dir if dir not presents
+	_, err := os.Stat(targetPath)
+	if os.IsNotExist(err) {
+		if err = os.MkdirAll(targetPath, 0750); err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+	}
+
 	// check targetPath is mounted
 	notMnt, err := mount.New("").IsNotMountPoint(targetPath)
 	if err != nil {
@@ -66,6 +74,9 @@ func (ns *nodeServer) NodeUnpublishVolume(
 	// check arguments
 	if len(req.GetTargetPath()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Target path missing in request")
+	}
+	if len(req.GetVolumeId()) == 0{
+		return nil, status.Error(codes.InvalidArgument, "Volume id missing in request")
 	}
 	// set parameter
 	volumeId := req.GetVolumeId()
