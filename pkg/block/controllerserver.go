@@ -138,7 +138,7 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 
 	// check volume id arguments
 	if len(req.GetVolumeId()) == 0 {
-		return nil, status.Error(codes.NotFound, "Volume ID missing in request")
+		return nil, status.Error(codes.InvalidArgument, "Volume ID missing in request")
 	}
 	volumeId := req.GetVolumeId()
 	// if volume id not exist
@@ -147,11 +147,9 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 		return nil, status.Error(codes.NotFound, fmt.Sprintf("Volume %s does not exist", volumeId))
 	}
 
-
-
 	// check nodeId arguments
 	if len(req.GetNodeId()) == 0{
-		return nil, status.Error(codes.NotFound, "Node ID missing in request")
+		return nil, status.Error(codes.InvalidArgument, "Node ID missing in request")
 	}
 	nodeId := req.GetNodeId()
 	// if instance id not exist
