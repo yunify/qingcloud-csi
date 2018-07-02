@@ -41,7 +41,7 @@ func TestFindInstance(t *testing.T) {
 	im := getim()
 	// test findVolume
 	for _, v := range testcase {
-		flag, err := im.findInstance(v.id)
+		flag, err := im.FindInstance(v.id)
 		if err != nil {
 			t.Error("find instance error: ", err.Error())
 		}

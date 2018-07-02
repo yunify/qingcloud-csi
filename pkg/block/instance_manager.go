@@ -70,7 +70,7 @@ func newInstanceManager() (*instanceManager, error) {
 // Return: 	nil,	nil: 	not found instance
 //			instance, nil: 	found instance
 //			nil, 	error:	internal error
-func (iv *instanceManager) findInstance(id string) (instance *qcservice.Instance, err error) {
+func (iv *instanceManager) FindInstance(id string) (instance *qcservice.Instance, err error) {
 	// set describe instance input
 	input := qcservice.DescribeInstancesInput{}
 	input.Instances = append(input.Instances, &id)

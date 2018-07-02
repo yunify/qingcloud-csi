@@ -21,32 +21,20 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		glog.V(3).Infof("Invalid create volume req: %v", req)
 		return nil, err
 	}
+
 	// Check sanity of request Name, Volume Capabilities
 	if len(req.Name) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Volume name missing in request")
 	}
-	if req.VolumeCapabilities == nil {
-		return nil, status.Error(codes.InvalidArgument, "Volume capabilities missing in request")
-	}
 	volumeName := req.GetName()
-	req.GetVolumeCapabilities()
-	// create StorageClass object
-	sc, err := NewQingStorageClassFromMap(req.GetParameters())
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
 	// create VolumeManager object
 	vm, err := NewVolumeManager()
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-
-	// Need to check for already existing volume name, and if found
-	// check for the requested capacity and already allocated capacity
-	if exVol, err := vm.FindVolumeByName(volumeName); err == nil && exVol != nil {
-		// Since err is nil, it means the volume with the same name already exists
-		// need to check if the size of exisiting volume is the same as in new
-		// request
+	// should not fail when requesting to create a volume with already exisiting name and same capacity
+	// should fail when requesting to create a volume with already exisiting name and different capacity.
+	if exVol, err:= vm.FindVolumeByName(volumeName); err == nil && exVol != nil{
 		glog.Warningf("Volume name %s with requesting capacity %d already exist with volume Id %s capacity %d",
 			volumeName, req.GetCapacityRange().GetRequiredBytes(), exVol.VolumeID, int64(*exVol.Size) * gib)
 		if int64(*exVol.Size)*gib == req.GetCapacityRange().GetRequiredBytes() {
@@ -61,16 +49,27 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		}
 		return nil, status.Error(codes.AlreadyExists,
 			fmt.Sprintf("Volume with the same name: %s but with different size already exist", volumeName))
-	} else if err != nil {
+	}else if err != nil {
 		return nil, status.Error(codes.Internal,
 			fmt.Sprintf("Find volume by name error %s, %s", volumeName, err.Error()))
 	}
+
+	// Check create volume arguments
+	if req.VolumeCapabilities == nil {
+		return nil, status.Error(codes.InvalidArgument, "Volume capabilities missing in request")
+	}
 	// Get volume size
-	volSizeBytes := int64(gib)
-	if req.GetVolumeCapabilities() != nil {
+	volSizeBytes := int64(0)
+	if req.GetCapacityRange() != nil {
 		volSizeBytes = int64(req.GetCapacityRange().GetRequiredBytes())
 	}
 	volSizeGB := int(volSizeBytes / gib)
+
+	// create StorageClass object
+	sc, err := NewQingStorageClassFromMap(req.GetParameters())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 
 	// Create volume
 	volumeId, err := vm.CreateVolume(volumeName, volSizeGB, *sc)
@@ -126,25 +125,36 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *csi.ControllerPublishVolumeRequest) (*csi.ControllerPublishVolumeResponse, error) {
 	glog.Infof("Run ControllerPublishVolume")
 	// 0. Preflight
+	// create volume manager object
+	vm, err := NewVolumeManager()
+	// create instance manager object
+	im, err:= newInstanceManager()
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
 	// check arguments
 	if len(req.GetVolumeId()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Volume ID missing in request")
 	}
+	volumeId := req.GetVolumeId()
+	// if volume id not exist
+	if exVol, err :=vm.FindVolume(volumeId) ; err == nil && exVol == nil{
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("Volume %s does not exist", volumeId))
+	}
+	// check nodeId
 	if len(req.GetNodeId()) == 0{
 		return nil, status.Error(codes.InvalidArgument, "Node ID missing in request")
 	}
+	nodeId := req.GetNodeId()
+	// if instance id not exist
+	if exIns, err := im.FindInstance(nodeId) ; err == nil && exIns == nil{
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("Instance %s does not exist", nodeId))
+	}
+
 	if req.GetVolumeCapability() == nil{
 		return nil, status.Error(codes.InvalidArgument, "Volume capability missing in request")
 	}
-	volumeId := req.GetVolumeId()
-	nodeId := req.GetNodeId()
-
 	// 1. Attach
-	// create volume manager object
-	vm, err := NewVolumeManager()
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
 	// attach volume
 	glog.Infof("Attaching volume %s to instance %s in zone %s...", volumeId, nodeId, vm.volumeService.Config.Zone)
 	err = vm.AttachVolume(volumeId, nodeId)
