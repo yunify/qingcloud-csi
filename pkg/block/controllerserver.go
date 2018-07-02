@@ -32,12 +32,19 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+	//
+	requireByte := req.GetCapacityRange().GetRequiredBytes()
+	limitByte := req.GetCapacityRange().GetLimitBytes()
+	if limitByte == 0{
+		limitByte = Int64_Max
+	}
+
 	// should not fail when requesting to create a volume with already exisiting name and same capacity
 	// should fail when requesting to create a volume with already exisiting name and different capacity.
 	if exVol, err:= vm.FindVolumeByName(volumeName); err == nil && exVol != nil{
-		glog.Warningf("Volume name %s with requesting capacity %d already exist with volume Id %s capacity %d",
-			volumeName, req.GetCapacityRange().GetRequiredBytes(), exVol.VolumeID, int64(*exVol.Size) * gib)
-		if int64(*exVol.Size)*gib == req.GetCapacityRange().GetRequiredBytes() {
+		glog.Warningf("Volume name %s with capacity [%d,%d] already exist with volume Id %s capacity %d",
+			volumeName, requireByte, limitByte, exVol.VolumeID, int64(*exVol.Size) * gib)
+		if int64(*exVol.Size)*gib >= requireByte && int64(*exVol.Size)*gib <= limitByte{
 			// exisiting volume is compatible with new request and should be reused.
 			return &csi.CreateVolumeResponse{
 				Volume: &csi.Volume{
@@ -59,11 +66,10 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		return nil, status.Error(codes.InvalidArgument, "Volume capabilities missing in request")
 	}
 	// Get volume size
-	volSizeBytes := int64(0)
-	if req.GetCapacityRange() != nil {
-		volSizeBytes = int64(req.GetCapacityRange().GetRequiredBytes())
+	volSizeGB := requireByte / gib
+	if volSizeGB * gib < requireByte{
+		volSizeGB += 1
 	}
-	volSizeGB := int(volSizeBytes / gib)
 
 	// create StorageClass object
 	sc, err := NewQingStorageClassFromMap(req.GetParameters())
@@ -72,7 +78,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	}
 
 	// Create volume
-	volumeId, err := vm.CreateVolume(volumeName, volSizeGB, *sc)
+	volumeId, err := vm.CreateVolume(volumeName, int(volSizeGB), *sc)
 	if err != nil {
 		return nil, err
 	}

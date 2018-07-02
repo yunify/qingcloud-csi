@@ -11,6 +11,7 @@ import (
 const (
 	InstanceFilePath = "/etc/qingcloud/instance-id"
 	ConfigFilePath = "/root/config.yaml"
+	Int64_Max = int64(^int64(0)>>1)
 )
 
 var instanceIdFromFile string
