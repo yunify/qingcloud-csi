@@ -41,7 +41,7 @@ func NewInstanceManagerWithConfig(config *qcconfig.Config) ( *instanceManager, e
 	return &im, nil
 }
 
-func newInstanceManager() (*instanceManager, error) {
+func NewInstanceManager() (*instanceManager, error) {
 	// create config
 	config, err := ReadConfigFromFile(ConfigFilePath)
 	if err != nil {
