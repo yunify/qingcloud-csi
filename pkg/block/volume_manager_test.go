@@ -109,9 +109,9 @@ func TestDeleteVolume(t *testing.T) {
 	testcase := []struct {
 		id           string
 	}{
-		{"vol-bq8djujd"},
-		{"vol-olbvqsex"},
-		{"vol-cawpw9lu"},
+		{"vol-oaihhpgo"},
+		{"vol-wmxjlndr"},
+		{"vol-30ltz79j"},
 	}
 	for _, v:= range testcase{
 		err := vp.DeleteVolume(v.id)

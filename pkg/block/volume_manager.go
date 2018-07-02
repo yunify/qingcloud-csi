@@ -92,7 +92,11 @@ func (vm *volumeManager) FindVolume(id string) (volume *qcservice.Volume, err er
 		return nil, nil
 	// Found one volume
 	case 1:
-		return output.VolumeSet[0], nil
+		if *output.VolumeSet[0].Status== BlockVolume_Status_CEASED || *output.VolumeSet[0].Status== BlockVolume_Status_DELETED{
+			return nil, nil
+		}else{
+			return output.VolumeSet[0], nil
+		}
 	// Found duplicate volumes
 	default:
 		return nil,
