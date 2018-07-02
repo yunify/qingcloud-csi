@@ -5,6 +5,7 @@ import (
 	"github.com/golang/glog"
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
 	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
+	qcclient "github.com/yunify/qingcloud-sdk-go/client"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -278,5 +279,15 @@ func (vm *volumeManager) DetachVolume(volumeId string, instanceId string) error 
 		}else{
 			return fmt.Errorf("Volume %s has been attached to another instance %s", volumeId, *vol.Instance.InstanceID)
 		}
+	}
+}
+
+
+func (vm *volumeManager) waitJob(jobId string) error{
+	err := qcclient.WaitJob(vm.jobService, jobId, OperationWaitTimeout, WaitInterval)
+	if err != nil{
+		return err
+	}else{
+		return nil
 	}
 }

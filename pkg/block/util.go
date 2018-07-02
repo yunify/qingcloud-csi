@@ -2,16 +2,19 @@ package block
 
 import (
 	"github.com/golang/glog"
+	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
 	"io/ioutil"
 	"os"
 	"strings"
-	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
+	"time"
 )
 
 const (
-	InstanceFilePath = "/etc/qingcloud/instance-id"
-	ConfigFilePath = "/root/config.yaml"
-	Int64_Max = int64(^int64(0)>>1)
+	InstanceFilePath     = "/etc/qingcloud/instance-id"
+	ConfigFilePath       = "/root/config.yaml"
+	Int64_Max            = int64(^int64(0) >> 1)
+	WaitInterval         = 10 * time.Second
+	OperationWaitTimeout = 180 * time.Second
 )
 
 var instanceIdFromFile string
@@ -49,7 +52,7 @@ func ReadConfigFromFile(filePath string) (*qcconfig.Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err = config.LoadConfigFromFilepath(filePath); err != nil{
+	if err = config.LoadConfigFromFilepath(filePath); err != nil {
 		return nil, err
 	}
 	return config, nil
