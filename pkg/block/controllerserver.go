@@ -47,7 +47,9 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		// Since err is nil, it means the volume with the same name already exists
 		// need to check if the size of exisiting volume is the same as in new
 		// request
-		if int64(*exVol.Size)*gib >= req.GetCapacityRange().GetRequiredBytes() {
+		glog.Warningf("Volume name %s with requesting capacity %d already exist with volume Id %s capacity %d",
+			volumeName, req.GetCapacityRange().GetRequiredBytes(), exVol.VolumeID, int64(*exVol.Size) * gib)
+		if int64(*exVol.Size)*gib == req.GetCapacityRange().GetRequiredBytes() {
 			// exisiting volume is compatible with new request and should be reused.
 			return &csi.CreateVolumeResponse{
 				Volume: &csi.Volume{
@@ -182,4 +184,34 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 	}
 
 	return &csi.ControllerUnpublishVolumeResponse{}, nil
+}
+
+func (cs *controllerServer) ValidateVolumeCapabilities(ctx context.Context, req *csi.ValidateVolumeCapabilitiesRequest) (*csi.ValidateVolumeCapabilitiesResponse, error) {
+	glog.V(5).Infof("Using default ValidateVolumeCapabilities")
+	// check input arguments
+	if len(req.GetVolumeId()) == 0{
+		return nil, status.Error(codes.InvalidArgument, "No volume id is provided")
+	}
+	if len(req.GetVolumeCapabilities()) == 0{
+		return nil, status.Error(codes.InvalidArgument, "No volume capabilities are provided")
+	}
+	for _, c := range req.GetVolumeCapabilities() {
+		found := false
+		for _, c1 := range cs.Driver.GetVolumeCapabilityAccessModes(){
+			if c1.GetMode() == c.GetAccessMode().GetMode() {
+				found = true
+			}
+		}
+		if !found {
+			return &csi.ValidateVolumeCapabilitiesResponse{
+				Supported: false,
+				Message:   "Driver doesnot support mode:" + c.GetAccessMode().GetMode().String(),
+			}, status.Error(codes.InvalidArgument, "Driver doesnot support mode:"+c.GetAccessMode().GetMode().String())
+		}
+		// TODO: Ignoring mount & block tyeps for now.
+	}
+
+	return &csi.ValidateVolumeCapabilitiesResponse{
+		Supported: true,
+	}, nil
 }
