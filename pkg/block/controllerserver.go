@@ -139,6 +139,10 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	if len(req.GetNodeId()) == 0{
 		return nil, status.Error(codes.InvalidArgument, "Node ID missing in request")
 	}
+	// check no volume capability
+	if req.GetVolumeCapability() == nil{
+		return nil, status.Error(codes.InvalidArgument, "No volume capability is provided ")
+	}
 	// create volume manager object
 	vm, err := NewVolumeManager()
 	if err != nil {
