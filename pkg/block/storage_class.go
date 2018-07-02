@@ -3,6 +3,7 @@ package block
 import (
 	"fmt"
 	"strconv"
+	"github.com/golang/glog"
 )
 
 type qingStorageClass struct {
@@ -26,7 +27,7 @@ func NewQingStorageClassFromMap(opt map[string]string) (*qingStorageClass, error
 	// volume type
 	sVolType, ok := opt["type"]
 	if !ok {
-		return nil, fmt.Errorf("Missing required parameter type")
+		glog.Warning("Missing required parameter type")
 	}
 	iVolType, err := strconv.Atoi(sVolType)
 	if err != nil {
@@ -34,22 +35,25 @@ func NewQingStorageClassFromMap(opt map[string]string) (*qingStorageClass, error
 	} else {
 		sc.VolumeType = iVolType
 	}
+
 	// Get volume maxsize +optional
-	sMaxSize, ok := opt["maxSize"]
-	iMaxSize, err := strconv.Atoi(sMaxSize)
-	if err != nil {
-		return nil, err
-	} else {
-		sc.VolumeMaxSize = iMaxSize
+	if sMaxSize, ok := opt["maxSize"]; ok {
+		if iMaxSize, err := strconv.Atoi(sMaxSize); err != nil{
+			return nil, err
+		} else {
+			sc.VolumeMaxSize = iMaxSize
+		}
 	}
+
 	// Get volume minsize +optional
-	sMinSize, ok := opt["minSize"]
-	iMinSize, err := strconv.Atoi(sMinSize)
-	if err != nil {
-		return nil, err
-	} else {
-		sc.VolumeMinSize = iMinSize
+	if sMinSize, ok := opt["minSize"]; ok {
+		if iMinSize, err := strconv.Atoi(sMinSize); err != nil{
+			return nil, err
+		} else {
+			sc.VolumeMinSize = iMinSize
+		}
 	}
+
 	// Ensure volume minSize less than volume maxSize
 	if sc.VolumeMinSize >= sc.VolumeMaxSize {
 		return nil, fmt.Errorf("Volume minSize must less than volume maxSize")
