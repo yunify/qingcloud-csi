@@ -75,6 +75,9 @@ func (ns *nodeServer) NodeUnpublishVolume(
 	if len(req.GetTargetPath()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Target path missing in request")
 	}
+	if len(req.GetVolumeId()) == 0{
+		return nil, status.Error(codes.InvalidArgument, "Volume id missing in request")
+	}
 	// set parameter
 	volumeId := req.GetVolumeId()
 	targetPath := req.GetTargetPath()

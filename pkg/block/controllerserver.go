@@ -23,13 +23,13 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	}
 	// Check sanity of request Name, Volume Capabilities
 	if len(req.Name) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "Volume Name cannot be empty")
+		return nil, status.Error(codes.InvalidArgument, "Volume name missing in request")
 	}
 	if req.VolumeCapabilities == nil {
-		return nil, status.Error(codes.InvalidArgument, "Volume Capabilities cannot be empty")
+		return nil, status.Error(codes.InvalidArgument, "Volume capabilities missing in request")
 	}
 	volumeName := req.GetName()
-
+	req.GetVolumeCapabilities()
 	// create StorageClass object
 	sc, err := NewQingStorageClassFromMap(req.GetParameters())
 	if err != nil {
@@ -91,6 +91,10 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 		glog.Warningf("invalid delete volume req: %v", req)
 		return nil, err
 	}
+	// Check sanity of request Name, Volume Capabilities
+	if len(req.GetVolumeId()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "Volume id missing in request")
+	}
 	// For now the image get unconditionally deleted, but here retention policy can be checked
 	volumeId := req.GetVolumeId()
 
@@ -100,6 +104,14 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 	vm, err := NewVolumeManager()
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
+	}
+	// For sanity: should succeed when an invalid volume id is used
+	volInfo, err := vm.FindVolume(volumeId)
+	if err != nil{
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if volInfo == nil{
+		return &csi.DeleteVolumeResponse{}, nil
 	}
 	// Delete block volume
 	if err = vm.DeleteVolume(volumeId); err != nil {
@@ -118,6 +130,9 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	}
 	if len(req.GetNodeId()) == 0{
 		return nil, status.Error(codes.InvalidArgument, "Node ID missing in request")
+	}
+	if req.GetVolumeCapability() == nil{
+		return nil, status.Error(codes.InvalidArgument, "Volume capability missing in request")
 	}
 	volumeId := req.GetVolumeId()
 	nodeId := req.GetNodeId()
