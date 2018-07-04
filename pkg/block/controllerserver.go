@@ -221,30 +221,32 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 // volume capability is required
 func (cs *controllerServer) ValidateVolumeCapabilities(ctx context.Context, req *csi.ValidateVolumeCapabilitiesRequest) (*csi.ValidateVolumeCapabilitiesResponse, error) {
 	glog.V(5).Infof("Using default ValidateVolumeCapabilities")
-	// check input arguments
-	if len(req.GetVolumeId()) == 0{
+	// require volume id parameter
+	if len(req.GetVolumeId()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "No volume id is provided")
 	}
-	if len(req.GetVolumeCapabilities()) == 0{
-		return nil, status.Error(codes.InvalidArgument, "No volume capabilities are provided")
-	}
-	volumeId:= req.GetVolumeId()
+	volumeId := req.GetVolumeId()
 	// check volume exist
 	vm, err := NewVolumeManager()
-	if err != nil{
+	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	vol, err :=vm.FindVolume(volumeId)
-	if err != nil{
+	vol, err := vm.FindVolume(volumeId)
+	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	if vol == nil{
+	if vol == nil {
 		return nil, status.Errorf(codes.NotFound, "Volume %s not fount", volumeId)
+	}
+
+	// require capability parameter
+	if len(req.GetVolumeCapabilities()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "No volume capabilities are provided")
 	}
 	// check capability
 	for _, c := range req.GetVolumeCapabilities() {
 		found := false
-		for _, c1 := range cs.Driver.GetVolumeCapabilityAccessModes(){
+		for _, c1 := range cs.Driver.GetVolumeCapabilityAccessModes() {
 			if c1.GetMode() == c.GetAccessMode().GetMode() {
 				found = true
 			}
