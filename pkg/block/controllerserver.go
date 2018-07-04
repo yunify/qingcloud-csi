@@ -55,7 +55,11 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 
 	// should not fail when requesting to create a volume with already exisiting name and same capacity
 	// should fail when requesting to create a volume with already exisiting name and different capacity.
-	if exVol, err:= vm.FindVolumeByName(volumeName); err == nil && exVol != nil{
+	exVol, err := vm.FindVolumeByName(volumeName)
+	if err != nil {
+		return nil, status.Error(codes.Internal, fmt.Sprintf("Find volume by name error %s, %s", volumeName, err.Error()))
+	}
+	if exVol != nil{
 		glog.Warningf("Volume name %s with capacity [%d,%d] already exist with volume Id %s capacity %d",
 			volumeName, requireByte, limitByte, *exVol.VolumeID, int64(*exVol.Size) * gib)
 		if *exVol.Size >= requireGb && int64(*exVol.Size)*gib <= limitByte{
@@ -70,10 +74,8 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		}
 		return nil, status.Error(codes.AlreadyExists,
 			fmt.Sprintf("Volume with the same name: %s but with different size already exist", volumeName))
-	}else if err != nil {
-		return nil, status.Error(codes.Internal,
-			fmt.Sprintf("Find volume by name error %s, %s", volumeName, err.Error()))
 	}
+
 	// Create volume
 	glog.Infof("Creating volume %s with %d GB in zone %s...", volumeName, requireGb, vm.volumeService.Config.Zone)
 	volumeId, err := vm.CreateVolume(volumeName, requireGb, *sc)
@@ -225,8 +227,6 @@ func (cs *controllerServer) ValidateVolumeCapabilities(ctx context.Context, req 
 	if len(req.GetVolumeId()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "No volume id is provided")
 	}
-	volumeId := req.GetVolumeId()
-
 	// require capability parameter
 	if len(req.GetVolumeCapabilities()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "No volume capabilities are provided")
@@ -236,12 +236,13 @@ func (cs *controllerServer) ValidateVolumeCapabilities(ctx context.Context, req 
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+	volumeId := req.GetVolumeId()
 	vol, err := vm.FindVolume(volumeId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if vol == nil {
-		return nil, status.Errorf(codes.NotFound, "Volume %s not fount", volumeId)
+		return nil, status.Errorf(codes.NotFound, "Volume %s does not exist", volumeId)
 	}
 	// check capability
 	for _, c := range req.GetVolumeCapabilities() {
@@ -254,7 +255,7 @@ func (cs *controllerServer) ValidateVolumeCapabilities(ctx context.Context, req 
 		if !found {
 			return &csi.ValidateVolumeCapabilitiesResponse{
 				Supported: false,
-				Message:   "Driver doesnot support mode:" + c.GetAccessMode().GetMode().String(),
+				Message:   "Driver does not support mode:" + c.GetAccessMode().GetMode().String(),
 			}, nil
 		}
 		// TODO: Ignoring mount & block tyeps for now.

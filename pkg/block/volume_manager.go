@@ -127,7 +127,7 @@ func (vm *volumeManager) FindVolumeByName(name string) (volume *qcservice.Volume
 	case 0:
 		return nil, nil
 	case 1:
-		if *output.VolumeSet[0].Status== BlockVolume_Status_CEASED || *output.VolumeSet[0].Status== BlockVolume_Status_DELETED{
+		if *output.VolumeSet[0].VolumeName == name && (*output.VolumeSet[0].Status== BlockVolume_Status_CEASED || *output.VolumeSet[0].Status== BlockVolume_Status_DELETED){
 			return nil, nil
 		}else{
 			return output.VolumeSet[0], nil
