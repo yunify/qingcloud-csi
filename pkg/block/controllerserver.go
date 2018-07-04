@@ -226,6 +226,11 @@ func (cs *controllerServer) ValidateVolumeCapabilities(ctx context.Context, req 
 		return nil, status.Error(codes.InvalidArgument, "No volume id is provided")
 	}
 	volumeId := req.GetVolumeId()
+
+	// require capability parameter
+	if len(req.GetVolumeCapabilities()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "No volume capabilities are provided")
+	}
 	// check volume exist
 	vm, err := NewVolumeManager()
 	if err != nil {
@@ -237,11 +242,6 @@ func (cs *controllerServer) ValidateVolumeCapabilities(ctx context.Context, req 
 	}
 	if vol == nil {
 		return nil, status.Errorf(codes.NotFound, "Volume %s not fount", volumeId)
-	}
-
-	// require capability parameter
-	if len(req.GetVolumeCapabilities()) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "No volume capabilities are provided")
 	}
 	// check capability
 	for _, c := range req.GetVolumeCapabilities() {
@@ -255,7 +255,7 @@ func (cs *controllerServer) ValidateVolumeCapabilities(ctx context.Context, req 
 			return &csi.ValidateVolumeCapabilitiesResponse{
 				Supported: false,
 				Message:   "Driver doesnot support mode:" + c.GetAccessMode().GetMode().String(),
-			}, status.Error(codes.InvalidArgument, "Driver doesnot support mode:"+c.GetAccessMode().GetMode().String())
+			}, nil
 		}
 		// TODO: Ignoring mount & block tyeps for now.
 	}
