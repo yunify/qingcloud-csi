@@ -62,6 +62,7 @@ func TestFindVolumeByName(t *testing.T) {
 	}{
 		{"hp-test", true},
 		{"hp-test-false", false},
+		{"sanity", false},
 	}
 
 	vp := getvp()

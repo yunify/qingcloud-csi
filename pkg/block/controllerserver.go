@@ -74,8 +74,8 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		return nil, status.Error(codes.Internal,
 			fmt.Sprintf("Find volume by name error %s, %s", volumeName, err.Error()))
 	}
-
 	// Create volume
+	glog.Infof("Creating volume %s with %d GB in zone %s...", volumeName, requireGb, vm.volumeService.Config.Zone)
 	volumeId, err := vm.CreateVolume(volumeName, requireGb, *sc)
 	if err != nil {
 		return nil, err
@@ -119,6 +119,7 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 		return &csi.DeleteVolumeResponse{}, nil
 	}
 	// Delete block volume
+	glog.Infof("Deleting volume %s in zone %s...", volumeId, vm.volumeService.Config.Zone)
 	if err = vm.DeleteVolume(volumeId); err != nil {
 		glog.Infof("Failed to delete block volume: %s in %s with error: %v", volumeId, vm.volumeService.Config.Zone, err)
 		return nil, status.Error(codes.Internal, err.Error())
@@ -205,6 +206,7 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	// do detach
+	glog.Infof("Detaching volume %s to instance %s in zone %s...", volumeId, nodeId, vm.volumeService.Config.Zone)
 	err = vm.DetachVolume(volumeId, nodeId)
 	if err != nil {
 		glog.Errorf("failed to detach block image: %s from instance %s with error: %v",
