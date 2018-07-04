@@ -14,6 +14,9 @@ type controllerServer struct {
 	*csicommon.DefaultControllerServer
 }
 
+// csi.CreateVolumeRequest: name 				+Required
+//							capability			+Required
+
 func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
 	glog.Info("Run CreateVolume")
 	// 0. Prepare
@@ -21,7 +24,12 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		glog.V(3).Infof("Invalid create volume req: %v", req)
 		return nil, err
 	}
-
+	// Required volume capability
+	if req.VolumeCapabilities == nil  {
+		return nil, status.Error(codes.InvalidArgument, "Volume capabilities missing in request")
+	}else if !HasSameAccessMode(cs.Driver.GetVolumeCapabilityAccessModes(), req.GetVolumeCapabilities()){
+		return nil, status.Error(codes.InvalidArgument, "Volume capabilities not match")
+	}
 	// Check sanity of request Name, Volume Capabilities
 	if len(req.Name) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Volume name missing in request")
@@ -32,8 +40,14 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+	// create StorageClass object
+	sc, err := NewQingStorageClassFromMap(req.GetParameters())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 	// get request volume capacity range
 	requireByte := req.GetCapacityRange().GetRequiredBytes()
+	requireGb := sc.formatVolumeSize(ByteCeilToGb(requireByte))
 	limitByte := req.GetCapacityRange().GetLimitBytes()
 	if limitByte == 0{
 		limitByte = Int64_Max
@@ -44,7 +58,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	if exVol, err:= vm.FindVolumeByName(volumeName); err == nil && exVol != nil{
 		glog.Warningf("Volume name %s with capacity [%d,%d] already exist with volume Id %s capacity %d",
 			volumeName, requireByte, limitByte, *exVol.VolumeID, int64(*exVol.Size) * gib)
-		if int64(*exVol.Size)*gib >= requireByte && int64(*exVol.Size)*gib <= limitByte{
+		if *exVol.Size >= requireGb && int64(*exVol.Size)*gib <= limitByte{
 			// exisiting volume is compatible with new request and should be reused.
 			return &csi.CreateVolumeResponse{
 				Volume: &csi.Volume{
@@ -61,24 +75,8 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 			fmt.Sprintf("Find volume by name error %s, %s", volumeName, err.Error()))
 	}
 
-	// Check create volume arguments
-	if req.VolumeCapabilities == nil {
-		return nil, status.Error(codes.InvalidArgument, "Volume capabilities missing in request")
-	}
-	// Get volume size
-	volSizeGB := requireByte / gib
-	if volSizeGB * gib < requireByte{
-		volSizeGB += 1
-	}
-
-	// create StorageClass object
-	sc, err := NewQingStorageClassFromMap(req.GetParameters())
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
 	// Create volume
-	volumeId, err := vm.CreateVolume(volumeName, int(volSizeGB), *sc)
+	volumeId, err := vm.CreateVolume(volumeName, requireGb, *sc)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +84,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	return &csi.CreateVolumeResponse{
 		Volume: &csi.Volume{
 			Id:            volumeId,
-			CapacityBytes: int64(volSizeGB) * gib,
+			CapacityBytes: int64(requireGb) * gib,
 			Attributes:    req.GetParameters(),
 		},
 	}, nil

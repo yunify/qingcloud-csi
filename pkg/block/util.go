@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"github.com/container-storage-interface/spec/lib/go/csi/v0"
 )
 
 const (
@@ -56,4 +57,48 @@ func ReadConfigFromFile(filePath string) (*qcconfig.Config, error) {
 		return nil, err
 	}
 	return config, nil
+}
+
+func HasSameAccessMode(accessMode []*csi.VolumeCapability_AccessMode, cap []*csi.VolumeCapability)bool{
+	for _, c := range cap {
+		found := false
+		for _, c1 := range accessMode{
+			if c1.GetMode() == c.GetAccessMode().GetMode() {
+				found = true
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
+}
+
+func GbToByte(num int) int64{
+	if num <0{
+		return 0
+	}
+	return int64(num)*gib
+}
+
+func ByteCeilToGb(num int64) int{
+	if num <= 0{
+		return 0
+	}
+	res := num/gib
+	if res *gib < num{
+		res +=1
+	}
+	return int(res)
+}
+
+func GbGreatThanByte(gb int, byte int64) int{
+	gb_int64 := GbToByte(gb)
+	if gb_int64 < byte{
+		return -1
+	}else if gb_int64 == byte{
+		return 0
+	}else{
+		return 1
+	}
 }
