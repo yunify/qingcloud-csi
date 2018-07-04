@@ -217,6 +217,8 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 	return &csi.ControllerUnpublishVolumeResponse{}, nil
 }
 
+// volume id is required
+// volume capability is required
 func (cs *controllerServer) ValidateVolumeCapabilities(ctx context.Context, req *csi.ValidateVolumeCapabilitiesRequest) (*csi.ValidateVolumeCapabilitiesResponse, error) {
 	glog.V(5).Infof("Using default ValidateVolumeCapabilities")
 	// check input arguments
@@ -226,6 +228,20 @@ func (cs *controllerServer) ValidateVolumeCapabilities(ctx context.Context, req 
 	if len(req.GetVolumeCapabilities()) == 0{
 		return nil, status.Error(codes.InvalidArgument, "No volume capabilities are provided")
 	}
+	volumeId:= req.GetVolumeId()
+	// check volume exist
+	vm, err := NewVolumeManager()
+	if err != nil{
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	vol, err :=vm.FindVolume(volumeId)
+	if err != nil{
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if vol == nil{
+		return nil, status.Errorf(codes.NotFound, "Volume %s not fount", volumeId)
+	}
+	// check capability
 	for _, c := range req.GetVolumeCapabilities() {
 		found := false
 		for _, c1 := range cs.Driver.GetVolumeCapabilityAccessModes(){
