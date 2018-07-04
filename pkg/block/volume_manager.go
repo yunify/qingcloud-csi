@@ -123,19 +123,16 @@ func (vm *volumeManager) FindVolumeByName(name string) (volume *qcservice.Volume
 		fmt.Errorf("call DescribeVolumes err: volume name %s in %s", name, vm.volumeService.Config.Zone)
 	}
 	// Not found volumes
-	switch *output.TotalCount {
-	case 0:
-		return nil, nil
-	case 1:
-		if *output.VolumeSet[0].VolumeName == name && (*output.VolumeSet[0].Status== BlockVolume_Status_CEASED || *output.VolumeSet[0].Status== BlockVolume_Status_DELETED){
-			return nil, nil
-		}else{
-			return output.VolumeSet[0], nil
+	for _, v:= range output.VolumeSet{
+		if *v.VolumeName!=name{
+			continue
 		}
-	default:
-		return nil,
-		fmt.Errorf("call DescribeVolumes err: find duplicate volumes, volume name %s in %s", name, vm.volumeService.Config.Zone)
+		if *v.Status == BlockVolume_Status_CEASED ||*v.Status==BlockVolume_Status_DELETED{
+			continue
+		}
+		return v,nil
 	}
+	return nil,nil
 }
 
 // create volume
