@@ -32,7 +32,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	//
+	// get request volume capacity range
 	requireByte := req.GetCapacityRange().GetRequiredBytes()
 	limitByte := req.GetCapacityRange().GetLimitBytes()
 	if limitByte == 0{
@@ -43,7 +43,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	// should fail when requesting to create a volume with already exisiting name and different capacity.
 	if exVol, err:= vm.FindVolumeByName(volumeName); err == nil && exVol != nil{
 		glog.Warningf("Volume name %s with capacity [%d,%d] already exist with volume Id %s capacity %d",
-			volumeName, requireByte, limitByte, exVol.VolumeID, int64(*exVol.Size) * gib)
+			volumeName, requireByte, limitByte, *exVol.VolumeID, int64(*exVol.Size) * gib)
 		if int64(*exVol.Size)*gib >= requireByte && int64(*exVol.Size)*gib <= limitByte{
 			// exisiting volume is compatible with new request and should be reused.
 			return &csi.CreateVolumeResponse{

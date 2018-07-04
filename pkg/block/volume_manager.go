@@ -127,7 +127,11 @@ func (vm *volumeManager) FindVolumeByName(name string) (volume *qcservice.Volume
 	case 0:
 		return nil, nil
 	case 1:
-		return output.VolumeSet[0], nil
+		if *output.VolumeSet[0].Status== BlockVolume_Status_CEASED || *output.VolumeSet[0].Status== BlockVolume_Status_DELETED{
+			return nil, nil
+		}else{
+			return output.VolumeSet[0], nil
+		}
 	default:
 		return nil,
 		fmt.Errorf("call DescribeVolumes err: find duplicate volumes, volume name %s in %s", name, vm.volumeService.Config.Zone)
