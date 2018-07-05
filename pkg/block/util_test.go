@@ -1,12 +1,12 @@
 package block
 
 import (
-	"testing"
-	"os"
+	"github.com/container-storage-interface/spec/lib/go/csi/v0"
 	"google.golang.org/grpc/codes"
 	"k8s.io/kubernetes/pkg/util/mount"
+	"os"
 	"syscall"
-	"github.com/container-storage-interface/spec/lib/go/csi/v0"
+	"testing"
 )
 
 var targetPath = "/root/adf"
@@ -18,7 +18,7 @@ func isNotDirErr(err error) bool {
 	return false
 }
 
-func TestBindMount(t *testing.T){
+func TestBindMount(t *testing.T) {
 	// 1. Mount
 	// check targetPath is mounted
 	notMnt, err := mount.New("").IsLikelyNotMountPoint(targetPath)
@@ -41,59 +41,59 @@ func TestBindMount(t *testing.T){
 	}
 }
 
-func TestGbToByte(t *testing.T){
-	testcases :=[]struct{
-		gb int
+func TestGbToByte(t *testing.T) {
+	testcases := []struct {
+		gb   int
 		byte int64
-		res bool
+		res  bool
 	}{
-		{10, 10*gib, true},
+		{10, 10 * gib, true},
 		{-1, 0, true},
-		{1, gib,true},
+		{1, gib, true},
 	}
 
-	for _, v:=range testcases{
+	for _, v := range testcases {
 		res := GbToByte(v.gb)
-		if res == v.byte{
+		if res == v.byte {
 			t.Logf("pass Gib %d, Byte=%d", v.gb, res)
-		}else{
+		} else {
 			t.Errorf("faile Gib %d, expect Byte %d, but actually %d", v.gb, v.byte, res)
 		}
 	}
 }
 
-func TestByteCeilToGb(t *testing.T){
-	testcases :=[]struct{
-		gb int
+func TestByteCeilToGb(t *testing.T) {
+	testcases := []struct {
+		gb   int
 		byte int64
-		res bool
+		res  bool
 	}{
-		{10, 10*gib- 2, true},
+		{10, 10*gib - 2, true},
 		{0, -1, true},
-		{1, gib,true},
+		{1, gib, true},
 	}
 
-	for _, v:=range testcases{
+	for _, v := range testcases {
 		res := ByteCeilToGb(v.byte)
-		if res == v.gb{
+		if res == v.gb {
 			t.Logf("pass Gib %d, Byte %d", v.gb, res)
-		}else{
+		} else {
 			t.Errorf("faile Byte %d, expect Gb %d, but actually %d", v.byte, v.gb, res)
 		}
 	}
 }
 
-func TestHasSameAccessMode(t *testing.T){
-	testcases := []struct{
+func TestHasSameAccessMode(t *testing.T) {
+	testcases := []struct {
 		access []*csi.VolumeCapability_AccessMode
-		cap []*csi.VolumeCapability
-		res bool
+		cap    []*csi.VolumeCapability
+		res    bool
 	}{
 		{
 			[]*csi.VolumeCapability_AccessMode{&csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}},
 			[]*csi.VolumeCapability{
 				{nil, &csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}}},
-				true,
+			true,
 		},
 		{
 			[]*csi.VolumeCapability_AccessMode{&csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}},
@@ -101,13 +101,12 @@ func TestHasSameAccessMode(t *testing.T){
 				{nil, &csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER}}},
 			false,
 		},
-
 	}
-	for _, v:=range testcases{
-		res := HasSameAccessMode(v.access,v.cap)
-		if res == v.res{
+	for _, v := range testcases {
+		res := HasSameAccessMode(v.access, v.cap)
+		if res == v.res {
 			t.Logf("success")
-		}else{
+		} else {
 			t.Errorf("failed, expect %t, but actually %t", v.res, res)
 		}
 	}

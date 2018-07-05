@@ -28,9 +28,9 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		return nil, err
 	}
 	// Required volume capability
-	if req.VolumeCapabilities == nil  {
+	if req.VolumeCapabilities == nil {
 		return nil, status.Error(codes.InvalidArgument, "Volume capabilities missing in request")
-	}else if !HasSameAccessMode(cs.Driver.GetVolumeCapabilityAccessModes(), req.GetVolumeCapabilities()){
+	} else if !HasSameAccessMode(cs.Driver.GetVolumeCapabilityAccessModes(), req.GetVolumeCapabilities()) {
 		return nil, status.Error(codes.InvalidArgument, "Volume capabilities not match")
 	}
 	// Check sanity of request Name, Volume Capabilities
@@ -52,7 +52,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	requireByte := req.GetCapacityRange().GetRequiredBytes()
 	requireGb := sc.formatVolumeSize(ByteCeilToGb(requireByte))
 	limitByte := req.GetCapacityRange().GetLimitBytes()
-	if limitByte == 0{
+	if limitByte == 0 {
 		limitByte = Int64_Max
 	}
 
@@ -62,10 +62,10 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	if err != nil {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("Find volume by name error %s, %s", volumeName, err.Error()))
 	}
-	if exVol != nil{
+	if exVol != nil {
 		glog.Warningf("Volume name %s with capacity [%d,%d] already exist with volume Id %s capacity %d",
-			volumeName, requireByte, limitByte, *exVol.VolumeID, int64(*exVol.Size) * gib)
-		if *exVol.Size >= requireGb && int64(*exVol.Size)*gib <= limitByte{
+			volumeName, requireByte, limitByte, *exVol.VolumeID, int64(*exVol.Size)*gib)
+		if *exVol.Size >= requireGb && int64(*exVol.Size)*gib <= limitByte {
 			// exisiting volume is compatible with new request and should be reused.
 			return &csi.CreateVolumeResponse{
 				Volume: &csi.Volume{
@@ -118,29 +118,29 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 	}
 	// For sanity: should succeed when an invalid volume id is used
 	volInfo, err := vm.FindVolume(volumeId)
-	if err != nil{
+	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	if volInfo == nil{
+	if volInfo == nil {
 		return &csi.DeleteVolumeResponse{}, nil
 	}
 	// Delete block volume
 	glog.Infof("Deleting volume %s status %s in zone %s...", volumeId, *volInfo.Status, vm.volumeService.Config.Zone)
 	// When delete volume returning with retry message, try to delete volume after several seconds
-	for i:=1;i <= 10;i++{
+	for i := 1; i <= 10; i++ {
 		err = vm.DeleteVolume(volumeId)
 		if err != nil {
 			glog.Infof("Failed to delete block volume: %s in %s with error: %v", volumeId, vm.volumeService.Config.Zone, err)
 			if strings.Contains(err.Error(), RetryString) {
-				time.Sleep(time.Duration(i) *time.Second )
-			}else{
+				time.Sleep(time.Duration(i) * time.Second)
+			} else {
 				return nil, status.Error(codes.Internal, err.Error())
 			}
-		}else{
+		} else {
 			return &csi.DeleteVolumeResponse{}, nil
 		}
 	}
-	return nil, status.Error(codes.Internal, "Exceed retry times: " + err.Error())
+	return nil, status.Error(codes.Internal, "Exceed retry times: "+err.Error())
 }
 
 func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *csi.ControllerPublishVolumeRequest) (*csi.ControllerPublishVolumeResponse, error) {
@@ -152,11 +152,11 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 		return nil, status.Error(codes.InvalidArgument, "Volume ID missing in request")
 	}
 	// check nodeId arguments
-	if len(req.GetNodeId()) == 0{
+	if len(req.GetNodeId()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Node ID missing in request")
 	}
 	// check no volume capability
-	if req.GetVolumeCapability() == nil{
+	if req.GetVolumeCapability() == nil {
 		return nil, status.Error(codes.InvalidArgument, "No volume capability is provided ")
 	}
 	// create volume manager object
@@ -165,30 +165,29 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	// create instance manager object
-	im, err:= NewInstanceManager()
+	im, err := NewInstanceManager()
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	// if volume id not exist
 	volumeId := req.GetVolumeId()
-	exVol, err :=vm.FindVolume(volumeId)
-	if err == nil && exVol == nil{
+	exVol, err := vm.FindVolume(volumeId)
+	if err == nil && exVol == nil {
 		return nil, status.Error(codes.NotFound, fmt.Sprintf("Volume %s does not exist", volumeId))
 	}
 
 	// if instance id not exist
 	nodeId := req.GetNodeId()
-	if exIns, err := im.FindInstance(nodeId) ; err == nil && exIns == nil{
+	if exIns, err := im.FindInstance(nodeId); err == nil && exIns == nil {
 		return nil, status.Error(codes.NotFound, fmt.Sprintf("Instance %s does not exist", nodeId))
 	}
 	// Volume published to another node
-	if len(*exVol.Instance.InstanceID) != 0 && *exVol.Instance.InstanceID != nodeId{
+	if len(*exVol.Instance.InstanceID) != 0 && *exVol.Instance.InstanceID != nodeId {
 		return nil, status.Error(codes.FailedPrecondition, "Volume published to another node")
 	}
 
-
-	if req.GetVolumeCapability() == nil{
+	if req.GetVolumeCapability() == nil {
 		return nil, status.Error(codes.InvalidArgument, "Volume capability missing in request")
 	}
 	// 1. Attach
@@ -211,7 +210,7 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 	if len(req.GetVolumeId()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Volume ID missing in request")
 	}
-	if len(req.GetNodeId()) == 0{
+	if len(req.GetNodeId()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Node ID missing in request")
 	}
 	volumeId := req.GetVolumeId()
@@ -228,7 +227,7 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 	err = vm.DetachVolume(volumeId, nodeId)
 	if err != nil {
 		glog.Errorf("failed to detach block image: %s from instance %s with error: %v",
-			volumeId,nodeId, err)
+			volumeId, nodeId, err)
 		return nil, err
 	}
 

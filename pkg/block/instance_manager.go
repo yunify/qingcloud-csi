@@ -2,8 +2,8 @@ package block
 
 import (
 	"github.com/golang/glog"
-	qcservice "github.com/yunify/qingcloud-sdk-go/service"
 	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
+	qcservice "github.com/yunify/qingcloud-sdk-go/service"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -22,7 +22,7 @@ type instanceManager struct {
 	jobService      *qcservice.JobService
 }
 
-func NewInstanceManagerWithConfig(config *qcconfig.Config) ( *instanceManager, error) {
+func NewInstanceManagerWithConfig(config *qcconfig.Config) (*instanceManager, error) {
 	// initial qingcloud iaas service
 	qs, err := qcservice.Init(config)
 	if err != nil {
@@ -35,7 +35,7 @@ func NewInstanceManagerWithConfig(config *qcconfig.Config) ( *instanceManager, e
 	// initial volume provisioner
 	im := instanceManager{
 		instanceService: is,
-		jobService:    js,
+		jobService:      js,
 	}
 	glog.Infof("Finish initial volume manager")
 	return &im, nil

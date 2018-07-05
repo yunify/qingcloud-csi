@@ -23,7 +23,7 @@ var getvp = func() *volumeManager {
 		return nil
 	}
 	vm, err := NewVolumeManagerWithConfig(qcConfig)
-	if err != nil{
+	if err != nil {
 		return nil
 	}
 
@@ -108,17 +108,17 @@ func TestDeleteVolume(t *testing.T) {
 	vp := getvp()
 	// testcase
 	testcase := []struct {
-		id           string
+		id string
 	}{
 		{"vol-oaihhpgo"},
 		{"vol-wmxjlndr"},
 		{"vol-30ltz79j"},
 	}
-	for _, v:= range testcase{
+	for _, v := range testcase {
 		err := vp.DeleteVolume(v.id)
-		if err != nil{
+		if err != nil {
 			t.Error(err)
-		}else{
+		} else {
 			t.Logf("testcase delete %s success", v.id)
 		}
 	}
@@ -128,13 +128,13 @@ func TestAttachVolume(t *testing.T) {
 	vp := getvp()
 	// testcase
 	testcases := []struct {
-		volumeId 	string
-		instanceId	string
-		result 		bool
+		volumeId   string
+		instanceId string
+		result     bool
 	}{
 		{"vol-fhlkhxpr", "i-msu2th7i", true},
 	}
-	for _, v:=range testcases{
+	for _, v := range testcases {
 		err := vp.AttachVolume(v.volumeId, v.instanceId)
 		if err != nil {
 			t.Error(err)

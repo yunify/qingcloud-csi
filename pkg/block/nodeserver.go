@@ -1,6 +1,7 @@
 package block
 
 import (
+	"fmt"
 	"github.com/container-storage-interface/spec/lib/go/csi/v0"
 	"github.com/golang/glog"
 	"github.com/kubernetes-csi/drivers/pkg/csi-common"
@@ -9,7 +10,6 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/kubernetes/pkg/util/mount"
 	"os"
-	"fmt"
 )
 
 type nodeServer struct {
@@ -77,7 +77,7 @@ func (ns *nodeServer) NodeUnpublishVolume(
 	if len(req.GetTargetPath()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Target path missing in request")
 	}
-	if len(req.GetVolumeId()) == 0{
+	if len(req.GetVolumeId()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Volume id missing in request")
 	}
 	// set parameter
@@ -93,7 +93,7 @@ func (ns *nodeServer) NodeUnpublishVolume(
 	}
 	if notMnt {
 		glog.Warningf("Volume %s has not mount point", volumeId)
-		return &csi.NodeUnpublishVolumeResponse{},nil
+		return &csi.NodeUnpublishVolumeResponse{}, nil
 	}
 	// do unmount
 	glog.Infof("Unbind mountvolume %s/%s", targetPath, volumeId)
@@ -144,17 +144,17 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	}
 	// find volume devicePath
 	volumeObj, err := vm.FindVolume(volumeId)
-	if err != nil{
+	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	if volumeObj == nil{
+	if volumeObj == nil {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("Cannot find volume %s", volumeId))
 	}
 	devicePath := ""
-	if volumeObj.Instance != nil && volumeObj.Instance.Device != nil && *volumeObj.Instance.Device != ""{
+	if volumeObj.Instance != nil && volumeObj.Instance.Device != nil && *volumeObj.Instance.Device != "" {
 		devicePath = *volumeObj.Instance.Device
 		glog.Infof("Find volume %s's device path is %s", volumeId, devicePath)
-	}else{
+	} else {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("Cannot find device path of volume %s", volumeId))
 	}
 	// do mount

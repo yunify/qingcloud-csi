@@ -17,12 +17,12 @@ var getim = func() *instanceManager {
 	if runtime.GOOS == "darwin" {
 		filepath = "./config.yaml"
 	}
-	config , err:=ReadConfigFromFile(filepath)
-	if err != nil{
+	config, err := ReadConfigFromFile(filepath)
+	if err != nil {
 		return nil
 	}
 	im, err := NewInstanceManagerWithConfig(config)
-	if err != nil{
+	if err != nil {
 		return nil
 	}
 	return im
