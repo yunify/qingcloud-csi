@@ -1,11 +1,10 @@
 package block
 
 import (
+	"fmt"
 	"github.com/golang/glog"
 	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 const (
@@ -81,17 +80,21 @@ func (iv *instanceManager) FindInstance(id string) (instance *qcservice.Instance
 		return nil, err
 	}
 	if *output.RetCode != 0 {
-		return nil, status.Errorf(
-			codes.Internal, "call DescribeInstances err: instance id %s in %s", id, iv.instanceService.Config.Zone)
+		glog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
+		return nil, fmt.Errorf(*output.Message)
 	}
 	// not found instances
 	switch *output.TotalCount {
 	case 0:
 		return nil, nil
 	case 1:
+		if *output.InstanceSet[0].Status == Instance_Status_CEASED || *output.InstanceSet[0].Status == Instance_Status_TERMINATED {
+			return nil, nil
+		} else {
+			return output.InstanceSet[0], nil
+		}
 		return output.InstanceSet[0], nil
 	default:
-		return nil, status.Errorf(
-			codes.OutOfRange, "find duplicate instances id %s in %s", id, iv.instanceService.Config.Zone)
+		return nil, fmt.Errorf("Find duplicate instances id %s in %s", id, iv.instanceService.Config.Zone)
 	}
 }
