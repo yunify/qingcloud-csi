@@ -164,7 +164,7 @@ func TestIsAttachedToInstance(t *testing.T) {
 func TestDetachVolume(t *testing.T) {
 	vp := getvp()
 	volumeID := "vol-fhlkhxpr"
-	instanceID := "i-msu2th7i"
+	instanceID := "sedrf"
 	err := vp.DetachVolume(volumeID, instanceID)
 	if err != nil {
 		t.Error(err)

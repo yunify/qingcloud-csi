@@ -276,11 +276,11 @@ func (vm *volumeManager) DetachVolume(volumeId string, instanceId string) error 
 	if *vol.Instance.InstanceID == "" {
 		return nil
 	} else {
-		if *vol.Instance.InstanceID == instanceId {
+		if *vol.Instance.InstanceID == instanceId || instanceId == ""{
 			// set input parameter
 			input := &qcservice.DetachVolumesInput{}
 			input.Volumes = append(input.Volumes, &volumeId)
-			input.Instance = &instanceId
+			input.Instance = vol.Instance.InstanceID
 			// attach volume
 			glog.Infof("call DetachVolume request volume id: %s, instance id: %s, zone: %s", volumeId, instanceId, zone)
 			output, err := vm.volumeService.DetachVolumes(input)
