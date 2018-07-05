@@ -170,7 +170,7 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	defer glog.Info("===== End NodeStageVolume =====")
 	capRsp , _ := ns.NodeGetCapabilities(context.Background(), nil)
 	if flag := HasNodeServiceCapability(capRsp.GetCapabilities(), csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME);flag == false{
-		glog.Errorf("invalid node stage volume req: %v", req)
+		glog.Errorf("driver capability %v", capRsp.GetCapabilities())
 		return nil, status.Error(codes.Unimplemented, "Node has not stage capability")
 	}
 	// 0. Preflight
