@@ -75,10 +75,10 @@ func HasSameVolumeAccessMode(accessMode []*csi.VolumeCapability_AccessMode, cap 
 	return true
 }
 
-func HasNodeServiceCapability(capabilities []*csi.NodeServiceCapability, cap csi.NodeServiceCapability_RPC_Type) bool{
-	for _,v:=range capabilities{
+func HasNodeServiceCapability(capabilities []*csi.NodeServiceCapability, cap csi.NodeServiceCapability_RPC_Type) bool {
+	for _, v := range capabilities {
 		glog.Info(v.String(), cap.String())
-		if strings.Contains(v.String(), cap.String()){
+		if strings.Contains(v.String(), cap.String()) {
 			return true
 		}
 	}

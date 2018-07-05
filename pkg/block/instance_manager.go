@@ -1,12 +1,12 @@
 package block
 
 import (
+	"fmt"
 	"github.com/golang/glog"
 	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"fmt"
 )
 
 const (

@@ -57,7 +57,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		limitByte = Int64_Max
 	}
 	// check volume range
-	if GbToByte(requireGb) > limitByte || requireGb > sc.VolumeMaxSize{
+	if GbToByte(requireGb) > limitByte || requireGb > sc.VolumeMaxSize {
 		glog.Errorf("Request capacity range [%d, %d] bytes, storage class capacity range [%d, %d] GB, format required size: %d gb",
 			requireByte, limitByte, sc.VolumeMinSize, sc.VolumeMaxSize, requireGb)
 		return nil, status.Error(codes.OutOfRange, "Unsupport capacity range")
@@ -74,7 +74,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 			volumeName, requireByte, limitByte, sc.VolumeType, vm.volumeService.Config.Zone)
 		glog.Infof("Exist volume name: %s, id: %s, capacity: %d GB, type: %d, zone: %s",
 			*exVol.VolumeName, *exVol.VolumeID, GbToByte(*exVol.Size), *exVol.VolumeType, vm.volumeService.Config.Zone)
-		if *exVol.Size >= requireGb && int64(*exVol.Size)*gib <= limitByte && *exVol.VolumeType == sc.VolumeType{
+		if *exVol.Size >= requireGb && int64(*exVol.Size)*gib <= limitByte && *exVol.VolumeType == sc.VolumeType {
 			// exisiting volume is compatible with new request and should be reused.
 			return &csi.CreateVolumeResponse{
 				Volume: &csi.Volume{
@@ -137,7 +137,7 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 		return &csi.DeleteVolumeResponse{}, nil
 	}
 	// Is volume in use
-	if *volInfo.Status == BlockVolume_Status_INUSE{
+	if *volInfo.Status == BlockVolume_Status_INUSE {
 		return nil, status.Errorf(codes.FailedPrecondition, "volume is in use by another resource")
 	}
 	// Do delete volume
@@ -200,7 +200,7 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	// if volume id not exist
 	volumeId := req.GetVolumeId()
 	exVol, err := vm.FindVolume(volumeId)
-	if err != nil{
+	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if exVol == nil {
@@ -210,13 +210,13 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	// if instance id not exist
 	nodeId := req.GetNodeId()
 	exIns, err := im.FindInstance(nodeId)
-	if err != nil{
+	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if exIns == nil {
 		return nil, status.Errorf(codes.NotFound, "Node: %s does not exist", nodeId)
 	}
-	
+
 	// Volume published to another node
 	if len(*exVol.Instance.InstanceID) != 0 && *exVol.Instance.InstanceID != nodeId {
 		return nil, status.Error(codes.FailedPrecondition, "Volume published to another node")
@@ -268,7 +268,7 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 
 	// check volume exist
 	exVol, err := vm.FindVolume(volumeId)
-	if err != nil{
+	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if exVol == nil {
@@ -277,7 +277,7 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 
 	// check node exist
 	exIns, err := im.FindInstance(nodeId)
-	if err != nil{
+	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if exIns == nil {

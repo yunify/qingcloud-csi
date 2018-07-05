@@ -29,7 +29,7 @@ func (ns *nodeServer) NodePublishVolume(
 	defer glog.Info("===== End NodePublishVolume =====")
 	// 0. Preflight
 	// check volume id
-	if len(req.GetVolumeId()) == 0{
+	if len(req.GetVolumeId()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Volume id missing in request")
 	}
 	// check target path
@@ -44,7 +44,7 @@ func (ns *nodeServer) NodePublishVolume(
 		return nil, status.Error(codes.FailedPrecondition, "Exceed capabilities")
 	}
 	// check stage path
-	if len(req.GetStagingTargetPath()) == 0{
+	if len(req.GetStagingTargetPath()) == 0 {
 		return nil, status.Error(codes.FailedPrecondition, "Staging target path not set")
 	}
 	// set parameter
@@ -168,8 +168,8 @@ func (ns *nodeServer) NodeUnpublishVolume(
 func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRequest) (*csi.NodeStageVolumeResponse, error) {
 	glog.Info("----- Start NodeStageVolume -----")
 	defer glog.Info("===== End NodeStageVolume =====")
-	capRsp , _ := ns.NodeGetCapabilities(context.Background(), nil)
-	if flag := HasNodeServiceCapability(capRsp.GetCapabilities(), csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME);flag == false{
+	capRsp, _ := ns.NodeGetCapabilities(context.Background(), nil)
+	if flag := HasNodeServiceCapability(capRsp.GetCapabilities(), csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME); flag == false {
 		glog.Errorf("driver capability %v", capRsp.GetCapabilities())
 		return nil, status.Error(codes.Unimplemented, "Node has not stage capability")
 	}
@@ -181,7 +181,7 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	if len(req.GetStagingTargetPath()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Target path missing in request")
 	}
-	if req.GetVolumeCapability() == nil{
+	if req.GetVolumeCapability() == nil {
 		return nil, status.Error(codes.InvalidArgument, "Volume capability missing in request")
 	}
 	// set parameter
@@ -244,8 +244,8 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.NodeUnstageVolumeResponse, error) {
 	glog.Info("----- Start NodeUnstageVolume -----")
 	defer glog.Info("===== End NodeUnstageVolume =====")
-	capRsp , _ := ns.NodeGetCapabilities(context.Background(), nil)
-	if flag := HasNodeServiceCapability(capRsp.GetCapabilities(), csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME);flag == false{
+	capRsp, _ := ns.NodeGetCapabilities(context.Background(), nil)
+	if flag := HasNodeServiceCapability(capRsp.GetCapabilities(), csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME); flag == false {
 		glog.Errorf("driver capability %v", capRsp.GetCapabilities())
 		return nil, status.Error(codes.Unimplemented, "Node has not unstage capability")
 	}
