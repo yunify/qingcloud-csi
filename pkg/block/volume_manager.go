@@ -79,13 +79,12 @@ func (vm *volumeManager) FindVolume(id string) (volume *qcservice.Volume, err er
 	// Error:
 	// 1. Error is not equal to nil.
 	if err != nil {
-		glog.Errorf("Code: %d, Message: %s", *output.RetCode, err.Error())
 		return nil, err
 	}
 	// 2. Return code is not equal to 0.
 	if *output.RetCode != 0 {
-		return nil,
-			fmt.Errorf("Call IaaS DescribeVolumes err: volume id %s in %s", id, vm.volumeService.Config.Zone)
+		glog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
+		return nil, fmt.Errorf("Call IaaS DescribeVolumes err: volume id %s in %s", id, vm.volumeService.Config.Zone)
 	}
 	switch *output.TotalCount {
 	// Not found volumes
@@ -117,12 +116,11 @@ func (vm *volumeManager) FindVolumeByName(name string) (volume *qcservice.Volume
 	output, err := vm.volumeService.DescribeVolumes(&input)
 	// Handle error
 	if err != nil {
-		glog.Errorf("Code: %d, Message: %s", *output.RetCode, err.Error())
 		return nil, err
 	}
 	if *output.RetCode != 0 {
-		return nil,
-			fmt.Errorf("Call IaaS DescribeVolumes err: volume name %s in %s", name, vm.volumeService.Config.Zone)
+		glog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
+		return nil, fmt.Errorf("Call IaaS DescribeVolumes err: volume name %s in %s", name, vm.volumeService.Config.Zone)
 	}
 	// Not found volumes
 	for _, v := range output.VolumeSet {
@@ -158,7 +156,6 @@ func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc qin
 		*input.Size, *vm.volumeService.Properties.Zone, *input.VolumeType, *input.Count, *input.VolumeName)
 	output, err := vm.volumeService.CreateVolumes(input)
 	if err != nil {
-		glog.Errorf("Code: %d, Message: %s", *output.RetCode, err.Error())
 		return "", err
 	}
 	// wait job
@@ -168,13 +165,13 @@ func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc qin
 	}
 	// check output
 	if *output.RetCode != 0 {
-		glog.Warningf("Call IaaS CreateVolumes return %d, name %s",
-			*output.RetCode, volumeName)
+		glog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
+		return "", fmt.Errorf(*output.Message)
 	} else {
 		volumeId = *output.Volumes[0]
 		glog.Infof("Call IaaS CreateVolume name %s id %s succeed", volumeName, volumeId)
+		return *output.Volumes[0], nil
 	}
-	return *output.Volumes[0], nil
 }
 
 // delete volume
@@ -187,7 +184,6 @@ func (vm *volumeManager) DeleteVolume(id string) error {
 		id, *vm.volumeService.Properties.Zone)
 	output, err := vm.volumeService.DeleteVolumes(input)
 	if err != nil {
-		glog.Errorf("Code: %d, Message: %s", *output.RetCode, err.Error())
 		return err
 	}
 	// wait job
@@ -197,12 +193,13 @@ func (vm *volumeManager) DeleteVolume(id string) error {
 	}
 	// check output
 	if *output.RetCode != 0 {
-		glog.Errorf("Call IaaS DeleteVolumes %s failed, return %d",
-			id, *output.RetCode)
+		glog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
+		return fmt.Errorf(*output.Message)
 	} else {
 		glog.Infof("Call IaaS DeleteVolume %s succeed", id)
+		return nil
 	}
-	return nil
+
 }
 
 // check volume attaching to instance
@@ -248,12 +245,12 @@ func (vm *volumeManager) AttachVolume(volumeId string, instanceId string) error 
 		glog.Infof("Call IaaS AttachVolume request volume id: %s, instance id: %s, zone: %s", volumeId, instanceId, zone)
 		output, err := vm.volumeService.AttachVolumes(input)
 		if err != nil {
-			glog.Errorf("Code: %d, Message: %s", *output.RetCode, err.Error())
 			return err
 		}
 		// check output
 		if *output.RetCode != 0 {
-			return fmt.Errorf("Call IaaS AttachVolume return %d, volume id %s", *output.RetCode, volumeId)
+			glog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
+			return fmt.Errorf(*output.Message)
 		}
 		// wait job
 		glog.Infof("Call IaaS WaitJob %s", *output.JobID)
@@ -293,12 +290,12 @@ func (vm *volumeManager) DetachVolume(volumeId string, instanceId string) error 
 			glog.Infof("Call IaaS DetachVolume request volume id: %s, instance id: %s, zone: %s", volumeId, instanceId, zone)
 			output, err := vm.volumeService.DetachVolumes(input)
 			if err != nil {
-				glog.Errorf("Code: %d, Message: %s", *output.RetCode, err.Error())
 				return err
 			}
 			// check output
 			if *output.RetCode != 0 {
-				return fmt.Errorf("Call IaaS DetachVolume return %d, volume id %s", *output.RetCode, volumeId)
+				glog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
+				return fmt.Errorf(*output.Message)
 			}
 			// wait job
 			glog.Infof("Call IaaS WaitJob %s", *output.JobID)

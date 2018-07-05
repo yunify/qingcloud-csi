@@ -5,8 +5,6 @@ import (
 	"github.com/golang/glog"
 	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 const (
@@ -79,12 +77,11 @@ func (iv *instanceManager) FindInstance(id string) (instance *qcservice.Instance
 	output, err := iv.instanceService.DescribeInstances(&input)
 	// error
 	if err != nil {
-		glog.Errorf("Code: %d, Message: %s", *output.RetCode, err.Error())
 		return nil, err
 	}
 	if *output.RetCode != 0 {
-		return nil, status.Errorf(
-			codes.Internal, "Call IaaS DescribeInstances err: instance id %s in %s", id, iv.instanceService.Config.Zone)
+		glog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
+		return nil, fmt.Errorf(*output.Message)
 	}
 	// not found instances
 	switch *output.TotalCount {
