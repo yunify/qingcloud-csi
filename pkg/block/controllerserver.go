@@ -19,7 +19,6 @@ type controllerServer struct {
 // This operation MUST be idempotent
 // csi.CreateVolumeRequest: name 				+Required
 //							capability			+Required
-
 func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
 	glog.Info("----- Start CreateVolume -----")
 	defer glog.Info("===== End CreateVolume =====")
@@ -39,7 +38,6 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		return nil, status.Error(codes.InvalidArgument, "Volume name missing in request")
 	}
 	volumeName := req.GetName()
-
 
 	// create VolumeManager object
 	vm, err := NewVolumeManager()
@@ -167,7 +165,6 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 //										node id				+ Required
 //										volume capability 	+ Required
 //										readonly			+ Required (This field is NOT provided when requesting in Kubernetes)
-
 func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *csi.ControllerPublishVolumeRequest) (*csi.ControllerPublishVolumeResponse, error) {
 	glog.Info("----- Start ControllerPublishVolume -----")
 	defer glog.Info("===== End ControllerPublishVolume =====")
@@ -218,11 +215,8 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	}
 	if exIns == nil {
 		return nil, status.Errorf(codes.NotFound, "Node: %s does not exist", nodeId)
-	}else{
-		if *exIns.Status!= Instance_Status_RUNNING{
-			return nil, status.Errorf(codes.NotFound, "Node: %d does not running", nodeId)
-		}
 	}
+	
 	// Volume published to another node
 	if len(*exVol.Instance.InstanceID) != 0 && *exVol.Instance.InstanceID != nodeId {
 		return nil, status.Error(codes.FailedPrecondition, "Volume published to another node")
@@ -245,7 +239,6 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 
 // This operation MUST be idempotent
 // csi.ControllerUnpublishVolumeRequest: 	volume id	+Required
-//
 func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *csi.ControllerUnpublishVolumeRequest) (*csi.ControllerUnpublishVolumeResponse, error) {
 	glog.Info("----- Start ControllerUnpublishVolume -----")
 	defer glog.Info("===== End ControllerUnpublishVolume =====")
@@ -289,10 +282,6 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 	}
 	if exIns == nil {
 		return nil, status.Errorf(codes.NotFound, "Node: %s does not exist", nodeId)
-	}else{
-		if *exIns.Status!= Instance_Status_RUNNING{
-			return nil, status.Errorf(codes.NotFound, "Node: %d does not running", nodeId)
-		}
 	}
 
 	// do detach
