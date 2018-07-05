@@ -6,50 +6,48 @@ import (
 )
 
 type qingStorageClass struct {
-	VolumeType      int    `json:"type"`
-	VolumeMaxSize   int    `json:"maxSize"`
-	VolumeMinSize   int    `json:"minSize"`
+	VolumeType    int `json:"type"`
+	VolumeMaxSize int `json:"maxSize"`
+	VolumeMinSize int `json:"minSize"`
 }
-
 
 func NewDefaultQingStorageClass() *qingStorageClass {
 	return &qingStorageClass{
-		VolumeType:      0,
-		VolumeMaxSize:   500,
-		VolumeMinSize:   10,
+		VolumeType:    0,
+		VolumeMaxSize: 500,
+		VolumeMinSize: 10,
 	}
 }
 
 func NewQingStorageClassFromMap(opt map[string]string) (*qingStorageClass, error) {
-	var ok bool
 	sc := NewDefaultQingStorageClass()
 	// volume type
-	sVolType, ok := opt["type"]
-	if !ok {
-		return nil, fmt.Errorf("Missing required parameter type")
+	if sVolType, ok := opt["type"]; ok {
+		if iVolType, err := strconv.Atoi(sVolType); err != nil {
+			return nil, err
+		} else {
+			sc.VolumeType = iVolType
+		}
 	}
-	iVolType, err := strconv.Atoi(sVolType)
-	if err != nil {
-		return nil, err
-	} else {
-		sc.VolumeType = iVolType
-	}
+
 	// Get volume maxsize +optional
-	sMaxSize, ok := opt["maxSize"]
-	iMaxSize, err := strconv.Atoi(sMaxSize)
-	if err != nil {
-		return nil, err
-	} else {
-		sc.VolumeMaxSize = iMaxSize
+	if sMaxSize, ok := opt["maxSize"]; ok {
+		if iMaxSize, err := strconv.Atoi(sMaxSize); err != nil {
+			return nil, err
+		} else {
+			sc.VolumeMaxSize = iMaxSize
+		}
 	}
+
 	// Get volume minsize +optional
-	sMinSize, ok := opt["minSize"]
-	iMinSize, err := strconv.Atoi(sMinSize)
-	if err != nil {
-		return nil, err
-	} else {
-		sc.VolumeMinSize = iMinSize
+	if sMinSize, ok := opt["minSize"]; ok {
+		if iMinSize, err := strconv.Atoi(sMinSize); err != nil {
+			return nil, err
+		} else {
+			sc.VolumeMinSize = iMinSize
+		}
 	}
+
 	// Ensure volume minSize less than volume maxSize
 	if sc.VolumeMinSize >= sc.VolumeMaxSize {
 		return nil, fmt.Errorf("Volume minSize must less than volume maxSize")

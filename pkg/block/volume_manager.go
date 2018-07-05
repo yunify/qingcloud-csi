@@ -3,8 +3,9 @@ package block
 import (
 	"fmt"
 	"github.com/golang/glog"
-	qcservice "github.com/yunify/qingcloud-sdk-go/service"
+	qcclient "github.com/yunify/qingcloud-sdk-go/client"
 	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
+	qcservice "github.com/yunify/qingcloud-sdk-go/service"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -44,7 +45,7 @@ func NewVolumeManagerWithConfig(config *qcconfig.Config) (*volumeManager, error)
 
 func NewVolumeManager() (*volumeManager, error) {
 	config, err := ReadConfigFromFile(ConfigFilePath)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 	// initial qingcloud iaas service
@@ -91,7 +92,11 @@ func (vm *volumeManager) FindVolume(id string) (volume *qcservice.Volume, err er
 		return nil, nil
 	// Found one volume
 	case 1:
-		return output.VolumeSet[0], nil
+		if *output.VolumeSet[0].Status == BlockVolume_Status_CEASED || *output.VolumeSet[0].Status == BlockVolume_Status_DELETED {
+			return nil, nil
+		} else {
+			return output.VolumeSet[0], nil
+		}
 	// Found duplicate volumes
 	default:
 		return nil,
@@ -115,22 +120,23 @@ func (vm *volumeManager) FindVolumeByName(name string) (volume *qcservice.Volume
 	}
 	if *output.RetCode != 0 {
 		return nil,
-		fmt.Errorf("call DescribeVolumes err: volume name %s in %s", name, vm.volumeService.Config.Zone)
+			fmt.Errorf("call DescribeVolumes err: volume name %s in %s", name, vm.volumeService.Config.Zone)
 	}
 	// Not found volumes
-	switch *output.TotalCount {
-	case 0:
-		return nil, nil
-	case 1:
-		return output.VolumeSet[0], nil
-	default:
-		return nil,
-		fmt.Errorf("call DescribeVolumes err: find duplicate volumes, volume name %s in %s", name, vm.volumeService.Config.Zone)
+	for _, v := range output.VolumeSet {
+		if *v.VolumeName != name {
+			continue
+		}
+		if *v.Status == BlockVolume_Status_CEASED || *v.Status == BlockVolume_Status_DELETED {
+			continue
+		}
+		return v, nil
 	}
+	return nil, nil
 }
 
 // create volume
-func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc qingStorageClass) ( volumeId string, err error) {
+func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc qingStorageClass) (volumeId string, err error) {
 	// 0. Set CreateVolume args
 	// set input value
 	input := &qcservice.CreateVolumesInput{}
@@ -152,15 +158,18 @@ func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc qin
 	if err != nil {
 		return "", err
 	}
+	// wait job
+	if err := vm.waitJob(*output.JobID); err != nil {
+		return "", err
+	}
 	// check output
 	if *output.RetCode != 0 {
 		glog.Warningf("call CreateVolumes return %d, name %s",
 			*output.RetCode, volumeName)
-	}else{
+	} else {
 		volumeId = *output.Volumes[0]
 		glog.Infof("call CreateVolume name %s id %s succeed", volumeName, volumeId)
 	}
-
 	return *output.Volumes[0], nil
 }
 
@@ -176,11 +185,15 @@ func (vm *volumeManager) DeleteVolume(id string) error {
 	if err != nil {
 		return err
 	}
+	// wait job
+	if err := vm.waitJob(*output.JobID); err != nil {
+		return err
+	}
 	// check output
 	if *output.RetCode != 0 {
 		glog.Errorf("call DeleteVolumes %s failed, return %d",
 			id, *output.RetCode)
-	}else{
+	} else {
 		glog.Infof("call DeleteVolume %s succeed", id)
 	}
 	return nil
@@ -210,14 +223,14 @@ func (vm *volumeManager) IsAttachedToInstance(volumeId string, instanceId string
 }
 
 // attach volume
-func (vm *volumeManager) AttachVolume(volumeId string, instanceId string) error{
+func (vm *volumeManager) AttachVolume(volumeId string, instanceId string) error {
 	zone := *vm.volumeService.Properties.Zone
 	// check volume status
 	vol, err := vm.FindVolume(volumeId)
-	if err != nil{
+	if err != nil {
 		return err
 	}
-	if vol == nil{
+	if vol == nil {
 		return fmt.Errorf("Cannot found volume %s", volumeId)
 	}
 	if *vol.Instance.InstanceID == "" {
@@ -235,11 +248,15 @@ func (vm *volumeManager) AttachVolume(volumeId string, instanceId string) error{
 		if *output.RetCode != 0 {
 			return fmt.Errorf("call AttachVolume return %d, volume id %s", *output.RetCode, volumeId)
 		}
+		// wait job
+		if err := vm.waitJob(*output.JobID); err != nil {
+			return err
+		}
 		return nil
-	}else{
-		if *vol.Instance.InstanceID == instanceId{
+	} else {
+		if *vol.Instance.InstanceID == instanceId {
 			return nil
-		}else{
+		} else {
 			return fmt.Errorf("Volume %s has been attached to another instance %s", volumeId, *vol.Instance.InstanceID)
 		}
 	}
@@ -250,20 +267,20 @@ func (vm *volumeManager) DetachVolume(volumeId string, instanceId string) error 
 	zone := *vm.volumeService.Properties.Zone
 	// check volume status
 	vol, err := vm.FindVolume(volumeId)
-	if err != nil{
+	if err != nil {
 		return err
 	}
-	if vol == nil{
+	if vol == nil {
 		return fmt.Errorf("Cannot found volume %s", volumeId)
 	}
-	if *vol.Instance.InstanceID == ""{
+	if *vol.Instance.InstanceID == "" {
 		return nil
-	}else{
-		if *vol.Instance.InstanceID == instanceId {
+	} else {
+		if *vol.Instance.InstanceID == instanceId || instanceId == ""{
 			// set input parameter
 			input := &qcservice.DetachVolumesInput{}
 			input.Volumes = append(input.Volumes, &volumeId)
-			input.Instance = &instanceId
+			input.Instance = vol.Instance.InstanceID
 			// attach volume
 			glog.Infof("call DetachVolume request volume id: %s, instance id: %s, zone: %s", volumeId, instanceId, zone)
 			output, err := vm.volumeService.DetachVolumes(input)
@@ -274,9 +291,22 @@ func (vm *volumeManager) DetachVolume(volumeId string, instanceId string) error 
 			if *output.RetCode != 0 {
 				return fmt.Errorf("call DetachVolume return %d, volume id %s", *output.RetCode, volumeId)
 			}
+			// wait job
+			if err := vm.waitJob(*output.JobID); err != nil {
+				return err
+			}
 			return nil
-		}else{
+		} else {
 			return fmt.Errorf("Volume %s has been attached to another instance %s", volumeId, *vol.Instance.InstanceID)
 		}
+	}
+}
+
+func (vm *volumeManager) waitJob(jobId string) error {
+	err := qcclient.WaitJob(vm.jobService, jobId, OperationWaitTimeout, WaitInterval)
+	if err != nil {
+		return err
+	} else {
+		return nil
 	}
 }

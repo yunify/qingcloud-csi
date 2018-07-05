@@ -1,6 +1,7 @@
 package block
 
 import (
+	"fmt"
 	"github.com/container-storage-interface/spec/lib/go/csi/v0"
 	"github.com/golang/glog"
 	"github.com/kubernetes-csi/drivers/pkg/csi-common"
@@ -9,28 +10,65 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/kubernetes/pkg/util/mount"
 	"os"
-	"fmt"
 )
 
 type nodeServer struct {
 	*csicommon.DefaultNodeServer
 }
 
+// This operation MUST be idempotent
+// If the volume corresponding to the volume id has already been published at the specified target path,
+// and is compatible with the specified volume capability and readonly flag, the plugin MUST reply 0 OK.
+// csi.NodePublishVolumeRequest:	volume id			+ Required
+//									target path			+ Required
+//									volume capability	+ Required
+//									read only			+ Required (This field is NOT provided when requesting in Kubernetes)
 func (ns *nodeServer) NodePublishVolume(
 	ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
-	glog.Infof("Run NodePublishVolume")
+	glog.Info("----- Start NodePublishVolume -----")
+	defer glog.Info("===== End NodePublishVolume =====")
 	// 0. Preflight
-	// check arguments
+	// check volume id
+	if len(req.GetVolumeId()) == 0{
+		return nil, status.Error(codes.InvalidArgument, "Volume id missing in request")
+	}
+	// check target path
 	if len(req.GetStagingTargetPath()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Target path missing in request")
+	}
+	// Check volume capability
+	if req.GetVolumeCapability() == nil {
+		return nil, status.Error(codes.InvalidArgument, "Volume capabilities missing in request")
+	} else if !HasSameVolumeAccessMode(ns.Driver.GetVolumeCapabilityAccessModes(),
+		[]*csi.VolumeCapability{req.GetVolumeCapability()}) {
+		return nil, status.Error(codes.FailedPrecondition, "Exceed capabilities")
+	}
+	// check stage path
+	if len(req.GetStagingTargetPath()) == 0{
+		return nil, status.Error(codes.FailedPrecondition, "Staging target path not set")
 	}
 	// set parameter
 	targetPath := req.GetTargetPath()
 	stagePath := req.GetStagingTargetPath()
+	volumeId := req.GetVolumeId()
+
+	// Create VolumeManager object
+	vm, err := NewVolumeManager()
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	// Check volume exist
+	volInfo, err := vm.FindVolume(volumeId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if volInfo == nil {
+		return nil, status.Errorf(codes.NotFound, "Volume %s does not exist", volumeId)
+	}
 
 	// 1. Mount
 	// Make dir if dir not presents
-	_, err := os.Stat(targetPath)
+	_, err = os.Stat(targetPath)
 	if os.IsNotExist(err) {
 		if err = os.MkdirAll(targetPath, 0750); err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
@@ -38,7 +76,8 @@ func (ns *nodeServer) NodePublishVolume(
 	}
 
 	// check targetPath is mounted
-	notMnt, err := mount.New("").IsNotMountPoint(targetPath)
+	mounter := mount.New("")
+	notMnt, err := mounter.IsNotMountPoint(targetPath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			if err = os.MkdirAll(targetPath, 0750); err != nil {
@@ -49,11 +88,13 @@ func (ns *nodeServer) NodePublishVolume(
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 	}
+	// For idempotent:
+	// If the volume corresponding to the volume id has already been published at the specified target path,
+	// and is compatible with the specified volume capability and readonly flag, the plugin MUST reply 0 OK.
 	if !notMnt {
 		return &csi.NodePublishVolumeResponse{}, nil
 	}
-	// do mount
-	mounter := mount.New("")
+
 	// set bind mount options
 	options := []string{"bind"}
 	if req.GetReadonly() == true {
@@ -67,17 +108,37 @@ func (ns *nodeServer) NodePublishVolume(
 	return &csi.NodePublishVolumeResponse{}, nil
 }
 
+// csi.NodeUnpublishVolumeRequest:	volume id	+ Required
+//									target path	+ Required
 func (ns *nodeServer) NodeUnpublishVolume(
 	ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
-	glog.Infof("Run NodeUnpublishVolume")
+	glog.Info("----- Start NodeUnpublishVolume -----")
+	defer glog.Info("===== End NodeUnpublishVolume =====")
 	// 0. Preflight
 	// check arguments
 	if len(req.GetTargetPath()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Target path missing in request")
 	}
+	if len(req.GetVolumeId()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "Volume id missing in request")
+	}
 	// set parameter
 	volumeId := req.GetVolumeId()
 	targetPath := req.GetTargetPath()
+
+	// Create VolumeManager object
+	vm, err := NewVolumeManager()
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	// Check volume exist
+	volInfo, err := vm.FindVolume(volumeId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if volInfo == nil {
+		return nil, status.Errorf(codes.NotFound, "Volume %s does not exist", volumeId)
+	}
 
 	// 1. Unmount
 	// check targetPath is mounted
@@ -88,7 +149,7 @@ func (ns *nodeServer) NodeUnpublishVolume(
 	}
 	if notMnt {
 		glog.Warningf("Volume %s has not mount point", volumeId)
-		return &csi.NodeUnpublishVolumeResponse{},nil
+		return &csi.NodeUnpublishVolumeResponse{}, nil
 	}
 	// do unmount
 	glog.Infof("Unbind mountvolume %s/%s", targetPath, volumeId)
@@ -100,8 +161,18 @@ func (ns *nodeServer) NodeUnpublishVolume(
 	return &csi.NodeUnpublishVolumeResponse{}, nil
 }
 
+// This operation MUST be idempotent
+// csi.NodeStageVolumeRequest: 	volume id			+ Required
+//								stage target path	+ Required
+//								volume capability	+ Required
 func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRequest) (*csi.NodeStageVolumeResponse, error) {
-	glog.Infof("Run NodeStageVolume")
+	glog.Info("----- Start NodeStageVolume -----")
+	defer glog.Info("===== End NodeStageVolume =====")
+	capRsp , _ := ns.NodeGetCapabilities(context.Background(), nil)
+	if flag := HasNodeServiceCapability(capRsp.GetCapabilities(), csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME);flag == false{
+		glog.Errorf("invalid node stage volume req: %v", req)
+		return nil, status.Error(codes.Unimplemented, "Node has not stage capability")
+	}
 	// 0. Preflight
 	// check arguments
 	if len(req.GetVolumeId()) == 0 {
@@ -110,11 +181,27 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	if len(req.GetStagingTargetPath()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Target path missing in request")
 	}
+	if req.GetVolumeCapability() == nil{
+		return nil, status.Error(codes.InvalidArgument, "Volume capability missing in request")
+	}
 	// set parameter
 	volumeId := req.GetVolumeId()
 	targetPath := req.GetStagingTargetPath()
 	fsType := req.GetVolumeCapability().GetMount().GetFsType()
 
+	// Create VolumeManager object
+	vm, err := NewVolumeManager()
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	// Check volume exist
+	volInfo, err := vm.FindVolume(volumeId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if volInfo == nil {
+		return nil, status.Errorf(codes.NotFound, "Volume %s does not exist", volumeId)
+	}
 	// 1. Mount
 	// if volume already mounted
 	notMnt, err := mount.New("").IsLikelyNotMountPoint(targetPath)
@@ -128,27 +215,17 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 	}
+	// already mount
 	if !notMnt {
 		return &csi.NodeStageVolumeResponse{}, nil
 	}
-	// create volume manager object
-	vm, err := NewVolumeManager()
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	// find volume devicePath
-	volumeObj, err := vm.FindVolume(volumeId)
-	if err != nil{
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	if volumeObj == nil{
-		return nil, status.Error(codes.Internal, fmt.Sprintf("Cannot find volume %s", volumeId))
-	}
+
+	// get device path
 	devicePath := ""
-	if volumeObj.Instance != nil && volumeObj.Instance.Device != nil && *volumeObj.Instance.Device != ""{
-		devicePath = *volumeObj.Instance.Device
+	if volInfo.Instance != nil && volInfo.Instance.Device != nil && *volInfo.Instance.Device != "" {
+		devicePath = *volInfo.Instance.Device
 		glog.Infof("Find volume %s's device path is %s", volumeId, devicePath)
-	}else{
+	} else {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("Cannot find device path of volume %s", volumeId))
 	}
 	// do mount
@@ -161,8 +238,17 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	return &csi.NodeStageVolumeResponse{}, nil
 }
 
+// This operation MUST be idempotent
+// csi.NodeUnstageVolumeRequest:	volume id	+ Required
+//									target path	+ Required
 func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.NodeUnstageVolumeResponse, error) {
-	glog.Infof("Run NodeUnstageVolume")
+	glog.Info("----- Start NodeUnstageVolume -----")
+	defer glog.Info("===== End NodeUnstageVolume =====")
+	capRsp , _ := ns.NodeGetCapabilities(context.Background(), nil)
+	if flag := HasNodeServiceCapability(capRsp.GetCapabilities(), csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME);flag == false{
+		glog.Errorf("invalid node stage volume req: %v", req)
+		return nil, status.Error(codes.Unimplemented, "Node has not unstage capability")
+	}
 	// 0. Preflight
 	// check arguments
 	if len(req.GetVolumeId()) == 0 {
@@ -172,11 +258,29 @@ func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstag
 		return nil, status.Error(codes.InvalidArgument, "Target path missing in request")
 	}
 	// set parameter
-	volumeID := req.GetVolumeId()
+	volumeId := req.GetVolumeId()
 	targetPath := req.GetStagingTargetPath()
+
+	// Create VolumeManager object
+	vm, err := NewVolumeManager()
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	// Check volume exist
+	volInfo, err := vm.FindVolume(volumeId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if volInfo == nil {
+		return nil, status.Errorf(codes.NotFound, "Volume %s does not exist", volumeId)
+	}
 
 	// 1. Unmount
 	// check targetPath is mounted
+	// For idempotent:
+	// If the volume corresponding to the volume id is not staged to the staging target path,
+	// the plugin MUST reply 0 OK.
 	mounter := mount.New("")
 	notMnt, err := mounter.IsLikelyNotMountPoint(targetPath)
 	if err != nil {
@@ -195,11 +299,11 @@ func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstag
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	glog.Infof("block image: volume %s has been unmounted.", volumeID)
+	glog.Infof("block image: volume %s has been unmounted.", volumeId)
 	cnt--
 	glog.Infof("block image: mount count: %d", cnt)
 	if cnt > 0 {
-		glog.Errorf("image %s still mounted in instance %s", volumeID, GetCurrentInstanceId())
+		glog.Errorf("image %s still mounted in instance %s", volumeId, GetCurrentInstanceId())
 		return nil, status.Error(codes.Internal, "unmount failed")
 	}
 
@@ -207,7 +311,8 @@ func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstag
 }
 
 func (ns *nodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetCapabilitiesRequest) (*csi.NodeGetCapabilitiesResponse, error) {
-	glog.Infof("Run NodeGetCapabilities")
+	glog.Info("----- Start NodeGetCapabilities -----")
+	defer glog.Info("===== End NodeGetCapabilities =====")
 	return &csi.NodeGetCapabilitiesResponse{
 		Capabilities: []*csi.NodeServiceCapability{
 			{
@@ -222,7 +327,9 @@ func (ns *nodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetC
 }
 
 func (ns *nodeServer) NodeGetId(ctx context.Context, req *csi.NodeGetIdRequest) (*csi.NodeGetIdResponse, error) {
-	glog.V(5).Infof("Run NodeGetId")
+	glog.Info("----- Start NodeGetId -----")
+	defer glog.Info("===== End NodeGetId =====")
+
 	return &csi.NodeGetIdResponse{
 		NodeId: GetCurrentInstanceId(),
 	}, nil

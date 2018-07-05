@@ -17,12 +17,12 @@ var getim = func() *instanceManager {
 	if runtime.GOOS == "darwin" {
 		filepath = "./config.yaml"
 	}
-	config , err:=ReadConfigFromFile(filepath)
-	if err != nil{
+	config, err := ReadConfigFromFile(filepath)
+	if err != nil {
 		return nil
 	}
 	im, err := NewInstanceManagerWithConfig(config)
-	if err != nil{
+	if err != nil {
 		return nil
 	}
 	return im
@@ -41,7 +41,7 @@ func TestFindInstance(t *testing.T) {
 	im := getim()
 	// test findVolume
 	for _, v := range testcase {
-		flag, err := im.findInstance(v.id)
+		flag, err := im.FindInstance(v.id)
 		if err != nil {
 			t.Error("find instance error: ", err.Error())
 		}

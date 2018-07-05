@@ -40,3 +40,8 @@
 [[constraint]]
   name = "k8s.io/kubernetes"
   version = "1.10.4"
+
+[[constraint]]
+  name = "github.com/kubernetes-csi/drivers"
+  revision = "e495cecb9c4027065045a0ea8d628da1b1190f1b"
+

@@ -26,7 +26,6 @@
   version = "v1.1.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/kubernetes-csi/drivers"
   packages = ["pkg/csi-common"]
   revision = "e495cecb9c4027065045a0ea8d628da1b1190f1b"
@@ -40,6 +39,7 @@
 [[projects]]
   name = "github.com/yunify/qingcloud-sdk-go"
   packages = [
+    "client",
     "config",
     "logger",
     "request",
@@ -169,6 +169,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ffbfdd9e2652ce07fbcbe58574cab2b4f9b90cd1dc92d25683aa368b710b50f6"
+  inputs-digest = "5c6b392f0e4b59a23f510dea0ff64867d1da126eb9f4c0c35e5d5ea74fea4b94"
   solver-name = "gps-cdcl"
   solver-version = 1
