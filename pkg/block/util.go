@@ -60,7 +60,7 @@ func ReadConfigFromFile(filePath string) (*qcconfig.Config, error) {
 	return config, nil
 }
 
-func HasSameAccessMode(accessMode []*csi.VolumeCapability_AccessMode, cap []*csi.VolumeCapability) bool {
+func HasSameVolumeAccessMode(accessMode []*csi.VolumeCapability_AccessMode, cap []*csi.VolumeCapability) bool {
 	for _, c := range cap {
 		found := false
 		for _, c1 := range accessMode {
@@ -73,6 +73,15 @@ func HasSameAccessMode(accessMode []*csi.VolumeCapability_AccessMode, cap []*csi
 		}
 	}
 	return true
+}
+
+func HasNodeServiceCapability(capabilities []*csi.NodeServiceCapability, cap csi.NodeServiceCapability_RPC_Type) bool{
+	for _,v:=range capabilities{
+		if v.String() == cap.String(){
+			return true
+		}
+	}
+	return false
 }
 
 func GbToByte(num int) int64 {

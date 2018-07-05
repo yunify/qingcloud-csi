@@ -31,7 +31,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	// Required volume capability
 	if req.VolumeCapabilities == nil {
 		return nil, status.Error(codes.InvalidArgument, "Volume capabilities missing in request")
-	} else if !HasSameAccessMode(cs.Driver.GetVolumeCapabilityAccessModes(), req.GetVolumeCapabilities()) {
+	} else if !HasSameVolumeAccessMode(cs.Driver.GetVolumeCapabilityAccessModes(), req.GetVolumeCapabilities()) {
 		return nil, status.Error(codes.InvalidArgument, "Volume capabilities not match")
 	}
 	// Check sanity of request Name, Volume Capabilities
@@ -267,6 +267,34 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+	// create instance manager object
+	im, err := NewInstanceManager()
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	// check volume exist
+	exVol, err := vm.FindVolume(volumeId)
+	if err != nil{
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if exVol == nil {
+		return nil, status.Errorf(codes.NotFound, "Volume: %s does not exist", volumeId)
+	}
+
+	// check node exist
+	exIns, err := im.FindInstance(nodeId)
+	if err != nil{
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if exIns == nil {
+		return nil, status.Errorf(codes.NotFound, "Node: %s does not exist", nodeId)
+	}else{
+		if *exIns.Status!= Instance_Status_RUNNING{
+			return nil, status.Errorf(codes.NotFound, "Node: %d does not running", nodeId)
+		}
+	}
+
 	// do detach
 	glog.Infof("Detaching volume %s to instance %s in zone %s...", volumeId, nodeId, vm.volumeService.Config.Zone)
 	err = vm.DetachVolume(volumeId, nodeId)
@@ -285,14 +313,17 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 func (cs *controllerServer) ValidateVolumeCapabilities(ctx context.Context, req *csi.ValidateVolumeCapabilitiesRequest) (*csi.ValidateVolumeCapabilitiesResponse, error) {
 	glog.Info("----- Start ValidateVolumeCapabilities -----")
 	defer glog.Info("===== End ValidateVolumeCapabilities =====")
+
 	// require volume id parameter
 	if len(req.GetVolumeId()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "No volume id is provided")
 	}
+
 	// require capability parameter
 	if len(req.GetVolumeCapabilities()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "No volume capabilities are provided")
 	}
+
 	// check volume exist
 	vm, err := NewVolumeManager()
 	if err != nil {
@@ -306,6 +337,7 @@ func (cs *controllerServer) ValidateVolumeCapabilities(ctx context.Context, req 
 	if vol == nil {
 		return nil, status.Errorf(codes.NotFound, "Volume %s does not exist", volumeId)
 	}
+
 	// check capability
 	for _, c := range req.GetVolumeCapabilities() {
 		found := false
