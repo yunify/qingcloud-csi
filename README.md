@@ -51,12 +51,12 @@ $ kubectl create -f deploy/block/kubernetes/sc.yaml
 - Check status of CSI plugin
 ```
 $ kubectl get pods | grep csi
-csi-attacher-0        1/1       Running       2          3d
+csi-attacher-0        1/1       Running       0          3d
 csi-provisioner-0     1/1       Running       0          3d
-csi-qingcloud-pgsbn   2/2       Running       3          1h
+csi-qingcloud-pgsbn   2/2       Running       0          1h
 ```
 
-### Operation
+### Verification
 - Create PVC
 ```
 $ kubectl create -f deploy/block/kubernetes/pvc.yaml
@@ -87,6 +87,25 @@ Source:
     VolumeHandle:  vol-8o3x8lvh
     ReadOnly:      false
 Events:            <none>
+```
+
+- Create deployment mounting PVC
+```
+$ kubectl create -f deploy/block/kubernetes/deploy.yaml
+```
+
+- Check deploy
+```
+$ kubectl get po | grep deploy
+deploy-nginx-qingcloud-84474cf674-zfhbs   1/1       Running   0          1m
+```
+
+```
+$ kubectl exec -ti deploy-nginx-qingcloud-84474cf674-zfhbs /bin/bash
+// We can access the directoriy mounting persistent volume in container
+# cd /mnt
+# ls
+lost+found
 ```
 
 ## Support
