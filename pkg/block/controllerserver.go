@@ -8,6 +8,8 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"strings"
+	"time"
 )
 
 type controllerServer struct {
@@ -18,7 +20,8 @@ type controllerServer struct {
 //							capability			+Required
 
 func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
-	glog.Info("Run CreateVolume")
+	glog.Info("----- Start CreateVolume -----")
+	defer glog.Info("===== End CreateVolume =====")
 	// 0. Prepare
 	if err := cs.Driver.ValidateControllerServiceRequest(csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME); err != nil {
 		glog.V(3).Infof("Invalid create volume req: %v", req)
@@ -93,7 +96,8 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 }
 
 func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVolumeRequest) (*csi.DeleteVolumeResponse, error) {
-	glog.Info("Run DeleteVolume")
+	glog.Info("----- Start DeleteVolume -----")
+	defer glog.Info("===== End DeleteVolume =====")
 	if err := cs.Driver.ValidateControllerServiceRequest(csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME); err != nil {
 		glog.Warningf("invalid delete volume req: %v", req)
 		return nil, err
@@ -121,16 +125,27 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 		return &csi.DeleteVolumeResponse{}, nil
 	}
 	// Delete block volume
-	glog.Infof("Deleting volume %s in zone %s...", volumeId, vm.volumeService.Config.Zone)
-	if err = vm.DeleteVolume(volumeId); err != nil {
-		glog.Infof("Failed to delete block volume: %s in %s with error: %v", volumeId, vm.volumeService.Config.Zone, err)
-		return nil, status.Error(codes.Internal, err.Error())
+	glog.Infof("Deleting volume %s status %s in zone %s...", volumeId, *volInfo.Status, vm.volumeService.Config.Zone)
+	// When delete volume returning with retry message, try to delete volume after several seconds
+	for i:=1;i <= 10;i++{
+		err = vm.DeleteVolume(volumeId)
+		if err != nil {
+			glog.Infof("Failed to delete block volume: %s in %s with error: %v", volumeId, vm.volumeService.Config.Zone, err)
+			if strings.Contains(err.Error(), RetryString) {
+				time.Sleep(time.Duration(i) *time.Second )
+			}else{
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+		}else{
+			return &csi.DeleteVolumeResponse{}, nil
+		}
 	}
-	return &csi.DeleteVolumeResponse{}, nil
+	return nil, status.Error(codes.Internal, "Exceed retry times: " + err.Error())
 }
 
 func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *csi.ControllerPublishVolumeRequest) (*csi.ControllerPublishVolumeResponse, error) {
-	glog.Infof("Run ControllerPublishVolume")
+	glog.Info("----- Start ControllerPublishVolume -----")
+	defer glog.Info("===== End ControllerPublishVolume =====")
 	// 0. Preflight
 	// check volume id arguments
 	if len(req.GetVolumeId()) == 0 {
@@ -189,7 +204,8 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 }
 
 func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *csi.ControllerUnpublishVolumeRequest) (*csi.ControllerUnpublishVolumeResponse, error) {
-	glog.Infof("Run ControllerUnpublishVolume")
+	glog.Info("----- Start ControllerUnpublishVolume -----")
+	defer glog.Info("===== End ControllerUnpublishVolume =====")
 	// 0. Preflight
 	// check arguments
 	if len(req.GetVolumeId()) == 0 {
@@ -222,7 +238,8 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 // volume id is required
 // volume capability is required
 func (cs *controllerServer) ValidateVolumeCapabilities(ctx context.Context, req *csi.ValidateVolumeCapabilitiesRequest) (*csi.ValidateVolumeCapabilitiesResponse, error) {
-	glog.V(5).Infof("Using default ValidateVolumeCapabilities")
+	glog.Info("----- Start ValidateVolumeCapabilities -----")
+	defer glog.Info("===== End ValidateVolumeCapabilities =====")
 	// require volume id parameter
 	if len(req.GetVolumeId()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "No volume id is provided")

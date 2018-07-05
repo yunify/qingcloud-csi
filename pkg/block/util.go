@@ -13,6 +13,7 @@ import (
 const (
 	InstanceFilePath     = "/etc/qingcloud/instance-id"
 	ConfigFilePath       = "/root/config.yaml"
+	RetryString			= "please try later"
 	Int64_Max            = int64(^uint64(0) >> 1)
 	WaitInterval         = 10 * time.Second
 	OperationWaitTimeout = 180 * time.Second

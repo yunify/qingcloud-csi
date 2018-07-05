@@ -18,7 +18,8 @@ type nodeServer struct {
 
 func (ns *nodeServer) NodePublishVolume(
 	ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
-	glog.Infof("Run NodePublishVolume")
+	glog.Info("----- Start NodePublishVolume -----")
+	defer glog.Info("===== End NodePublishVolume =====")
 	// 0. Preflight
 	// check arguments
 	if len(req.GetStagingTargetPath()) == 0 {
@@ -69,7 +70,8 @@ func (ns *nodeServer) NodePublishVolume(
 
 func (ns *nodeServer) NodeUnpublishVolume(
 	ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
-	glog.Infof("Run NodeUnpublishVolume")
+	glog.Info("----- Start NodeUnpublishVolume -----")
+	defer glog.Info("===== End NodeUnpublishVolume =====")
 	// 0. Preflight
 	// check arguments
 	if len(req.GetTargetPath()) == 0 {
@@ -104,7 +106,8 @@ func (ns *nodeServer) NodeUnpublishVolume(
 }
 
 func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRequest) (*csi.NodeStageVolumeResponse, error) {
-	glog.Infof("Run NodeStageVolume")
+	glog.Info("----- Start NodeStageVolume -----")
+	defer glog.Info("===== End NodeStageVolume =====")
 	// 0. Preflight
 	// check arguments
 	if len(req.GetVolumeId()) == 0 {
@@ -165,7 +168,8 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 }
 
 func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.NodeUnstageVolumeResponse, error) {
-	glog.Infof("Run NodeUnstageVolume")
+	glog.Info("----- Start NodeUnstageVolume -----")
+	defer glog.Info("===== End NodeUnstageVolume =====")
 	// 0. Preflight
 	// check arguments
 	if len(req.GetVolumeId()) == 0 {
@@ -210,7 +214,8 @@ func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstag
 }
 
 func (ns *nodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetCapabilitiesRequest) (*csi.NodeGetCapabilitiesResponse, error) {
-	glog.Infof("Run NodeGetCapabilities")
+	glog.Info("----- Start NodeGetCapabilities -----")
+	defer glog.Info("===== End NodeGetCapabilities =====")
 	return &csi.NodeGetCapabilitiesResponse{
 		Capabilities: []*csi.NodeServiceCapability{
 			{
@@ -225,7 +230,8 @@ func (ns *nodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetC
 }
 
 func (ns *nodeServer) NodeGetId(ctx context.Context, req *csi.NodeGetIdRequest) (*csi.NodeGetIdResponse, error) {
-	glog.V(5).Infof("Run NodeGetId")
+	glog.Info("----- Start NodeGetId -----")
+	defer glog.Info("===== End NodeGetId =====")
 	return &csi.NodeGetIdResponse{
 		NodeId: GetCurrentInstanceId(),
 	}, nil
