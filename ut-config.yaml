@@ -1,0 +1,9 @@
+qy_access_key_id: ''
+qy_secret_access_key: ''
+zone: 'sh1a'
+host: 'api.qingcloud.com'
+port: 443
+protocol: 'https'
+uri: '/iaas'
+connection_retries: 3
+connection_timeout: 30
