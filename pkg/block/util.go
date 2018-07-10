@@ -69,25 +69,25 @@ func ReadConfigFromFile(filePath string) (*qcconfig.Config, error) {
 	return config, nil
 }
 
-func ContainsVolumeCapability(accessModes []*csi.VolumeCapability_AccessMode, subCaps *csi.VolumeCapability) bool{
-	for _, cap := range accessModes{
-		if cap.GetMode() == subCaps.GetAccessMode().GetMode(){
+func ContainsVolumeCapability(accessModes []*csi.VolumeCapability_AccessMode, subCaps *csi.VolumeCapability) bool {
+	for _, cap := range accessModes {
+		if cap.GetMode() == subCaps.GetAccessMode().GetMode() {
 			return true
 		}
 	}
 	return false
 }
 
-func ContainsVolumeCapabilities(accessModes []*csi.VolumeCapability_AccessMode, subCaps []*csi.VolumeCapability) bool{
-	for _, v:=range subCaps{
-		if !ContainsVolumeCapability(accessModes, v){
+func ContainsVolumeCapabilities(accessModes []*csi.VolumeCapability_AccessMode, subCaps []*csi.VolumeCapability) bool {
+	for _, v := range subCaps {
+		if !ContainsVolumeCapability(accessModes, v) {
 			return false
 		}
 	}
 	return true
 }
 
-func ContainsNodeServiceCapability(nodeCaps []*csi.NodeServiceCapability, subCap csi.NodeServiceCapability_RPC_Type) bool{
+func ContainsNodeServiceCapability(nodeCaps []*csi.NodeServiceCapability, subCap csi.NodeServiceCapability_RPC_Type) bool {
 	for _, v := range nodeCaps {
 		if strings.Contains(v.String(), subCap.String()) {
 			return true

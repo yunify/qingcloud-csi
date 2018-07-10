@@ -6,8 +6,6 @@ import (
 	"github.com/kubernetes-csi/drivers/pkg/csi-common"
 )
 
-
-
 const version = "0.2.0"
 
 var blockVolumes map[string]blockVolume

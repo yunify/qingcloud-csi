@@ -2,21 +2,24 @@ package block
 
 import (
 	"runtime"
-	"strconv"
 	"testing"
 )
 
-var getvp = func() *volumeManager {
+var (
+	volumeId1   string = "vol-5pmaukiv"
+	volumeName1 string = "qingcloud-csi-test"
+	instanceId1 string = "i-msu2th7i"
+	instanceId2 string = "i-hgz8mri2"
+)
+
+var getvm = func() VolumeManager {
 	// get storage class
 	var filepath string
-	if runtime.GOOS == "windows" {
-		filepath = "C:\\Users\\wangx\\Documents\\config.json"
-	}
 	if runtime.GOOS == "linux" {
-		filepath = "/root/config.json"
+		filepath = "../../ut-config.yaml"
 	}
 	if runtime.GOOS == "darwin" {
-		filepath = "./config.yaml"
+		filepath = "../../ut-config.yaml"
 	}
 	qcConfig, err := ReadConfigFromFile(filepath)
 	if err != nil {
@@ -31,145 +34,313 @@ var getvp = func() *volumeManager {
 }
 
 func TestFindVolume(t *testing.T) {
+	vm := getvm()
+	_, err := vm.FindVolume(volumeId1)
+	if err != nil {
+		t.Error(err.Error())
+	}
 	// testcase
 	testcase := []struct {
-		id    string
-		exist bool
+		name   string
+		id     string
+		result bool
 	}{
-		{"vol-fhlkhxpr", true},
-		{"vol-vol-fhlkhxpw", false},
+		{
+			name:   "Avaiable",
+			id:     volumeId1,
+			result: true,
+		},
+		{
+			name:   "Not found",
+			id:     volumeId1 + "fake",
+			result: false,
+		},
+		{
+			name:   "By name",
+			id:     volumeName1,
+			result: false,
+		},
 	}
 
-	vp := getvp()
 	// test findVolume
 	for _, v := range testcase {
-		flag, err := vp.FindVolume(v.id)
+		vol, err := vm.FindVolume(v.id)
 		if err != nil {
 			t.Error("find volume error: ", err.Error())
 		}
-		if (flag != nil) == v.exist {
-			t.Logf("volume id %s, expect %t, actually %t", v.id, v.exist, flag != nil)
-		} else {
-			t.Errorf("volume id %s, expect %t, actually %t", v.id, v.exist, flag != nil)
+		res := (vol != nil)
+		if res != v.result {
+			t.Errorf("name: %s, expect %t, actually %t", v.name, v.result, res)
 		}
 	}
 }
 
 func TestFindVolumeByName(t *testing.T) {
 	testcase := []struct {
-		name  string
-		exist bool
+		name     string
+		testname string
+		result   bool
 	}{
-		{"hp-test", true},
-		{"hp-test-false", false},
-		{"sanity", false},
+		{
+			name:     "Avaiable",
+			testname: volumeName1,
+			result:   true,
+		},
+		{
+			name:     "Ceased",
+			testname: "sanity",
+			result:   false,
+		},
+		{
+			name:     "Volume id",
+			testname: volumeId1,
+			result:   false,
+		},
+		{
+			name:     "Substring",
+			testname: string((volumeName1)[:2]),
+			result:   false,
+		},
+		{
+			name:     "Null string",
+			testname: "",
+			result:   false,
+		},
 	}
 
-	vp := getvp()
+	vm := getvm()
 	// test findVolume
 	for _, v := range testcase {
-		flag, err := vp.FindVolumeByName(v.name)
+		vol, err := vm.FindVolumeByName(v.testname)
 		if err != nil {
 			t.Error("find volume error: ", err.Error())
 		}
-		if (flag != nil) == v.exist {
-			t.Logf("volume id %s, expect %t, actually %t", v.name, v.exist, flag != nil)
-		} else {
-			t.Errorf("volume id %s, expect %t, actually %t", v.name, v.exist, flag != nil)
+		res := (vol != nil)
+		if res != v.result {
+			t.Errorf("name %s, expect %t, actually %t", v.name, v.testname, res)
 		}
 	}
 }
 
 func TestCreateVolume(t *testing.T) {
-	// storageclass
+
 	sc := NewDefaultQingStorageClass()
-	// testcase
-	testcase := []struct {
-		vc            blockVolume
-		createSuccess bool
+	vm := getvm()
+
+	testcases := []struct {
+		name    string
+		volName string
+		reqSize int
+		result  bool
+		volId   string
 	}{
-		{blockVolume{VolName: "pvc-test-", VolSize: 12}, true},
-		{blockVolume{VolName: "pvc-test-", VolSize: 121}, true},
-		{blockVolume{VolName: "pvc-test-", VolSize: -1}, true},
+		{
+			name:    "create volume name test-1",
+			volName: "test-1",
+			reqSize: 1,
+			result:  true,
+			volId:   "",
+		},
+		{
+			name:    "create volume name test-1 repeatedly",
+			volName: "test-1",
+			reqSize: 3,
+			result:  false,
+			volId:   "",
+		},
+		{
+			name:    "create volume name test-2",
+			volName: "test-2",
+			reqSize: 20,
+			result:  true,
+			volId:   "",
+		},
 	}
-	vp := getvp()
-	for i, v := range testcase {
-		v.vc.VolName += strconv.Itoa(i)
-		volId, err := vp.CreateVolume(v.vc.VolName, v.vc.VolSize, *sc)
-		if (err == nil) == v.createSuccess {
-			t.Logf("testcase passed, %s", volId)
+	for i, v := range testcases {
+		volId, err := vm.CreateVolume(v.volName, v.reqSize, *sc)
+		if err != nil {
+			t.Errorf("test %s: %s", v.name, err.Error())
 		} else {
-			t.Error(err)
+			testcases[i].volId = volId
+			vol, _ := vm.FindVolume(volId)
+			if *vol.VolumeName != v.volName {
+				t.Errorf("test %s: expect %t", v.name, v.result)
+			}
 		}
 	}
-}
-
-func TestDeleteVolume(t *testing.T) {
-	vp := getvp()
-	// testcase
-	testcase := []struct {
-		id string
-	}{
-		{"vol-oaihhpgo"},
-		{"vol-wmxjlndr"},
-		{"vol-30ltz79j"},
-	}
-	for _, v := range testcase {
-		err := vp.DeleteVolume(v.id)
+	// clear process
+	for _, v := range testcases {
+		err := vm.DeleteVolume(v.volId)
 		if err != nil {
-			t.Error(err)
-		} else {
-			t.Logf("testcase delete %s success", v.id)
+			t.Errorf("test %s: delete error %s", v.name, err.Error())
 		}
 	}
 }
 
 func TestAttachVolume(t *testing.T) {
-	vp := getvp()
+	vm := getvm()
 	// testcase
 	testcases := []struct {
+		name       string
 		volumeId   string
 		instanceId string
-		result     bool
+		isError    bool
 	}{
-		{"vol-fhlkhxpr", "i-msu2th7i", true},
+		{
+			name:       "Attach success",
+			volumeId:   volumeId1,
+			instanceId: instanceId1,
+			isError:    false,
+		},
+		{
+			name:       "Attach repeatedly, idempotent",
+			volumeId:   volumeId1,
+			instanceId: instanceId1,
+			isError:    false,
+		},
+		{
+			name:       "Attach another instance",
+			volumeId:   volumeId1,
+			instanceId: instanceId2,
+			isError:    true,
+		},
+		{
+			name:       "Attach not exist instance",
+			volumeId:   volumeId1,
+			instanceId: "ins-123456",
+			isError:    true,
+		},
 	}
 	for _, v := range testcases {
-		err := vp.AttachVolume(v.volumeId, v.instanceId)
-		if err != nil {
-			t.Error(err)
-		} else {
-			t.Logf("testcase attach volume %s to instance %s success", v.volumeId, v.instanceId)
+		err := vm.AttachVolume(v.volumeId, v.instanceId)
+		if err != nil && !v.isError {
+			t.Errorf("error name %s: %s", v.name, err.Error())
 		}
 	}
 
 }
 
 func TestIsAttachedToInstance(t *testing.T) {
-	vp := getvp()
-	volumeID := "vol-fhlkhxpr"
-	instanceID := "i-msu2th7i"
-	flag, err := vp.IsAttachedToInstance(volumeID, instanceID)
-	if err != nil {
-		t.Error(err)
-	} else {
-		if flag == true {
-			t.Logf("volume %s is attached to instance %s", volumeID, instanceID)
-		} else {
-			t.Errorf("volume %s is not attached to instance %s", volumeID, instanceID)
+	vm := getvm()
+	testcases := []struct {
+		name       string
+		volumeId   string
+		instanceId string
+		result     bool
+		isError    bool
+	}{
+		{
+			name:       "Attach success",
+			volumeId:   volumeId1,
+			instanceId: instanceId1,
+			result:     true,
+			isError:    false,
+		},
+		{
+			name:       "Attach another instance",
+			volumeId:   volumeId1,
+			instanceId: instanceId2,
+			result:     false,
+			isError:    false,
+		},
+		{
+			name:       "Not found volume",
+			volumeId:   volumeId1 + "fake",
+			instanceId: instanceId1,
+			result:     false,
+			isError:    true,
+		},
+		{
+			name:       "Not found instance",
+			volumeId:   volumeId1,
+			instanceId: instanceId1 + "fake",
+			result:     false,
+			isError:    false,
+		},
+	}
+	for _, v := range testcases {
+		flag, err := vm.IsAttachedToInstance(v.volumeId, v.instanceId)
+		if err != nil {
+			if !v.isError {
+				t.Errorf("error name %s: %s", v.name, err.Error())
+			}
+		}
+		if flag != v.result {
+			t.Errorf("name %s: expect %t", v.name, v.result)
 		}
 	}
 }
 
 func TestDetachVolume(t *testing.T) {
-	vp := getvp()
-	volumeID := "vol-fhlkhxpr"
-	instanceID := "sedrf"
-	err := vp.DetachVolume(volumeID, instanceID)
-	if err != nil {
-		t.Error(err)
-	} else {
-		t.Logf("testcase detach volume %s from instance %s success",
-			volumeID, instanceID)
+	vm := getvm()
+	testcase := []struct {
+		name       string
+		volumeId   string
+		instanceId string
+		isError    bool
+	}{
+		{
+			name:       "detach normally",
+			volumeId:   volumeId1,
+			instanceId: instanceId1,
+			isError:    false,
+		},
+		{
+			name:       "detach repeatedly, idempotent",
+			volumeId:   volumeId1,
+			instanceId: instanceId1,
+			isError:    false,
+		},
+		{
+			name:       "volume not found",
+			volumeId:   "fake",
+			instanceId: instanceId1,
+			isError:    true,
+		},
+		{
+			name:       "instance not found",
+			volumeId:   volumeId1,
+			instanceId: "fake",
+			isError:    true,
+		},
+	}
+
+	for _, v := range testcase {
+		err := vm.DetachVolume(v.volumeId, v.instanceId)
+		if err != nil && !v.isError {
+			t.Errorf("error name %s: %s", v.name, err.Error())
+		}
+	}
+}
+
+func TestDeleteVolume(t *testing.T) {
+	vm := getvm()
+	// testcase
+	testcase := []struct {
+		name    string
+		id      string
+		isError bool
+	}{
+		{
+			name:    "delete first volume",
+			id:      volumeId1,
+			isError: false,
+		},
+		{
+			name:    "delete first volume repeatedly",
+			id:      volumeId1,
+			isError: true,
+		},
+		{
+			name:    "delete not exist volume",
+			id:      "vol-1234567",
+			isError: true,
+		},
+	}
+	for _, v := range testcase {
+		err := vm.DeleteVolume(v.id)
+		if err != nil && !v.isError {
+			t.Errorf("error name %s: %s", v.name, err.Error())
+		}
 	}
 }

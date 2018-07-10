@@ -19,12 +19,24 @@ const (
 	BlockVolume_Status_CEASED    string = "ceased"
 )
 
+type VolumeManager interface {
+	FindVolume(id string) (volume *qcservice.Volume, err error)
+	FindVolumeByName(name string) (volume *qcservice.Volume, err error)
+	CreateVolume(volumeName string, requestSize int, sc qingStorageClass) (volumeId string, err error)
+	DeleteVolume(id string) error
+	IsAttachedToInstance(volumeId string, instanceId string) (flag bool, err error)
+	AttachVolume(volumeId string, instanceId string) error
+	DetachVolume(volumeId string, instanceId string) error
+	GetZone() string
+	waitJob(jobId string) error
+}
+
 type volumeManager struct {
 	volumeService *qcservice.VolumeService
 	jobService    *qcservice.JobService
 }
 
-func NewVolumeManagerWithConfig(config *qcconfig.Config) (*volumeManager, error) {
+func NewVolumeManagerWithConfig(config *qcconfig.Config) (VolumeManager, error) {
 	// initial qingcloud iaas service
 	qs, err := qcservice.Init(config)
 	if err != nil {
@@ -43,7 +55,7 @@ func NewVolumeManagerWithConfig(config *qcconfig.Config) (*volumeManager, error)
 	return &vp, nil
 }
 
-func NewVolumeManager() (*volumeManager, error) {
+func NewVolumeManager() (VolumeManager, error) {
 	config, err := ReadConfigFromFile(ConfigFilePath)
 	if err != nil {
 		return nil, err
@@ -105,10 +117,16 @@ func (vm *volumeManager) FindVolume(id string) (volume *qcservice.Volume, err er
 }
 
 // Find volume by volume name
+// In Qingcloud IaaS platform, it is possible that two volumes have the same name.
+// In Kubernetes, the CO will set a unique PV name.
+// CSI driver take the PV name as a volume name.
 // Return: 	nil, 		nil: 	not found volumes
 //			volumes,	nil:	found volume
 //			nil,		error:	internal error
 func (vm *volumeManager) FindVolumeByName(name string) (volume *qcservice.Volume, err error) {
+	if len(name) == 0 {
+		return nil, nil
+	}
 	// Set input arguements
 	input := qcservice.DescribeVolumesInput{}
 	input.SearchWord = &name
@@ -268,6 +286,7 @@ func (vm *volumeManager) AttachVolume(volumeId string, instanceId string) error 
 }
 
 // detach volume
+// idempotent
 func (vm *volumeManager) DetachVolume(volumeId string, instanceId string) error {
 	zone := *vm.volumeService.Properties.Zone
 	// check volume status
@@ -307,6 +326,13 @@ func (vm *volumeManager) DetachVolume(volumeId string, instanceId string) error 
 			return fmt.Errorf("Volume %s has been attached to another instance %s", volumeId, *vol.Instance.InstanceID)
 		}
 	}
+}
+
+func (vm *volumeManager) GetZone() string {
+	if vm == nil || vm.volumeService == nil || vm.volumeService.Properties == nil || vm.volumeService.Properties.Zone == nil {
+		return ""
+	}
+	return *vm.volumeService.Properties.Zone
 }
 
 func (vm *volumeManager) waitJob(jobId string) error {

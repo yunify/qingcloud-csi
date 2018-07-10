@@ -71,9 +71,9 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	}
 	if exVol != nil {
 		glog.Infof("Request volume name: %s, capacity range [%d,%d] bytes, type: %d, zone: %s",
-			volumeName, requireByte, limitByte, sc.VolumeType, vm.volumeService.Config.Zone)
+			volumeName, requireByte, limitByte, sc.VolumeType, vm.GetZone())
 		glog.Infof("Exist volume name: %s, id: %s, capacity: %d GB, type: %d, zone: %s",
-			*exVol.VolumeName, *exVol.VolumeID, GbToByte(*exVol.Size), *exVol.VolumeType, vm.volumeService.Config.Zone)
+			*exVol.VolumeName, *exVol.VolumeID, GbToByte(*exVol.Size), *exVol.VolumeType, vm.GetZone())
 		if *exVol.Size >= requireGb && int64(*exVol.Size)*gib <= limitByte && *exVol.VolumeType == sc.VolumeType {
 			// exisiting volume is compatible with new request and should be reused.
 			return &csi.CreateVolumeResponse{
@@ -89,7 +89,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	}
 
 	// do create volume
-	glog.Infof("Creating volume %s with %d GB in zone %s...", volumeName, requireGb, vm.volumeService.Config.Zone)
+	glog.Infof("Creating volume %s with %d GB in zone %s...", volumeName, requireGb, vm.GetZone())
 	volumeId, err := vm.CreateVolume(volumeName, requireGb, *sc)
 	if err != nil {
 		return nil, err
@@ -141,14 +141,14 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 		return nil, status.Errorf(codes.FailedPrecondition, "volume is in use by another resource")
 	}
 	// Do delete volume
-	glog.Infof("Deleting volume %s status %s in zone %s...", volumeId, *volInfo.Status, vm.volumeService.Config.Zone)
+	glog.Infof("Deleting volume %s status %s in zone %s...", volumeId, *volInfo.Status, vm.GetZone())
 	// When return with retry message at deleting volume, retry after several seconds.
 	// Retry times is 10.
 	// Retry interval is changed from 1 second to 10 seconds.
 	for i := 1; i <= 10; i++ {
 		err = vm.DeleteVolume(volumeId)
 		if err != nil {
-			glog.Infof("Failed to delete block volume: %s in %s with error: %v", volumeId, vm.volumeService.Config.Zone, err)
+			glog.Infof("Failed to delete block volume: %s in %s with error: %v", volumeId, vm.GetZone(), err)
 			if strings.Contains(err.Error(), RetryString) {
 				time.Sleep(time.Duration(i) * time.Second)
 			} else {
@@ -227,7 +227,7 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	}
 	// 1. Attach
 	// attach volume
-	glog.Infof("Attaching volume %s to instance %s in zone %s...", volumeId, nodeId, vm.volumeService.Config.Zone)
+	glog.Infof("Attaching volume %s to instance %s in zone %s...", volumeId, nodeId, vm.GetZone())
 	err = vm.AttachVolume(volumeId, nodeId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -285,7 +285,7 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 	}
 
 	// do detach
-	glog.Infof("Detaching volume %s to instance %s in zone %s...", volumeId, nodeId, vm.volumeService.Config.Zone)
+	glog.Infof("Detaching volume %s to instance %s in zone %s...", volumeId, nodeId, vm.GetZone())
 	err = vm.DetachVolume(volumeId, nodeId)
 	if err != nil {
 		glog.Errorf("failed to detach block image: %s from instance %s with error: %v",
