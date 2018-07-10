@@ -19,6 +19,15 @@ const (
 	OperationWaitTimeout = 180 * time.Second
 )
 
+const (
+	kib    int64 = 1024
+	mib    int64 = kib * 1024
+	gib    int64 = mib * 1024
+	gib100 int64 = gib * 100
+	tib    int64 = gib * 1024
+	tib100 int64 = tib * 100
+)
+
 var instanceIdFromFile string
 
 func CreatePath(persistentStoragePath string) error {
@@ -60,25 +69,27 @@ func ReadConfigFromFile(filePath string) (*qcconfig.Config, error) {
 	return config, nil
 }
 
-func HasSameVolumeAccessMode(accessMode []*csi.VolumeCapability_AccessMode, cap []*csi.VolumeCapability) bool {
-	for _, c := range cap {
-		found := false
-		for _, c1 := range accessMode {
-			if c1.GetMode() == c.GetAccessMode().GetMode() {
-				found = true
-			}
+func ContainsVolumeCapability(accessModes []*csi.VolumeCapability_AccessMode, subCaps *csi.VolumeCapability) bool{
+	for _, cap := range accessModes{
+		if cap.GetMode() == subCaps.GetAccessMode().GetMode(){
+			return true
 		}
-		if !found {
+	}
+	return false
+}
+
+func ContainsVolumeCapabilities(accessModes []*csi.VolumeCapability_AccessMode, subCaps []*csi.VolumeCapability) bool{
+	for _, v:=range subCaps{
+		if !ContainsVolumeCapability(accessModes, v){
 			return false
 		}
 	}
 	return true
 }
 
-func HasNodeServiceCapability(capabilities []*csi.NodeServiceCapability, cap csi.NodeServiceCapability_RPC_Type) bool {
-	for _, v := range capabilities {
-		glog.Info(v.String(), cap.String())
-		if strings.Contains(v.String(), cap.String()) {
+func ContainsNodeServiceCapability(nodeCaps []*csi.NodeServiceCapability, subCap csi.NodeServiceCapability_RPC_Type) bool{
+	for _, v := range nodeCaps {
+		if strings.Contains(v.String(), subCap.String()) {
 			return true
 		}
 	}
@@ -101,15 +112,4 @@ func ByteCeilToGb(num int64) int {
 		res += 1
 	}
 	return int(res)
-}
-
-func GbGreatThanByte(gb int, byte int64) int {
-	gb_int64 := GbToByte(gb)
-	if gb_int64 < byte {
-		return -1
-	} else if gb_int64 == byte {
-		return 0
-	} else {
-		return 1
-	}
 }

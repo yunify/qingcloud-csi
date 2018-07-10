@@ -30,7 +30,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	// Required volume capability
 	if req.VolumeCapabilities == nil {
 		return nil, status.Error(codes.InvalidArgument, "Volume capabilities missing in request")
-	} else if !HasSameVolumeAccessMode(cs.Driver.GetVolumeCapabilityAccessModes(), req.GetVolumeCapabilities()) {
+	} else if !ContainsVolumeCapabilities(cs.Driver.GetVolumeCapabilityAccessModes(), req.GetVolumeCapabilities()) {
 		return nil, status.Error(codes.InvalidArgument, "Volume capabilities not match")
 	}
 	// Check sanity of request Name, Volume Capabilities
