@@ -6,15 +6,6 @@ import (
 	"github.com/kubernetes-csi/drivers/pkg/csi-common"
 )
 
-const (
-	kib    int64 = 1024
-	mib    int64 = kib * 1024
-	gib    int64 = mib * 1024
-	gib100 int64 = gib * 100
-	tib    int64 = gib * 1024
-	tib100 int64 = tib * 100
-)
-
 const version = "0.2.0"
 
 var blockVolumes map[string]blockVolume
