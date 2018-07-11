@@ -35,6 +35,9 @@ func NewQingStorageClassFromMap(opt map[string]string) (*qingStorageClass, error
 		if iMaxSize, err := strconv.Atoi(sMaxSize); err != nil {
 			return nil, err
 		} else {
+			if iMaxSize < 0 {
+				return nil, fmt.Errorf("MaxSize must not less than zero")
+			}
 			sc.VolumeMaxSize = iMaxSize
 		}
 	}
@@ -44,18 +47,21 @@ func NewQingStorageClassFromMap(opt map[string]string) (*qingStorageClass, error
 		if iMinSize, err := strconv.Atoi(sMinSize); err != nil {
 			return nil, err
 		} else {
+			if iMinSize < 0 {
+				return nil, fmt.Errorf("MinSize must not less than zero")
+			}
 			sc.VolumeMinSize = iMinSize
 		}
 	}
 
 	// Ensure volume minSize less than volume maxSize
-	if sc.VolumeMinSize >= sc.VolumeMaxSize {
-		return nil, fmt.Errorf("Volume minSize must less than volume maxSize")
+	if sc.VolumeMaxSize < sc.VolumeMinSize {
+		return nil, fmt.Errorf("Volume maxSize must greater than or equal to volume minSize")
 	}
 	return sc, nil
 }
 
-func (sc qingStorageClass) formatVolumeSize(size int) int {
+func (sc qingStorageClass) FormatVolumeSize(size int) int {
 	if size <= sc.VolumeMinSize {
 		return sc.VolumeMinSize
 	} else if size >= sc.VolumeMaxSize {
@@ -63,6 +69,9 @@ func (sc qingStorageClass) formatVolumeSize(size int) int {
 	}
 	if size%10 != 0 {
 		size = (size/10 + 1) * 10
+	}
+	if size >= sc.VolumeMaxSize {
+		return sc.VolumeMaxSize
 	}
 	return size
 }

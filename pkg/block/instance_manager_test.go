@@ -5,50 +5,60 @@ import (
 	"testing"
 )
 
-var getim = func() *instanceManager {
+var getim = func() InstanceManager {
 	// get storage class
 	var filepath string
 	if runtime.GOOS == "windows" {
-		filepath = "C:\\Users\\wangx\\Documents\\config.yaml"
+		filepath = "../../ut-config.yaml"
 	}
 	if runtime.GOOS == "linux" {
-		filepath = "/root/config.yaml"
+		filepath = "../../ut-config.yaml"
 	}
 	if runtime.GOOS == "darwin" {
-		filepath = "./config.yaml"
+		filepath = "../../ut-config.yaml"
 	}
-	config, err := ReadConfigFromFile(filepath)
+	qcConfig, err := ReadConfigFromFile(filepath)
 	if err != nil {
 		return nil
 	}
-	im, err := NewInstanceManagerWithConfig(config)
+	im, err := NewInstanceManagerWithConfig(qcConfig)
 	if err != nil {
 		return nil
 	}
+
 	return im
 }
 
 func TestFindInstance(t *testing.T) {
-	// testcase
-	testcase := []struct {
-		id    string
-		exist bool
-	}{
-		{"i-hgz8mri2", true},
-		{"i-hgz8mri3", false},
-	}
-
 	im := getim()
-	// test findVolume
-	for _, v := range testcase {
-		flag, err := im.FindInstance(v.id)
+	testcases := []struct {
+		name  string
+		id    string
+		found bool
+	}{
+		{
+			name:  "Avaiable",
+			id:    instanceId1,
+			found: true,
+		},
+		{
+			name:  "Not found",
+			id:    "instance-1234",
+			found: false,
+		},
+		{
+			name:  "By name",
+			id:    "neonsan-test",
+			found: false,
+		},
+	}
+	for _, v := range testcases {
+		ins, err := im.FindInstance(v.id)
 		if err != nil {
-			t.Error("find instance error: ", err.Error())
+			t.Errorf("name %s error: %s", v.name, err.Error())
 		}
-		if (flag != nil) == v.exist {
-			t.Logf("instance id %s, expect %t, actually %t", v.id, v.exist, flag != nil)
-		} else {
-			t.Errorf("instance id %s, expect %t, actually %t", v.id, v.exist, flag != nil)
+		if v.found && *ins.InstanceID != v.id {
+			t.Errorf("name %s: find id error")
 		}
 	}
 }

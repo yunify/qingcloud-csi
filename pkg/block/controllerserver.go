@@ -51,7 +51,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	}
 	// get request volume capacity range
 	requireByte := req.GetCapacityRange().GetRequiredBytes()
-	requireGb := sc.formatVolumeSize(ByteCeilToGb(requireByte))
+	requireGb := sc.FormatVolumeSize(ByteCeilToGb(requireByte))
 	limitByte := req.GetCapacityRange().GetLimitBytes()
 	if limitByte == 0 {
 		limitByte = Int64_Max

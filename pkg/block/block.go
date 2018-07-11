@@ -8,8 +8,6 @@ import (
 
 const version = "0.2.0"
 
-var blockVolumes map[string]blockVolume
-
 type block struct {
 	driver *csicommon.CSIDriver
 
