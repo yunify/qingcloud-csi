@@ -47,12 +47,12 @@ func NewVolumeManagerWithConfig(config *qcconfig.Config) (VolumeManager, error) 
 	// create job service
 	js, _ := qs.Job(config.Zone)
 	// initial volume provisioner
-	vp := volumeManager{
+	vm := volumeManager{
 		volumeService: vs,
 		jobService:    js,
 	}
 	glog.Infof("Finished new volume manager")
-	return &vp, nil
+	return &vm, nil
 }
 
 func NewVolumeManager() (VolumeManager, error) {
@@ -70,12 +70,12 @@ func NewVolumeManager() (VolumeManager, error) {
 	// create job service
 	js, _ := qs.Job(config.Zone)
 	// initial volume provisioner
-	vp := volumeManager{
+	vm := volumeManager{
 		volumeService: vs,
 		jobService:    js,
 	}
 	glog.Infof("Finished new volume manager")
-	return &vp, nil
+	return &vm, nil
 }
 
 // Find volume by volume ID
@@ -162,7 +162,7 @@ func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc qin
 	count := 1
 	input.Count = &count
 	// volume provisioner size
-	size := sc.formatVolumeSize(requestSize)
+	size := sc.FormatVolumeSize(requestSize)
 	input.Size = &size
 	// create volume name
 	input.VolumeName = &volumeName

@@ -16,12 +16,16 @@ const (
 	Instance_Status_CEASED     string = "ceased"
 )
 
+type InstanceManager interface {
+	FindInstance(id string) (instance *qcservice.Instance, err error)
+}
+
 type instanceManager struct {
 	instanceService *qcservice.InstanceService
 	jobService      *qcservice.JobService
 }
 
-func NewInstanceManagerWithConfig(config *qcconfig.Config) (*instanceManager, error) {
+func NewInstanceManagerWithConfig(config *qcconfig.Config) (InstanceManager, error) {
 	// initial qingcloud iaas service
 	qs, err := qcservice.Init(config)
 	if err != nil {
@@ -40,7 +44,7 @@ func NewInstanceManagerWithConfig(config *qcconfig.Config) (*instanceManager, er
 	return &im, nil
 }
 
-func NewInstanceManager() (*instanceManager, error) {
+func NewInstanceManager() (InstanceManager, error) {
 	// create config
 	config, err := ReadConfigFromFile(ConfigFilePath)
 	if err != nil {
