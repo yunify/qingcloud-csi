@@ -1,0 +1,87 @@
+# This YAML file contains all API objects that are necessary to run external
+# CSI provisioner.
+#
+# In production, this needs to be in separate files, e.g. service account and
+# role and role binding needs to be created once, while stateful set may
+# require some tuning.
+#
+# In addition, mock CSI driver is hardcoded as the CSI driver.
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: csi-qingcloud-controller
+  namespace: csi-qingcloud
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-qingcloud-provisioner
+  labels:
+    qingcloud.com/csi-controller: "true"
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "create", "delete", "update"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list", "watch", "create", "update", "patch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments"]
+    verbs: ["get", "list", "watch", "update"]
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-qingcloud-attacher
+  labels:
+    qingcloud.com/csi-controller: "true"
+rules:
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "update"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["volumeattachments"]
+    verbs: ["get", "list", "watch", "update"]
+
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-qingcloud-controller
+aggregationRule:
+  clusterRoleSelectors:
+  - matchLabels:
+      qingcloud.com/csi-controller: "true"
+rules: []
+
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-qingcloud-controller
+subjects:
+  - kind: ServiceAccount
+    name: csi-qingcloud-controller
+    namespace: csi-qingcloud
+roleRef:
+  kind: ClusterRole
+  name: csi-qingcloud-controller
+  apiGroup: rbac.authorization.k8s.io

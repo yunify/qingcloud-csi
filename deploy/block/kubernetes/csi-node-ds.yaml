@@ -1,0 +1,92 @@
+# This YAML file contains driver-registrar & csi driver nodeplugin API objects,
+# which are necessary to run csi nodeplugin for Qingcloud storage.
+
+kind: DaemonSet
+apiVersion: apps/v1beta2
+metadata:
+  name: csi-qingcloud-node
+  namespace: csi-qingcloud
+spec:
+  selector:
+    matchLabels:
+      app: csi-qingcloud
+      tier: node
+  template:
+    metadata:
+      labels:
+        app: csi-qingcloud
+        tier: node
+    spec:
+      serviceAccount: csi-qingcloud-node
+      hostNetwork: true
+      imagePullSecrets:
+        - name: csi-registry
+      containers:
+        - name: driver-registrar
+          image: quay.io/k8scsi/driver-registrar:v0.2.0
+          args:
+            - "--v=5"
+            - "--csi-address=$(ADDRESS)"
+          env:
+            - name: ADDRESS
+              value: /var/lib/kubelet/plugins/csi-qingcloud/csi.sock
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /var/lib/kubelet/plugins/csi-qingcloud
+        - name: csi-qingcloud
+          securityContext:
+            privileged: true
+            capabilities:
+              add: ["SYS_ADMIN"]
+            allowPrivilegeEscalation: true
+          image: dockerhub.qingcloud.com/wiley/csi-qingcloud:v0.2.0.1
+          args :
+            - "--nodeid=$(NODE_ID)"
+            - "--endpoint=$(CSI_ENDPOINT)"
+            - "--v=5"
+            - "--drivername=csi-qingcloud"
+          env:
+            - name: NODE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: CSI_ENDPOINT
+              value: unix://var/lib/kubelet/plugins/csi-qingcloud/csi.sock
+          imagePullPolicy: "Always"
+          volumeMounts:
+            - name: plugin-dir
+              mountPath: /var/lib/kubelet/plugins/csi-qingcloud
+            - name: mount-dir
+              mountPath: /var/lib/kubelet
+              mountPropagation: "Bidirectional"
+            - name: dev-dir
+              mountPath: /dev
+              mountPropagation: "HostToContainer"
+            - name: instance-id
+              mountPath: /etc/qingcloud
+              readOnly: true
+            - name: server-config
+              mountPath: /root
+      volumes:
+        # make sure mount propagate feature gate is enabled
+        - name: mount-dir
+          hostPath:
+            path: /var/lib/kubelet
+        - name: plugin-dir
+          hostPath:
+            path: /var/lib/kubelet/plugins/csi-qingcloud
+            type: DirectoryOrCreate
+        - name: dev-dir
+          hostPath:
+            path: /dev
+            type: Directory
+        - name: instance-id
+          hostPath:
+            path: /etc/qingcloud
+        - name: server-config
+          configMap:
+            name: csi-qingcloud
