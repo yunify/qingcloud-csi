@@ -9,9 +9,6 @@ QingCloud CSI plugin implements an interface between Container Storage Interface
 
 ## Block Plugin
 
-### Configuration
-- StorageClass: set the name and other parameters of your block storage server
-
 ### Compiling
 QingCloud CSI plugin can be complied as a binary file or a container.  We can get a binary file in _output folder. When compiled as a container, the image is stored in a local Docker's image store.
 
@@ -28,65 +25,56 @@ $ make blockplugin-container
 You can find image in your local image store
 ```
 $ docker images | grep csi-qingcloud
-csi-qingcloud		v0.2.0		640a9519e59b		55 minutes ago		332MB
+dockerhub.qingcloud.com/wiley/csi-qingcloud		latest		640a9519e59b		55 minutes ago		333MB
 ```
+
+### Configuration
+- [ConfigMap](deploy/block/kubernetes/csi-ns-cm.yaml): set parameters of accessing storage server
+- [StorageClass](deploy/block/kubernetes/sc.yaml): set creating volume parameters
+- [Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation): DO NOT disable this feature gate
 
 ### Deploying
-- Deploy helper containers that the Kubernetes team provides.
+`Tips: This guide will create a namespace named csi-qingcloud and deploy CSI plugin in this namespace. You can modify yaml files mentioned below and deploy the plugin in other namespace.`
+
+- Create csi-qingcloud namespace and configmap
 ```
-$ kubectl create -f deploy/block/kubernetes/csi-provisioner.yaml
-$ kubectl create -f deploy/block/kubernetes/csi-attacher.yaml
+$ kubectl create -f deploy/block/kubernetes/csi-ns-cm.yaml
 ```
 
-- Deploy CSI plugin that storage vendor provides.
+- Create Docker image registry secret
 ```
-$ kubectl create -f deploy/block/kubernetes/csi-qingcloud.yaml
+kubectl create secret docker-registry csi-registry --docker-server=dockerhub.qingcloud.com --docker-username=<YOUR_USERNAME> --docker-password=<YOUR_PASSWORD> --docker-email=<YOUR_EMAIL> --namespace=csi-qingcloud
 ```
 
+- Create object releated to access control
+```
+$ kubectl create -f deploy/block/kubernetes/csi-controller-rbac.yaml
+$ kubectl create -f deploy/block/kubernetes/csi-node-rbac.yaml
+```
+
+- Deploy CSI plugin
+```
+$ kubectl create -f deploy/block/kubernetes/csi-controller-sts.yaml
+$ kubectl create -f deploy/block/kubernetes/csi-node-ds.yaml
+```
+
+- Check status of CSI plugin
+```
+$ kubectl get pods -n csi-qingcloud | grep csi
+csi-qingcloud-controller-0      3/3       Running       0          5m
+csi-qingcloud-node-kks3q        2/2       Running       0          2m
+csi-qingcloud-node-pgsbn        2/2       Running       0          2m
+```
+
+### Verification
 - Create storage class by Kubernetes cluster administrator
 ```
 $ kubectl create -f deploy/block/kubernetes/sc.yaml
 ```
 
-- Check status of CSI plugin
-```
-$ kubectl get pods | grep csi
-csi-attacher-0        1/1       Running       0          3d
-csi-provisioner-0     1/1       Running       0          3d
-csi-qingcloud-pgsbn   2/2       Running       0          1h
-```
-
-### Verification
 - Create PVC
 ```
 $ kubectl create -f deploy/block/kubernetes/pvc.yaml
-```
-
-- Check PVC and PV
-```
-$ kubectl get pvc
-NAME            STATUS    VOLUME                 CAPACITY   ACCESS MODES   STORAGECLASS      AGE
-qingcloud-pvc   Bound     pvc-77a1e29168ab11e8   10Gi       RWO            csi-qingcloud     22s
-
-$ kubectl describe pv pvc-77a1e29168ab11e8
-Name:            pvc-77a1e29168ab11e8
-Labels:          <none>
-Annotations:     pv.kubernetes.io/provisioned-by=csi-qingcloud
-Finalizers:      [kubernetes.io/pv-protection]
-StorageClass:    csi-qingcloud
-Status:          Bound
-Claim:           default/qingcloud-pvc
-Reclaim Policy:  Delete
-Access Modes:    RWO
-Capacity:        10Gi
-Node Affinity:   <none>
-Message:         
-Source:
-    Type:          CSI (a Container Storage Interface (CSI) volume source)
-    Driver:        csi-qingcloud
-    VolumeHandle:  vol-8o3x8lvh
-    ReadOnly:      false
-Events:            <none>
 ```
 
 - Create deployment mounting PVC
@@ -97,7 +85,7 @@ $ kubectl create -f deploy/block/kubernetes/deploy.yaml
 - Check deploy
 ```
 $ kubectl get po | grep deploy
-deploy-nginx-qingcloud-84474cf674-zfhbs   1/1       Running   0          1m
+nginx-84474cf674-zfhbs   1/1       Running   0          1m
 ```
 
 ```

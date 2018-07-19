@@ -40,7 +40,7 @@ func CreatePath(persistentStoragePath string) error {
 	return nil
 }
 
-func ReadCurrentInstanceId() {
+func readCurrentInstanceId() {
 	bytes, err := ioutil.ReadFile(InstanceFilePath)
 	if err != nil {
 		glog.Errorf("Getting current instance-id error: %s", err.Error())
@@ -52,8 +52,8 @@ func ReadCurrentInstanceId() {
 }
 
 func GetCurrentInstanceId() string {
-	if instanceIdFromFile == "" {
-		ReadCurrentInstanceId()
+	if len(instanceIdFromFile) == 0 {
+		readCurrentInstanceId()
 	}
 	return instanceIdFromFile
 }

@@ -1,16 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: deploy-nginx-qingcloud
+  name: nginx
 spec:
   selector:
     matchLabels:
-      app: nginx-csi
+      app: nginx
+      tier: csi-qingcloud
   replicas: 1
   template:
     metadata:
       labels:
-        app: nginx-csi
+        app: nginx
+        tier: csi-qingcloud
     spec:
       containers:
       - name: nginx
@@ -21,6 +23,6 @@ spec:
       volumes:
       - name: mypvc
         persistentVolumeClaim:
-          claimName: qingcloud-pvc
+          claimName: pvc-test
           readOnly: false
 
