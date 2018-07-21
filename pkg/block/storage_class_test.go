@@ -18,11 +18,13 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				"type":    "0",
 				"maxSize": "1000",
 				"minSize": "10",
+				"fsType":  "ext4",
 			},
 			sc: qingStorageClass{
 				VolumeType:    0,
 				VolumeMaxSize: 1000,
 				VolumeMinSize: 10,
+				VolumeFsType:  FileSystem_EXT4,
 			},
 			isErr: false,
 		},
@@ -32,6 +34,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				"type":    "k",
 				"maxSize": "1000",
 				"minSize": "10",
+				"fsType":  "xfs",
 			},
 			sc:    qingStorageClass{},
 			isErr: true,
@@ -42,6 +45,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				"type":    "0",
 				"maxSize": "s",
 				"minSize": "10",
+				"fsType":  "xfs",
 			},
 			sc:    qingStorageClass{},
 			isErr: true,
@@ -52,6 +56,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				"type":    "0",
 				"maxSize": "1000",
 				"minSize": "1001",
+				"fsType":  "ext3",
 			},
 			sc:    qingStorageClass{},
 			isErr: true,
@@ -62,11 +67,13 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				"type":    "0",
 				"maxSize": "1000",
 				"minSize": "1000",
+				"fsType":  "ext4",
 			},
 			sc: qingStorageClass{
 				VolumeType:    0,
 				VolumeMaxSize: 1000,
 				VolumeMinSize: 1000,
+				VolumeFsType:  FileSystem_EXT4,
 			},
 			isErr: false,
 		},
@@ -76,9 +83,52 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				"type":    "0",
 				"maxSize": "1000",
 				"minSize": "-2",
+				"fsType":  "ext4",
 			},
 			sc:    qingStorageClass{},
 			isErr: true,
+		},
+		{
+			name: "input empty fsType",
+			mp: map[string]string{
+				"type":    "0",
+				"maxSize": "1000",
+				"minSize": "1000",
+				"fsType":  "",
+			},
+			sc: qingStorageClass{
+				VolumeType:    0,
+				VolumeMaxSize: 1000,
+				VolumeMinSize: 1000,
+				VolumeFsType:  FileSystem_EXT4,
+			},
+			isErr: true,
+		},
+		{
+			name: "input wrong fsType",
+			mp: map[string]string{
+				"type":    "0",
+				"maxSize": "1000",
+				"minSize": "1000",
+				"fsType":  "wrong",
+			},
+			sc: qingStorageClass{},
+			isErr: true,
+		},
+		{
+			name: "not input fsType",
+			mp: map[string]string{
+				"type":    "0",
+				"maxSize": "1000",
+				"minSize": "1000",
+			},
+			sc: qingStorageClass{
+				VolumeType:    0,
+				VolumeMaxSize: 1000,
+				VolumeMinSize: 1000,
+				VolumeFsType:  FileSystem_EXT4,
+			},
+			isErr: false,
 		},
 	}
 	for _, v := range testcases {
@@ -86,6 +136,8 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 		if err != nil {
 			if !v.isErr {
 				t.Errorf("name %s raise error: %s", v.name, err.Error())
+			}else{
+				t.Logf("name %s: expect error, error stirng %s", v.name, err.Error())
 			}
 		} else if v.isErr && err == nil {
 			t.Errorf("name %s: expect error occur %t, but actually %t", v.name, v.isErr, !v.isErr)
