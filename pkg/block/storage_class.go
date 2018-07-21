@@ -1,3 +1,19 @@
+// +-------------------------------------------------------------------------
+// | Copyright (C) 2018 Yunify, Inc.
+// +-------------------------------------------------------------------------
+// | Licensed under the Apache License, Version 2.0 (the "License");
+// | you may not use this work except in compliance with the License.
+// | You may obtain a copy of the License in the LICENSE file, or at:
+// |
+// | http://www.apache.org/licenses/LICENSE-2.0
+// |
+// | Unless required by applicable law or agreed to in writing, software
+// | distributed under the License is distributed on an "AS IS" BASIS,
+// | WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// | See the License for the specific language governing permissions and
+// | limitations under the License.
+// +-------------------------------------------------------------------------
+
 package block
 
 import (
@@ -6,18 +22,18 @@ import (
 )
 
 type qingStorageClass struct {
-	VolumeType   	int 		`json:"type"`
-	VolumeMaxSize	int 		`json:"maxSize"`
-	VolumeMinSize	int 		`json:"minSize"`
-	VolumeFsType	string		`json:"fsType",omitempty`
+	VolumeType    int    `json:"type"`
+	VolumeMaxSize int    `json:"maxSize"`
+	VolumeMinSize int    `json:"minSize"`
+	VolumeFsType  string `json:"fsType"`
 }
 
 func NewDefaultQingStorageClass() *qingStorageClass {
 	return &qingStorageClass{
-		VolumeType:   	0,
-		VolumeMaxSize:	500,
-		VolumeMinSize:	10,
-		VolumeFsType:	FileSystem_DEFAULT,
+		VolumeType:    0,
+		VolumeMaxSize: 500,
+		VolumeMinSize: 10,
+		VolumeFsType:  FileSystem_DEFAULT,
 	}
 }
 
@@ -35,7 +51,7 @@ func NewQingStorageClassFromMap(opt map[string]string) (*qingStorageClass, error
 	// Get volume FsType +optional
 	// Default is ext4
 	if sFsType, ok := opt["fsType"]; ok {
-		if !IsValidFileSystemType(sFsType){
+		if !IsValidFileSystemType(sFsType) {
 			return nil, fmt.Errorf("Does not support fsType \"%s\"", sFsType)
 		}
 		sc.VolumeFsType = sFsType

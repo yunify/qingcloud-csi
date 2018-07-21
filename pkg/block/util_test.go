@@ -1,3 +1,19 @@
+// +-------------------------------------------------------------------------
+// | Copyright (C) 2018 Yunify, Inc.
+// +-------------------------------------------------------------------------
+// | Licensed under the Apache License, Version 2.0 (the "License");
+// | you may not use this work except in compliance with the License.
+// | You may obtain a copy of the License in the LICENSE file, or at:
+// |
+// | http://www.apache.org/licenses/LICENSE-2.0
+// |
+// | Unless required by applicable law or agreed to in writing, software
+// | distributed under the License is distributed on an "AS IS" BASIS,
+// | WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// | See the License for the specific language governing permissions and
+// | limitations under the License.
+// +-------------------------------------------------------------------------
+
 package block
 
 import (
@@ -15,48 +31,60 @@ func TestContainsVolumeCapability(t *testing.T) {
 		{
 			name: "Driver: SINGLE_NODE_WRITER, Req: SINGLE_NODE_WRITER",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
+				&csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
 			},
 			capabilities: &csi.VolumeCapability{
-				AccessMode: &csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}},
+				AccessMode: &csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}},
 			result: true,
 		},
 		{
 			name: "Driver: SINGLE_NODE_WRITER, Req: MULTI_NODE_MULTI_WRITER",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
+				&csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
 			},
 			capabilities: &csi.VolumeCapability{
-				AccessMode: &csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER}},
+				AccessMode: &csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER}},
 			result: false,
 		},
 		{
 			name: "Driver: SINGLE_NODE_WRITER, MULTI_NODE_MULTI_WRITER, Req: MULTI_NODE_MULTI_WRITER",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
-				&csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER},
+				&csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
+				&csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER},
 			},
 			capabilities: &csi.VolumeCapability{
-				AccessMode: &csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER}},
+				AccessMode: &csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER}},
 			result: true,
 		},
 		{
 			name: "Driver: MULTI_NODE_MULTI_WRITER, MULTI_NODE_READER_ONLY, Req: MULTI_NODE_READER_ONLY",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER},
-				&csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY},
+				&csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER},
+				&csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY},
 			},
 			capabilities: &csi.VolumeCapability{
-				AccessMode: &csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY}},
+				AccessMode: &csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY}},
 			result: true,
 		},
 		{
 			name: "Driver: MULTI_NODE_READER_ONLY, Req: SINGLE_NODE_WRITER",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY},
+				&csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY},
 			},
 			capabilities: &csi.VolumeCapability{
-				AccessMode: &csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}},
+				AccessMode: &csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}},
 			result: false,
 		},
 	}
@@ -78,93 +106,114 @@ func TestContainsVolumeCapabilities(t *testing.T) {
 		{
 			name: "Driver: SINGLE_NODE_WRITER, Req: SINGLE_NODE_WRITER",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
+				&csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
 			},
 			capabilities: []*csi.VolumeCapability{
 				&csi.VolumeCapability{
-					AccessMode: &csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}},
+					AccessMode: &csi.VolumeCapability_AccessMode{
+						Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}},
 			},
 			result: true,
 		},
 		{
 			name: "Driver: SINGLE_NODE_WRITER, Req: MULTI_NODE_MULTI_WRITER",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
+				&csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
 			},
 			capabilities: []*csi.VolumeCapability{
 				&csi.VolumeCapability{
-					AccessMode: &csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER}},
+					AccessMode: &csi.VolumeCapability_AccessMode{
+						Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER}},
 			},
 		},
 		{
 			name: "Driver: SINGLE_NODE_WRITER, Req: MULTI_NODE_READER_ONLY",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
+				&csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
 			},
 			capabilities: []*csi.VolumeCapability{
 				&csi.VolumeCapability{
-					AccessMode: &csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY}},
+					AccessMode: &csi.VolumeCapability_AccessMode{
+						Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY}},
 			},
 		},
 		{
 			name: "Driver: SINGLE_NODE_WRITER, MULTI_NODE_MULTI_WRITER, Req: MULTI_NODE_MULTI_WRITER",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
-				&csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER},
+				&csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
+				&csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER},
 			},
 			capabilities: []*csi.VolumeCapability{
 				&csi.VolumeCapability{
-					AccessMode: &csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER}},
+					AccessMode: &csi.VolumeCapability_AccessMode{
+						Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER}},
 			},
 			result: true,
 		},
 		{
 			name: "Driver: MULTI_NODE_MULTI_WRITER, MULTI_NODE_READER_ONLY, Req: MULTI_NODE_READER_ONLY",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER},
-				&csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY},
+				&csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER},
+				&csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY},
 			},
 			capabilities: []*csi.VolumeCapability{
 				&csi.VolumeCapability{
-					AccessMode: &csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY}},
+					AccessMode: &csi.VolumeCapability_AccessMode{
+						Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY}},
 			},
 			result: true,
 		},
 		{
 			name: "Driver: MULTI_NODE_READER_ONLY, Req: SINGLE_NODE_WRITER",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY},
+				&csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY},
 			},
 			capabilities: []*csi.VolumeCapability{
 				&csi.VolumeCapability{
-					AccessMode: &csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}},
+					AccessMode: &csi.VolumeCapability_AccessMode{
+						Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}},
 			},
 			result: false,
 		},
 		{
 			name: "Driver: SINGLE_NODE_WRITER, Req: SINGLE_NODE_WRITER,MULTI_NODE_READER_ONLY",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
+				&csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
 			},
 			capabilities: []*csi.VolumeCapability{
 				&csi.VolumeCapability{
-					AccessMode: &csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}},
+					AccessMode: &csi.VolumeCapability_AccessMode{
+						Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}},
 				&csi.VolumeCapability{
-					AccessMode: &csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY}},
+					AccessMode: &csi.VolumeCapability_AccessMode{
+						Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY}},
 			},
 			result: false,
 		},
 		{
 			name: "Driver: SINGLE_NODE_WRITER, MULTI_NODE_WRITER, Req: MULTI_NODE_MULTI_WRITER, SINGLE_NODE_WRITER",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
-				&csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER},
+				&csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
+				&csi.VolumeCapability_AccessMode{
+					Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER},
 			},
 			capabilities: []*csi.VolumeCapability{
 				&csi.VolumeCapability{
-					AccessMode: &csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER}},
+					AccessMode: &csi.VolumeCapability_AccessMode{
+						Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER}},
 				&csi.VolumeCapability{
-					AccessMode: &csi.VolumeCapability_AccessMode{csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}},
+					AccessMode: &csi.VolumeCapability_AccessMode{
+						Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}},
 			},
 			result: true,
 		},
@@ -270,41 +319,41 @@ func TestByteCeilToGb(t *testing.T) {
 }
 
 func TestIsValidFileSystemType(t *testing.T) {
-	testcases := []struct{
-		name	string
-		fsType	string
-		expect 	bool
+	testcases := []struct {
+		name   string
+		fsType string
+		expect bool
 	}{
 		{
-			name:		"EXT3",
-			fsType: 	FileSystem_EXT3,
-			expect: 	true,
+			name:   "EXT3",
+			fsType: FileSystem_EXT3,
+			expect: true,
 		},
 		{
-			name:		"EXT4",
-			fsType: 	FileSystem_EXT4,
-			expect: 	true,
+			name:   "EXT4",
+			fsType: FileSystem_EXT4,
+			expect: true,
 		},
 		{
-			name:		"XFS",
-			fsType: 	FileSystem_XFS,
-			expect: 	true,
+			name:   "XFS",
+			fsType: FileSystem_XFS,
+			expect: true,
 		},
 		{
-			name:		"ext5",
-			fsType:		"ext5",
-			expect: 	false,
+			name:   "ext5",
+			fsType: "ext5",
+			expect: false,
 		},
 		{
-			name:		"NTFS",
-			fsType:		"NTFS",
-			expect: 	false,
+			name:   "NTFS",
+			fsType: "NTFS",
+			expect: false,
 		},
 	}
 
-	for _, v:= range testcases{
+	for _, v := range testcases {
 		res := IsValidFileSystemType(v.fsType)
-		if res != v.expect{
+		if res != v.expect {
 			t.Errorf("test %s: expect %t, but actually %t", v.name, v.expect, res)
 		}
 	}

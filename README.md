@@ -5,7 +5,7 @@
 Kubernetes volume plugin based on CSI specification which support block storage of qingcloud
 
 ## Description
-QingCloud CSI plugin implements an interface between Container Storage Interface([CSI](https://github.com/container-storage-interface/)) enabled Container Orchestrator(CO) and the storage of QingCloud. Currently, QingCloud CSI plugin is tested in Kubernetes v1.10.0+ environment and should be able to work in any CSI enabled CO.
+QingCloud CSI plugin implements an interface between Container Storage Interface([CSI](https://github.com/container-storage-interface/)) enabled Container Orchestrator(CO) and the storage of QingCloud. Currently, QingCloud CSI plugin has been passed the [CSI test](https://github.com/kubernetes-csi/csi-test) in Kubernetes v1.10 environment.
 
 ## Block Plugin
 
@@ -29,17 +29,28 @@ dockerhub.qingcloud.com/wiley/csi-qingcloud		latest		640a9519e59b		55 minutes ag
 ```
 
 ### Configuration
-- [ConfigMap](deploy/block/kubernetes/csi-ns-cm.yaml): set parameters of accessing storage server
-- [StorageClass](deploy/block/kubernetes/sc.yaml): set creating volume parameters
-- [Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation): DO NOT disable this feature gate
+- [ConfigMap](deploy/block/kubernetes/config.yaml): Set parameters about accessing storage server.
+- [StorageClass](deploy/block/kubernetes/sc.yaml): Set creating volume parameters.
+- [Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation): DO NOT disable this feature gate.
 
-### Deploying
-`Tips: This guide will create a namespace named csi-qingcloud and deploy CSI plugin in this namespace. You can modify yaml files mentioned below and deploy the plugin in other namespace.`
+> Notes: When deploy this plugin in QingCloud AppCenter, you must follow guides below.
+> 1. Modify creating ConfigMap [script](deploy/block/kubernetes/create-cm.sh) and create a ConfigMap which references the YAML file(*/etc/qingcloud/client.yaml*) on the host machine.
+> 1. In the [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML file, add *"/data"* prefix at paths related to Kubelet.
 
-- Create csi-qingcloud namespace and configmap
+### Deployment
+This guide will create a namespace named csi-qingcloud and deploy CSI plugin in this namespace. You can modify YAML files mentioned below and deploy the plugin in other namespace.
+
+- Create csi-qingcloud namespace
 ```
-$ kubectl create -f deploy/block/kubernetes/csi-ns-cm.yaml
+$ kubectl create -f deploy/block/kubernetes/csi-ns.yaml
 ```
+
+- Create ConfigMap from file
+```
+$ chmod +x deploy/block/kubernetes/create-cm.sh
+$ ./create-cm.sh
+```
+
 
 - Create Docker image registry secret
 ```
@@ -67,22 +78,22 @@ csi-qingcloud-node-pgsbn        2/2       Running       0          2m
 ```
 
 ### Verification
-- Create storage class by Kubernetes cluster administrator
+- Create a StorageClass by Kubernetes cluster administrator
 ```
 $ kubectl create -f deploy/block/kubernetes/sc.yaml
 ```
 
-- Create PVC
+- Create a PVC
 ```
 $ kubectl create -f deploy/block/kubernetes/pvc.yaml
 ```
 
-- Create deployment mounting PVC
+- Create a Deployment mounting the PVC
 ```
 $ kubectl create -f deploy/block/kubernetes/deploy.yaml
 ```
 
-- Check deploy
+- Check Pods status
 ```
 $ kubectl get po | grep deploy
 nginx-84474cf674-zfhbs   1/1       Running   0          1m
