@@ -268,3 +268,44 @@ func TestByteCeilToGb(t *testing.T) {
 		}
 	}
 }
+
+func TestIsValidFileSystemType(t *testing.T) {
+	testcases := []struct{
+		name	string
+		fsType	string
+		expect 	bool
+	}{
+		{
+			name:		"EXT3",
+			fsType: 	FileSystem_EXT3,
+			expect: 	true,
+		},
+		{
+			name:		"EXT4",
+			fsType: 	FileSystem_EXT4,
+			expect: 	true,
+		},
+		{
+			name:		"XFS",
+			fsType: 	FileSystem_XFS,
+			expect: 	true,
+		},
+		{
+			name:		"ext5",
+			fsType:		"ext5",
+			expect: 	false,
+		},
+		{
+			name:		"NTFS",
+			fsType:		"NTFS",
+			expect: 	false,
+		},
+	}
+
+	for _, v:= range testcases{
+		res := IsValidFileSystemType(v.fsType)
+		if res != v.expect{
+			t.Errorf("test %s: expect %t, but actually %t", v.name, v.expect, res)
+		}
+	}
+}

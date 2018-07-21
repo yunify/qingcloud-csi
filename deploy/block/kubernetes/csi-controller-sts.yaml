@@ -21,12 +21,16 @@ spec:
 ---
 
 kind: StatefulSet
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 metadata:
   name: csi-qingcloud-controller
   namespace: csi-qingcloud
 spec:
   serviceName: "csi-qingcloud-controller"
+  selector:
+    matchLabels:
+      app: csi-qingcloud
+      tier: controller
   replicas: 1
   template:
     metadata:

@@ -28,6 +28,14 @@ const (
 	tib100 int64 = tib * 100
 )
 
+
+const (
+	FileSystem_EXT3		string	=	"ext3"
+	FileSystem_EXT4		string	=	"ext4"
+	FileSystem_XFS		string	=	"xfs"
+	FileSystem_DEFAULT 	string	=	FileSystem_EXT4
+)
+
 var instanceIdFromFile string
 
 func CreatePath(persistentStoragePath string) error {
@@ -112,4 +120,17 @@ func ByteCeilToGb(num int64) int {
 		res += 1
 	}
 	return int(res)
+}
+
+func IsValidFileSystemType(fs string)bool{
+	switch fs {
+	case FileSystem_EXT3:
+		return true
+	case FileSystem_EXT4:
+		return true
+	case FileSystem_XFS:
+		return true
+	default:
+		return false
+	}
 }

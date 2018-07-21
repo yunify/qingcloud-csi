@@ -6,28 +6,39 @@ import (
 )
 
 type qingStorageClass struct {
-	VolumeType    int `json:"type"`
-	VolumeMaxSize int `json:"maxSize"`
-	VolumeMinSize int `json:"minSize"`
+	VolumeType   	int 		`json:"type"`
+	VolumeMaxSize	int 		`json:"maxSize"`
+	VolumeMinSize	int 		`json:"minSize"`
+	VolumeFsType	string		`json:"fsType",omitempty`
 }
 
 func NewDefaultQingStorageClass() *qingStorageClass {
 	return &qingStorageClass{
-		VolumeType:    0,
-		VolumeMaxSize: 500,
-		VolumeMinSize: 10,
+		VolumeType:   	0,
+		VolumeMaxSize:	500,
+		VolumeMinSize:	10,
+		VolumeFsType:	FileSystem_DEFAULT,
 	}
 }
 
 func NewQingStorageClassFromMap(opt map[string]string) (*qingStorageClass, error) {
 	sc := NewDefaultQingStorageClass()
-	// volume type
+	// volume type +required
 	if sVolType, ok := opt["type"]; ok {
 		if iVolType, err := strconv.Atoi(sVolType); err != nil {
 			return nil, err
 		} else {
 			sc.VolumeType = iVolType
 		}
+	}
+
+	// Get volume FsType +optional
+	// Default is ext4
+	if sFsType, ok := opt["fsType"]; ok {
+		if !IsValidFileSystemType(sFsType){
+			return nil, fmt.Errorf("Does not support fsType \"%s\"", sFsType)
+		}
+		sc.VolumeFsType = sFsType
 	}
 
 	// Get volume maxsize +optional

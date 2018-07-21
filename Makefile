@@ -1,7 +1,7 @@
 .PHONY: all blockplugin
 
 BLOCK_IMAGE_NAME=dockerhub.qingcloud.com/wiley/csi-qingcloud
-BLOCK_IMAGE_VERSION=latest
+BLOCK_IMAGE_VERSION=v0.2.0.1
 BLOCK_PLUGIN_NAME=blockplugin
 
 blockplugin:

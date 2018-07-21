@@ -7,4 +7,5 @@ parameters:
   type: "0"
   maxSize: "500"
   minSize: "10"
+  fsType: "ext4"
 reclaimPolicy: Delete 

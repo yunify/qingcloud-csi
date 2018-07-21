@@ -51,6 +51,13 @@ func (ns *nodeServer) NodePublishVolume(
 	stagePath := req.GetStagingTargetPath()
 	volumeId := req.GetVolumeId()
 
+	// set fsType
+	qc, err := NewQingStorageClassFromMap(req.GetVolumeAttributes())
+	if err != nil{
+		return nil,status.Error(codes.Internal, err.Error())
+	}
+	fsType := qc.VolumeFsType
+
 	// Create VolumeManager object
 	vm, err := NewVolumeManager()
 	if err != nil {
@@ -99,8 +106,8 @@ func (ns *nodeServer) NodePublishVolume(
 	if req.GetReadonly() == true {
 		options = append(options, "ro")
 	}
-	glog.Infof("Bind mount %s at %s", stagePath, targetPath)
-	if err := mounter.Mount(stagePath, targetPath, "", options); err != nil {
+	glog.Infof("Bind mount %s at %s, fsType %s, options %v ...", stagePath, targetPath, fsType, options)
+	if err := mounter.Mount(stagePath, targetPath, fsType, options); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	glog.Infof("Mount bind %s at %s succeed", stagePath, targetPath)
@@ -186,7 +193,12 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	// set parameter
 	volumeId := req.GetVolumeId()
 	targetPath := req.GetStagingTargetPath()
-	fsType := req.GetVolumeCapability().GetMount().GetFsType()
+	// set fsType
+	qc, err := NewQingStorageClassFromMap(req.GetVolumeAttributes())
+	if err != nil{
+		return nil,status.Error(codes.Internal, err.Error())
+	}
+	fsType := qc.VolumeFsType
 
 	// Create VolumeManager object
 	vm, err := NewVolumeManager()
