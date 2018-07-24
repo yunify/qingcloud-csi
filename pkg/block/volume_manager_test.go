@@ -17,7 +17,6 @@
 package block
 
 import (
-	"path"
 	"runtime"
 	"testing"
 )
@@ -29,12 +28,6 @@ var (
 	instanceId1 string = "i-0nuxqgal"
 	instanceId2 string = "i-tta11nep"
 )
-
-func getCurrentPath() string {
-	_, filename, _, _ := runtime.Caller(1)
-
-	return path.Dir(filename)
-}
 
 var getvm = func() VolumeManager {
 	// get storage class

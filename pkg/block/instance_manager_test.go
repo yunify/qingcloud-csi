@@ -17,8 +17,6 @@
 package block
 
 import (
-	"flag"
-	"os"
 	"runtime"
 	"testing"
 )
@@ -38,15 +36,6 @@ var getim = func() InstanceManager {
 	}
 
 	return im
-}
-
-func TestMain(m *testing.M) {
-	flag.Set("alsologtostderr", "true")
-	flag.Set("log_dir", "/tmp")
-	flag.Set("v", "3")
-	flag.Parse()
-	ret := m.Run()
-	os.Exit(ret)
 }
 
 func TestFindInstance(t *testing.T) {
