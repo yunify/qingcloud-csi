@@ -66,7 +66,7 @@ func TestFindInstance(t *testing.T) {
 		if err != nil {
 			t.Errorf("name %s error: %s", v.name, err.Error())
 		}
-		if v.found && *ins.InstanceID != v.id {
+		if v.found && (ins == nil || *ins.InstanceID != v.id) {
 			t.Errorf("name %s: find id error", v.name)
 		}
 	}

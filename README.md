@@ -35,7 +35,7 @@ dockerhub.qingcloud.com/wiley/csi-qingcloud		latest		640a9519e59b		55 minutes ag
 
 > Notes: When deploy this plugin in QingCloud AppCenter, you must follow guides below.
 > 1. Modify creating ConfigMap [script](deploy/block/kubernetes/create-cm.sh) and create a ConfigMap which references the YAML file(*/etc/qingcloud/client.yaml*) on the host machine.
-> 1. In the [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML file, add *"/data"* prefix at paths related to Kubelet.
+> 1. In the [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML file, please replace *"/var/lib/kubelet"* with *"/data/var/lib/kubelet"* .
 
 ### Deployment
 This guide will create a namespace named csi-qingcloud and deploy CSI plugin in this namespace. You can modify YAML files mentioned below and deploy the plugin in other namespace.

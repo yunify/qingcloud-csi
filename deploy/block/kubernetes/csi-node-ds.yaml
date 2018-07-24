@@ -75,6 +75,8 @@ spec:
             - name: plugin-dir
               mountPath: /var/lib/kubelet/plugins/csi-qingcloud
             - name: mount-dir
+              # In AppCenter, must set mountPath field as below.
+              # mountPath: /data/var/lib/kubelet
               mountPath: /var/lib/kubelet
               mountPropagation: "Bidirectional"
             - name: dev-dir
@@ -89,6 +91,8 @@ spec:
         # make sure mount propagate feature gate is enabled
         - name: mount-dir
           hostPath:
+            # In AppCenter, must set path field as below.
+            # path: /data/var/lib/kubelet
             path: /var/lib/kubelet
         - name: plugin-dir
           hostPath:

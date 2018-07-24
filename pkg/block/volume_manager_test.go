@@ -17,7 +17,6 @@
 package block
 
 import (
-	"path"
 	"runtime"
 	"testing"
 )
@@ -26,15 +25,9 @@ var (
 	// Tester should set these variables before executing unit test.
 	volumeId1   string = "vol-8boq0cz6"
 	volumeName1 string = "qingcloud-csi-test"
-	instanceId1 string = "i-msu2th7i"
-	instanceId2 string = "i-hgz8mri2"
+	instanceId1 string = "i-0nuxqgal"
+	instanceId2 string = "i-tta11nep"
 )
-
-func getCurrentPath() string {
-	_, filename, _, _ := runtime.Caller(1)
-
-	return path.Dir(filename)
-}
 
 var getvm = func() VolumeManager {
 	// get storage class
@@ -51,15 +44,6 @@ var getvm = func() VolumeManager {
 	}
 	return vm
 }
-
-//func TestMain(m *testing.M) {
-//	flag.Set("alsologtostderr", "true")
-//	flag.Set("log_dir", "/tmp")
-//	flag.Set("v", "3")
-//	flag.Parse()
-//	ret := m.Run()
-//	os.Exit(ret)
-//}
 
 func TestFindVolume(t *testing.T) {
 	vm := getvm()

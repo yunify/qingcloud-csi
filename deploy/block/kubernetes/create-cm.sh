@@ -15,4 +15,8 @@
 # | See the License for the specific language governing permissions and
 # | limitations under the License.
 # +-------------------------------------------------------------------------
+
+# In AppCenter, you can create ConfigMap in the way below.
+# kubectl create configmap csi-qingcloud --from-file=config.yaml=/etc/qingcloud/client.yaml --namespace=csi-qingcloud
+
 kubectl create configmap csi-qingcloud --from-file=config.yaml=./config.yaml --namespace=csi-qingcloud
