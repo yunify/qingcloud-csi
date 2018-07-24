@@ -17,6 +17,8 @@
 package block
 
 import (
+	"flag"
+	"os"
 	"runtime"
 	"testing"
 )
@@ -36,6 +38,15 @@ var getim = func() InstanceManager {
 	}
 
 	return im
+}
+
+func TestMain(m *testing.M) {
+	flag.Set("alsologtostderr", "true")
+	flag.Set("log_dir", "/tmp")
+	flag.Set("v", "3")
+	flag.Parse()
+	ret := m.Run()
+	os.Exit(ret)
 }
 
 func TestFindInstance(t *testing.T) {
@@ -66,7 +77,7 @@ func TestFindInstance(t *testing.T) {
 		if err != nil {
 			t.Errorf("name %s error: %s", v.name, err.Error())
 		}
-		if v.found && *ins.InstanceID != v.id {
+		if v.found && (ins == nil || *ins.InstanceID != v.id) {
 			t.Errorf("name %s: find id error", v.name)
 		}
 	}
