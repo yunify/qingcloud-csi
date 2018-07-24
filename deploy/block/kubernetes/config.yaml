@@ -14,21 +14,12 @@
 # | limitations under the License.
 # +-------------------------------------------------------------------------
 
-.PHONY: all blockplugin
-
-BLOCK_IMAGE_NAME=dockerhub.qingcloud.com/wiley/csi-qingcloud
-BLOCK_IMAGE_VERSION=v0.2.0.1
-BLOCK_PLUGIN_NAME=blockplugin
-
-blockplugin:
-	if [ ! -d ./vendor ]; then dep ensure; fi
-	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -o  _output/${BLOCK_PLUGIN_NAME} ./cmd/block
-
-blockplugin-container: blockplugin
-	cp _output/${BLOCK_PLUGIN_NAME} deploy/block/docker
-	docker build -t $(BLOCK_IMAGE_NAME):$(BLOCK_IMAGE_VERSION) deploy/block/docker
-
-clean:
-	go clean -r -x
-	rm -rf ./_output
-	rm -rf deploy/block/docker/${BLOCK_PLUGIN_NAME}
+qy_access_key_id: 'ACCESS_KEY_ID'
+qy_secret_access_key: 'ACCESS_KEY_SECRET'
+zone: 'ZONE'
+host: 'api.qingcloud.com'
+port: 443
+protocol: 'https'
+uri: '/iaas'
+connection_retries: 3
+connection_timeout: 30

@@ -19,3 +19,5 @@ bin/
 tmp/
 
 .DS_store
+
+_output

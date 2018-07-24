@@ -1,3 +1,19 @@
+// +-------------------------------------------------------------------------
+// | Copyright (C) 2018 Yunify, Inc.
+// +-------------------------------------------------------------------------
+// | Licensed under the Apache License, Version 2.0 (the "License");
+// | you may not use this work except in compliance with the License.
+// | You may obtain a copy of the License in the LICENSE file, or at:
+// |
+// | http://www.apache.org/licenses/LICENSE-2.0
+// |
+// | Unless required by applicable law or agreed to in writing, software
+// | distributed under the License is distributed on an "AS IS" BASIS,
+// | WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// | See the License for the specific language governing permissions and
+// | limitations under the License.
+// +-------------------------------------------------------------------------
+
 package block
 
 import (
@@ -25,7 +41,7 @@ type instanceManager struct {
 	jobService      *qcservice.JobService
 }
 
-func NewInstanceManagerWithConfig(config *qcconfig.Config) (InstanceManager, error) {
+func NewInstanceManagerFromConfig(config *qcconfig.Config) (InstanceManager, error) {
 	// initial qingcloud iaas service
 	qs, err := qcservice.Init(config)
 	if err != nil {
@@ -40,33 +56,17 @@ func NewInstanceManagerWithConfig(config *qcconfig.Config) (InstanceManager, err
 		instanceService: is,
 		jobService:      js,
 	}
-	glog.Infof("Finish initial volume manager")
+	glog.Infof("Finish initial instance manager")
 	return &im, nil
 }
 
-func NewInstanceManager() (InstanceManager, error) {
+func NewInstanceManagerFromFile(filePath string) (InstanceManager, error) {
 	// create config
-	config, err := ReadConfigFromFile(ConfigFilePath)
+	config, err := ReadConfigFromFile(filePath)
 	if err != nil {
 		return nil, err
 	}
-	// initial Qingcloud iaas service
-	qs, err := qcservice.Init(config)
-	if err != nil {
-		return nil, err
-	}
-	// create volume service
-	is, _ := qs.Instance(config.Zone)
-	// create job service
-	js, _ := qs.Job(config.Zone)
-	// initial volume provider
-	im := instanceManager{
-		instanceService: is,
-		jobService:      js,
-	}
-	glog.Infof("instance provider init finish, zone: %s",
-		*im.instanceService.Properties.Zone)
-	return &im, nil
+	return NewInstanceManagerFromConfig(config)
 }
 
 // Find instance by instance ID
@@ -76,6 +76,8 @@ func NewInstanceManager() (InstanceManager, error) {
 func (iv *instanceManager) FindInstance(id string) (instance *qcservice.Instance, err error) {
 	// set describe instance input
 	input := qcservice.DescribeInstancesInput{}
+	var seeCluster int = 1
+	input.IsClusterNode = &seeCluster
 	input.Instances = append(input.Instances, &id)
 	// call describe instance
 	output, err := iv.instanceService.DescribeInstances(&input)
@@ -94,8 +96,6 @@ func (iv *instanceManager) FindInstance(id string) (instance *qcservice.Instance
 	case 1:
 		if *output.InstanceSet[0].Status == Instance_Status_CEASED || *output.InstanceSet[0].Status == Instance_Status_TERMINATED {
 			return nil, nil
-		} else {
-			return output.InstanceSet[0], nil
 		}
 		return output.InstanceSet[0], nil
 	default:

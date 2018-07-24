@@ -1,3 +1,19 @@
+// +-------------------------------------------------------------------------
+// | Copyright (C) 2018 Yunify, Inc.
+// +-------------------------------------------------------------------------
+// | Licensed under the Apache License, Version 2.0 (the "License");
+// | you may not use this work except in compliance with the License.
+// | You may obtain a copy of the License in the LICENSE file, or at:
+// |
+// | http://www.apache.org/licenses/LICENSE-2.0
+// |
+// | Unless required by applicable law or agreed to in writing, software
+// | distributed under the License is distributed on an "AS IS" BASIS,
+// | WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// | See the License for the specific language governing permissions and
+// | limitations under the License.
+// +-------------------------------------------------------------------------
+
 package block
 
 import (
@@ -53,13 +69,13 @@ func (ns *nodeServer) NodePublishVolume(
 
 	// set fsType
 	qc, err := NewQingStorageClassFromMap(req.GetVolumeAttributes())
-	if err != nil{
-		return nil,status.Error(codes.Internal, err.Error())
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	fsType := qc.VolumeFsType
 
 	// Create VolumeManager object
-	vm, err := NewVolumeManager()
+	vm, err := NewVolumeManagerFromFile(ConfigFilePath)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -133,7 +149,7 @@ func (ns *nodeServer) NodeUnpublishVolume(
 	targetPath := req.GetTargetPath()
 
 	// Create VolumeManager object
-	vm, err := NewVolumeManager()
+	vm, err := NewVolumeManagerFromFile(ConfigFilePath)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -195,13 +211,13 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	targetPath := req.GetStagingTargetPath()
 	// set fsType
 	qc, err := NewQingStorageClassFromMap(req.GetVolumeAttributes())
-	if err != nil{
-		return nil,status.Error(codes.Internal, err.Error())
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	fsType := qc.VolumeFsType
 
 	// Create VolumeManager object
-	vm, err := NewVolumeManager()
+	vm, err := NewVolumeManagerFromFile(ConfigFilePath)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -273,7 +289,7 @@ func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstag
 	targetPath := req.GetStagingTargetPath()
 
 	// Create VolumeManager object
-	vm, err := NewVolumeManager()
+	vm, err := NewVolumeManagerFromFile(ConfigFilePath)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
