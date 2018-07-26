@@ -31,7 +31,7 @@ func TestContainsVolumeCapability(t *testing.T) {
 		{
 			name: "Driver: SINGLE_NODE_WRITER, Req: SINGLE_NODE_WRITER",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{
+				{
 					Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
 			},
 			capabilities: &csi.VolumeCapability{
@@ -42,7 +42,7 @@ func TestContainsVolumeCapability(t *testing.T) {
 		{
 			name: "Driver: SINGLE_NODE_WRITER, Req: MULTI_NODE_MULTI_WRITER",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{
+				{
 					Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
 			},
 			capabilities: &csi.VolumeCapability{
@@ -53,9 +53,9 @@ func TestContainsVolumeCapability(t *testing.T) {
 		{
 			name: "Driver: SINGLE_NODE_WRITER, MULTI_NODE_MULTI_WRITER, Req: MULTI_NODE_MULTI_WRITER",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{
+				{
 					Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
-				&csi.VolumeCapability_AccessMode{
+				{
 					Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER},
 			},
 			capabilities: &csi.VolumeCapability{
@@ -66,9 +66,9 @@ func TestContainsVolumeCapability(t *testing.T) {
 		{
 			name: "Driver: MULTI_NODE_MULTI_WRITER, MULTI_NODE_READER_ONLY, Req: MULTI_NODE_READER_ONLY",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{
+				{
 					Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER},
-				&csi.VolumeCapability_AccessMode{
+				{
 					Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY},
 			},
 			capabilities: &csi.VolumeCapability{
@@ -79,7 +79,7 @@ func TestContainsVolumeCapability(t *testing.T) {
 		{
 			name: "Driver: MULTI_NODE_READER_ONLY, Req: SINGLE_NODE_WRITER",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{
+				{
 					Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY},
 			},
 			capabilities: &csi.VolumeCapability{
@@ -106,11 +106,11 @@ func TestContainsVolumeCapabilities(t *testing.T) {
 		{
 			name: "Driver: SINGLE_NODE_WRITER, Req: SINGLE_NODE_WRITER",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{
+				{
 					Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
 			},
 			capabilities: []*csi.VolumeCapability{
-				&csi.VolumeCapability{
+				{
 					AccessMode: &csi.VolumeCapability_AccessMode{
 						Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}},
 			},
@@ -119,11 +119,11 @@ func TestContainsVolumeCapabilities(t *testing.T) {
 		{
 			name: "Driver: SINGLE_NODE_WRITER, Req: MULTI_NODE_MULTI_WRITER",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{
+				{
 					Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
 			},
 			capabilities: []*csi.VolumeCapability{
-				&csi.VolumeCapability{
+				{
 					AccessMode: &csi.VolumeCapability_AccessMode{
 						Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER}},
 			},
@@ -131,11 +131,11 @@ func TestContainsVolumeCapabilities(t *testing.T) {
 		{
 			name: "Driver: SINGLE_NODE_WRITER, Req: MULTI_NODE_READER_ONLY",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{
+				{
 					Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
 			},
 			capabilities: []*csi.VolumeCapability{
-				&csi.VolumeCapability{
+				{
 					AccessMode: &csi.VolumeCapability_AccessMode{
 						Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY}},
 			},
@@ -143,13 +143,13 @@ func TestContainsVolumeCapabilities(t *testing.T) {
 		{
 			name: "Driver: SINGLE_NODE_WRITER, MULTI_NODE_MULTI_WRITER, Req: MULTI_NODE_MULTI_WRITER",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{
+				{
 					Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
-				&csi.VolumeCapability_AccessMode{
+				{
 					Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER},
 			},
 			capabilities: []*csi.VolumeCapability{
-				&csi.VolumeCapability{
+				{
 					AccessMode: &csi.VolumeCapability_AccessMode{
 						Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER}},
 			},
@@ -158,13 +158,13 @@ func TestContainsVolumeCapabilities(t *testing.T) {
 		{
 			name: "Driver: MULTI_NODE_MULTI_WRITER, MULTI_NODE_READER_ONLY, Req: MULTI_NODE_READER_ONLY",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{
+				{
 					Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER},
-				&csi.VolumeCapability_AccessMode{
+				{
 					Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY},
 			},
 			capabilities: []*csi.VolumeCapability{
-				&csi.VolumeCapability{
+				{
 					AccessMode: &csi.VolumeCapability_AccessMode{
 						Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY}},
 			},
@@ -173,11 +173,11 @@ func TestContainsVolumeCapabilities(t *testing.T) {
 		{
 			name: "Driver: MULTI_NODE_READER_ONLY, Req: SINGLE_NODE_WRITER",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{
+				{
 					Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY},
 			},
 			capabilities: []*csi.VolumeCapability{
-				&csi.VolumeCapability{
+				{
 					AccessMode: &csi.VolumeCapability_AccessMode{
 						Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}},
 			},
@@ -186,14 +186,14 @@ func TestContainsVolumeCapabilities(t *testing.T) {
 		{
 			name: "Driver: SINGLE_NODE_WRITER, Req: SINGLE_NODE_WRITER,MULTI_NODE_READER_ONLY",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{
+				{
 					Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
 			},
 			capabilities: []*csi.VolumeCapability{
-				&csi.VolumeCapability{
+				{
 					AccessMode: &csi.VolumeCapability_AccessMode{
 						Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}},
-				&csi.VolumeCapability{
+				{
 					AccessMode: &csi.VolumeCapability_AccessMode{
 						Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_READER_ONLY}},
 			},
@@ -202,16 +202,16 @@ func TestContainsVolumeCapabilities(t *testing.T) {
 		{
 			name: "Driver: SINGLE_NODE_WRITER, MULTI_NODE_WRITER, Req: MULTI_NODE_MULTI_WRITER, SINGLE_NODE_WRITER",
 			accessModes: []*csi.VolumeCapability_AccessMode{
-				&csi.VolumeCapability_AccessMode{
+				{
 					Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER},
-				&csi.VolumeCapability_AccessMode{
+				{
 					Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER},
 			},
 			capabilities: []*csi.VolumeCapability{
-				&csi.VolumeCapability{
+				{
 					AccessMode: &csi.VolumeCapability_AccessMode{
 						Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER}},
-				&csi.VolumeCapability{
+				{
 					AccessMode: &csi.VolumeCapability_AccessMode{
 						Mode: csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER}},
 			},
@@ -270,7 +270,7 @@ func TestContainsNodeServiceCapability(t *testing.T) {
 	}
 }
 
-func TestGbToByte(t *testing.T) {
+func TestGibToByte(t *testing.T) {
 	testcases := []struct {
 		name string
 		gb   int
@@ -285,14 +285,14 @@ func TestGbToByte(t *testing.T) {
 	}
 
 	for _, v := range testcases {
-		res := GbToByte(v.gb)
+		res := GibToByte(v.gb)
 		if res != v.byte {
 			t.Errorf("test %s: expect %d, but result was %d", v.name, v.byte, res)
 		}
 	}
 }
 
-func TestByteCeilToGb(t *testing.T) {
+func TestByteCeilToGib(t *testing.T) {
 	testcases := []struct {
 		name string
 		byte int64
@@ -311,7 +311,7 @@ func TestByteCeilToGb(t *testing.T) {
 	}
 
 	for _, v := range testcases {
-		res := ByteCeilToGb(v.byte)
+		res := ByteCeilToGib(v.byte)
 		if res != v.gb {
 			t.Errorf("test %s: expect %d Gb, but actually %d", v.name, v.gb, res)
 		}
@@ -326,17 +326,17 @@ func TestIsValidFileSystemType(t *testing.T) {
 	}{
 		{
 			name:   "EXT3",
-			fsType: FileSystem_EXT3,
+			fsType: FileSystemExt3,
 			expect: true,
 		},
 		{
 			name:   "EXT4",
-			fsType: FileSystem_EXT4,
+			fsType: FileSystemExt4,
 			expect: true,
 		},
 		{
 			name:   "XFS",
-			fsType: FileSystem_XFS,
+			fsType: FileSystemXfs,
 			expect: true,
 		},
 		{

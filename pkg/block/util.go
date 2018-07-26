@@ -27,10 +27,11 @@ import (
 )
 
 const (
+	// In Qingcloud bare host, the path of the file containing instance id.
 	InstanceFilePath = "/etc/qingcloud/instance-id"
 
 	RetryString          = "please try later"
-	Int64_Max            = int64(^uint64(0) >> 1)
+	Int64Max             = int64(^uint64(0) >> 1)
 	WaitInterval         = 10 * time.Second
 	OperationWaitTimeout = 180 * time.Second
 )
@@ -45,15 +46,17 @@ const (
 )
 
 const (
-	FileSystem_EXT3    string = "ext3"
-	FileSystem_EXT4    string = "ext4"
-	FileSystem_XFS     string = "xfs"
-	FileSystem_DEFAULT string = FileSystem_EXT4
+	FileSystemExt3    string = "ext3"
+	FileSystemExt4    string = "ext4"
+	FileSystemXfs     string = "xfs"
+	FileSystemDefault string = FileSystemExt4
 )
 
 var instanceIdFromFile string
 var ConfigFilePath string
 
+// CreatePath
+// Create file path if it does not exits.
 func CreatePath(persistentStoragePath string) error {
 	if _, err := os.Stat(persistentStoragePath); os.IsNotExist(err) {
 		if err := os.MkdirAll(persistentStoragePath, os.FileMode(0755)); err != nil {
@@ -75,6 +78,8 @@ func readCurrentInstanceId() {
 	glog.Infof("Getting current instance-id: \"%s\"", instanceIdFromFile)
 }
 
+// GetCurrentInstanceId
+// Get instance id
 func GetCurrentInstanceId() string {
 	if len(instanceIdFromFile) == 0 {
 		readCurrentInstanceId()
@@ -82,6 +87,8 @@ func GetCurrentInstanceId() string {
 	return instanceIdFromFile
 }
 
+// ReadConfigFromFile
+// Read config file from a path and return config
 func ReadConfigFromFile(filePath string) (*qcconfig.Config, error) {
 	config, err := qcconfig.NewDefault()
 	if err != nil {
@@ -93,6 +100,8 @@ func ReadConfigFromFile(filePath string) (*qcconfig.Config, error) {
 	return config, nil
 }
 
+// ContainsVolumeCapability
+// Does Array of VolumeCapability_AccessMode contain the volume capability of subCaps
 func ContainsVolumeCapability(accessModes []*csi.VolumeCapability_AccessMode, subCaps *csi.VolumeCapability) bool {
 	for _, cap := range accessModes {
 		if cap.GetMode() == subCaps.GetAccessMode().GetMode() {
@@ -102,6 +111,8 @@ func ContainsVolumeCapability(accessModes []*csi.VolumeCapability_AccessMode, su
 	return false
 }
 
+// ContainsVolumeCapabilities
+// Does array of VolumeCapability_AccessMode contain volume capabilities of subCaps
 func ContainsVolumeCapabilities(accessModes []*csi.VolumeCapability_AccessMode, subCaps []*csi.VolumeCapability) bool {
 	for _, v := range subCaps {
 		if !ContainsVolumeCapability(accessModes, v) {
@@ -111,6 +122,8 @@ func ContainsVolumeCapabilities(accessModes []*csi.VolumeCapability_AccessMode, 
 	return true
 }
 
+// ContainsNodeServiceCapability
+// Does array of NodeServiceCapability contain node service capability of subCap
 func ContainsNodeServiceCapability(nodeCaps []*csi.NodeServiceCapability, subCap csi.NodeServiceCapability_RPC_Type) bool {
 	for _, v := range nodeCaps {
 		if strings.Contains(v.String(), subCap.String()) {
@@ -120,14 +133,18 @@ func ContainsNodeServiceCapability(nodeCaps []*csi.NodeServiceCapability, subCap
 	return false
 }
 
-func GbToByte(num int) int64 {
+// GibToByte
+// Convert GiB to Byte
+func GibToByte(num int) int64 {
 	if num < 0 {
 		return 0
 	}
 	return int64(num) * gib
 }
 
-func ByteCeilToGb(num int64) int {
+// ByteCeilToGib
+// Convert Byte to Gib
+func ByteCeilToGib(num int64) int {
 	if num <= 0 {
 		return 0
 	}
@@ -138,13 +155,15 @@ func ByteCeilToGb(num int64) int {
 	return int(res)
 }
 
+// Check file system type
+// Support: ext3, ext4 and xfs
 func IsValidFileSystemType(fs string) bool {
 	switch fs {
-	case FileSystem_EXT3:
+	case FileSystemExt3:
 		return true
-	case FileSystem_EXT4:
+	case FileSystemExt4:
 		return true
-	case FileSystem_XFS:
+	case FileSystemXfs:
 		return true
 	default:
 		return false

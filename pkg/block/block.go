@@ -35,28 +35,38 @@ type block struct {
 	cscap []*csi.ControllerServiceCapability
 }
 
+// GetBlockDriver
+// Create block driver
 func GetBlockDriver() *block {
 	return &block{}
 }
 
+// NewIdentityServer
+// Create identity server
 func NewIdentityServer(d *csicommon.CSIDriver) *identityServer {
 	return &identityServer{
 		DefaultIdentityServer: csicommon.NewDefaultIdentityServer(d),
 	}
 }
 
+// NewControllerServer
+// Create controller server
 func NewControllerServer(d *csicommon.CSIDriver) *controllerServer {
 	return &controllerServer{
 		DefaultControllerServer: csicommon.NewDefaultControllerServer(d),
 	}
 }
 
+// NewNodeServer
+// Create node server
 func NewNodeServer(d *csicommon.CSIDriver) *nodeServer {
 	return &nodeServer{
 		DefaultNodeServer: csicommon.NewDefaultNodeServer(d),
 	}
 }
 
+// Run
+// Initial and start CSI driver
 func (blk *block) Run(driverName, nodeID, endpoint string) {
 	glog.Infof("Driver: %v version: %v", driverName, version)
 
