@@ -66,16 +66,16 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	// get request volume capacity range
-	requireByte := req.GetCapacityRange().GetRequiredBytes()
-	requireGb := sc.FormatVolumeSize(ByteCeilToGb(requireByte))
+	requiredByte := req.GetCapacityRange().GetRequiredBytes()
+	requiredGib := sc.FormatVolumeSize(ByteCeilToGib(requiredByte))
 	limitByte := req.GetCapacityRange().GetLimitBytes()
 	if limitByte == 0 {
-		limitByte = Int64_Max
+		limitByte = Int64Max
 	}
 	// check volume range
-	if GbToByte(requireGb) > limitByte || requireGb > sc.VolumeMaxSize {
+	if GibToByte(requiredGib) > limitByte || requiredGib > sc.VolumeMaxSize {
 		glog.Errorf("Request capacity range [%d, %d] bytes, storage class capacity range [%d, %d] GB, format required size: %d gb",
-			requireByte, limitByte, sc.VolumeMinSize, sc.VolumeMaxSize, requireGb)
+			requiredByte, limitByte, sc.VolumeMinSize, sc.VolumeMaxSize, requiredGib)
 		return nil, status.Error(codes.OutOfRange, "Unsupport capacity range")
 	}
 
@@ -87,10 +87,10 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	}
 	if exVol != nil {
 		glog.Infof("Request volume name: %s, capacity range [%d,%d] bytes, type: %d, zone: %s",
-			volumeName, requireByte, limitByte, sc.VolumeType, vm.GetZone())
+			volumeName, requiredByte, limitByte, sc.VolumeType, vm.GetZone())
 		glog.Infof("Exist volume name: %s, id: %s, capacity: %d GB, type: %d, zone: %s",
-			*exVol.VolumeName, *exVol.VolumeID, GbToByte(*exVol.Size), *exVol.VolumeType, vm.GetZone())
-		if *exVol.Size >= requireGb && int64(*exVol.Size)*gib <= limitByte && *exVol.VolumeType == sc.VolumeType {
+			*exVol.VolumeName, *exVol.VolumeID, GibToByte(*exVol.Size), *exVol.VolumeType, vm.GetZone())
+		if *exVol.Size >= requiredGib && int64(*exVol.Size)*gib <= limitByte && *exVol.VolumeType == sc.VolumeType {
 			// exisiting volume is compatible with new request and should be reused.
 			return &csi.CreateVolumeResponse{
 				Volume: &csi.Volume{
@@ -105,8 +105,8 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	}
 
 	// do create volume
-	glog.Infof("Creating volume %s with %d GB in zone %s...", volumeName, requireGb, vm.GetZone())
-	volumeId, err := vm.CreateVolume(volumeName, requireGb, *sc)
+	glog.Infof("Creating volume %s with %d GB in zone %s...", volumeName, requiredGib, vm.GetZone())
+	volumeId, err := vm.CreateVolume(volumeName, requiredGib, *sc)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	return &csi.CreateVolumeResponse{
 		Volume: &csi.Volume{
 			Id:            volumeId,
-			CapacityBytes: int64(requireGb) * gib,
+			CapacityBytes: int64(requiredGib) * gib,
 			Attributes:    req.GetParameters(),
 		},
 	}, nil
@@ -153,7 +153,7 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 		return &csi.DeleteVolumeResponse{}, nil
 	}
 	// Is volume in use
-	if *volInfo.Status == BlockVolume_Status_INUSE {
+	if *volInfo.Status == BlockVolumeStatusInuse {
 		return nil, status.Errorf(codes.FailedPrecondition, "volume is in use by another resource")
 	}
 	// Do delete volume

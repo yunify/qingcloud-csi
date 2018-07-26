@@ -27,12 +27,12 @@ import (
 )
 
 const (
-	BlockVolume_Status_PENDING   string = "pending"
-	BlockVolume_Status_AVAILABLE string = "available"
-	BlockVolume_Status_INUSE     string = "in-use"
-	BlockVolume_Status_SUSPENDED string = "suspended"
-	BlockVolume_Status_DELETED   string = "deleted"
-	BlockVolume_Status_CEASED    string = "ceased"
+	BlockVolumeStatusPending   string = "pending"
+	BlockVolumeStatusAvailable string = "available"
+	BlockVolumeStatusInuse     string = "in-use"
+	BlockVolumeStatusSuspended string = "suspended"
+	BlockVolumeStatusDeleted   string = "deleted"
+	BlockVolumeStatusCeased    string = "ceased"
 )
 
 type VolumeManager interface {
@@ -52,6 +52,8 @@ type volumeManager struct {
 	jobService    *qcservice.JobService
 }
 
+// NewVolumeManagerFromConfig
+// Create volume manager from config
 func NewVolumeManagerFromConfig(config *qcconfig.Config) (VolumeManager, error) {
 	// initial qingcloud iaas service
 	qs, err := qcservice.Init(config)
@@ -71,14 +73,15 @@ func NewVolumeManagerFromConfig(config *qcconfig.Config) (VolumeManager, error) 
 	return &vm, nil
 }
 
+// NewVolumeManagerFromFile
+// Create volume manager from file
 func NewVolumeManagerFromFile(filePath string) (VolumeManager, error) {
 	config, err := ReadConfigFromFile(filePath)
 	if err != nil {
 		glog.Errorf("Failed read config file [%s], error: [%s]", filePath, err.Error())
 		return nil, err
-	} else {
-		glog.Infof("Succeed read config file [%s]", filePath)
 	}
+	glog.Infof("Succeed read config file [%s]", filePath)
 	return NewVolumeManagerFromConfig(config)
 }
 
@@ -108,11 +111,10 @@ func (vm *volumeManager) FindVolume(id string) (volume *qcservice.Volume, err er
 		return nil, nil
 	// Found one volume
 	case 1:
-		if *output.VolumeSet[0].Status == BlockVolume_Status_CEASED || *output.VolumeSet[0].Status == BlockVolume_Status_DELETED {
+		if *output.VolumeSet[0].Status == BlockVolumeStatusCeased || *output.VolumeSet[0].Status == BlockVolumeStatusDeleted {
 			return nil, nil
-		} else {
-			return output.VolumeSet[0], nil
 		}
+		return output.VolumeSet[0], nil
 	// Found duplicate volumes
 	default:
 		return nil,
@@ -131,7 +133,7 @@ func (vm *volumeManager) FindVolumeByName(name string) (volume *qcservice.Volume
 	if len(name) == 0 {
 		return nil, nil
 	}
-	// Set input arguements
+	// Set input arguments
 	input := qcservice.DescribeVolumesInput{}
 	input.SearchWord = &name
 	// Call DescribeVolumes
@@ -149,7 +151,7 @@ func (vm *volumeManager) FindVolumeByName(name string) (volume *qcservice.Volume
 		if *v.VolumeName != name {
 			continue
 		}
-		if *v.Status == BlockVolume_Status_CEASED || *v.Status == BlockVolume_Status_DELETED {
+		if *v.Status == BlockVolumeStatusCeased || *v.Status == BlockVolumeStatusDeleted {
 			continue
 		}
 		return v, nil
@@ -157,7 +159,10 @@ func (vm *volumeManager) FindVolumeByName(name string) (volume *qcservice.Volume
 	return nil, nil
 }
 
-// create volume
+// CreateVolume
+// 1. format volume size
+// 2. create volume
+// 3. wait job
 func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc qingStorageClass) (volumeId string, err error) {
 	// 0. Set CreateVolume args
 	// set input value
@@ -189,14 +194,15 @@ func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc qin
 	if *output.RetCode != 0 {
 		glog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
 		return "", fmt.Errorf(*output.Message)
-	} else {
-		volumeId = *output.Volumes[0]
-		glog.Infof("Call IaaS CreateVolume name %s id %s succeed", volumeName, volumeId)
-		return *output.Volumes[0], nil
 	}
+	volumeId = *output.Volumes[0]
+	glog.Infof("Call IaaS CreateVolume name %s id %s succeed", volumeName, volumeId)
+	return *output.Volumes[0], nil
 }
 
-// delete volume
+// DeleteVolume
+// 1. delete volume by id
+// 2. wait job
 func (vm *volumeManager) DeleteVolume(id string) error {
 	// set input value
 	input := &qcservice.DeleteVolumesInput{}
@@ -217,14 +223,14 @@ func (vm *volumeManager) DeleteVolume(id string) error {
 	if *output.RetCode != 0 {
 		glog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
 		return fmt.Errorf(*output.Message)
-	} else {
-		glog.Infof("Call IaaS DeleteVolume %s succeed", id)
-		return nil
 	}
-
+	glog.Infof("Call IaaS DeleteVolume %s succeed", id)
+	return nil
 }
 
-// check volume attaching to instance
+// IsAttachedToInstance
+// 1. get volume information
+// 2. compare input instance id with instance field in volume information
 func (vm *volumeManager) IsAttachedToInstance(volumeId string, instanceId string) (flag bool, err error) {
 	// zone
 	zone := vm.volumeService.Config.Zone
@@ -242,12 +248,14 @@ func (vm *volumeManager) IsAttachedToInstance(volumeId string, instanceId string
 
 	if volumeItem.Instance != nil && *volumeItem.Instance.InstanceID == instanceId {
 		return true, nil
-	} else {
-		return false, nil
 	}
+	return false, nil
 }
 
-// attach volume
+// AttachVolume
+// 1. get volume information
+// 2. attach volume on instance
+// 3. wait job
 func (vm *volumeManager) AttachVolume(volumeId string, instanceId string) error {
 	zone := *vm.volumeService.Properties.Zone
 	// check volume status
@@ -276,21 +284,21 @@ func (vm *volumeManager) AttachVolume(volumeId string, instanceId string) error 
 		}
 		// wait job
 		glog.Infof("Call IaaS WaitJob %s", *output.JobID)
-		if err := vm.waitJob(*output.JobID); err != nil {
-			return err
-		}
-		return nil
+		return vm.waitJob(*output.JobID)
 	} else {
 		if *vol.Instance.InstanceID == instanceId {
 			return nil
-		} else {
-			return fmt.Errorf("Volume %s has been attached to another instance %s", volumeId, *vol.Instance.InstanceID)
 		}
+		return fmt.Errorf("Volume %s has been attached to another instance %s.", volumeId, *vol.Instance.InstanceID)
 	}
 }
 
 // detach volume
-// idempotent
+// 1. get volume information
+// 2. If volume not attached, return nil.
+//   If volume attached, check instance id.
+// 3. attach volume
+// 4. wait job
 func (vm *volumeManager) DetachVolume(volumeId string, instanceId string) error {
 	zone := *vm.volumeService.Properties.Zone
 	// check volume status
@@ -322,16 +330,14 @@ func (vm *volumeManager) DetachVolume(volumeId string, instanceId string) error 
 			}
 			// wait job
 			glog.Infof("Call IaaS WaitJob %s", *output.JobID)
-			if err := vm.waitJob(*output.JobID); err != nil {
-				return err
-			}
-			return nil
-		} else {
-			return fmt.Errorf("Volume %s has been attached to another instance %s", volumeId, *vol.Instance.InstanceID)
+			return vm.waitJob(*output.JobID)
 		}
+		return fmt.Errorf("Volume %s has been attached to another instance %s", volumeId, *vol.Instance.InstanceID)
 	}
 }
 
+// GetZone
+// Get current zone in Qingcloud IaaS
 func (vm *volumeManager) GetZone() string {
 	if vm == nil || vm.volumeService == nil || vm.volumeService.Properties == nil || vm.volumeService.Properties.Zone == nil {
 		return ""
@@ -344,7 +350,6 @@ func (vm *volumeManager) waitJob(jobId string) error {
 	if err != nil {
 		glog.Error("Call Iaas WaitJob: ", jobId)
 		return err
-	} else {
-		return nil
 	}
+	return nil
 }

@@ -46,7 +46,7 @@ func TestFindInstance(t *testing.T) {
 		found bool
 	}{
 		{
-			name:  "Avaiable",
+			name:  "Available",
 			id:    instanceId1,
 			found: true,
 		},

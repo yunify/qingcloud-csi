@@ -24,12 +24,12 @@ import (
 )
 
 const (
-	Instance_Status_PENDING    string = "pending"
-	Instance_Status_RUNNING    string = "running"
-	Instance_Status_STOPPED    string = "stopped"
-	Instance_Status_SUSPENDED  string = "suspended"
-	Instance_Status_TERMINATED string = "terminated"
-	Instance_Status_CEASED     string = "ceased"
+	InstanceStatusPending    string = "pending"
+	InstanceStatusRunning    string = "running"
+	InstanceStatusStopped    string = "stopped"
+	InstanceStatusSuspended  string = "suspended"
+	InstanceStatusTerminated string = "terminated"
+	InstanceStatusCreased    string = "ceased"
 )
 
 type InstanceManager interface {
@@ -41,6 +41,7 @@ type instanceManager struct {
 	jobService      *qcservice.JobService
 }
 
+// NewInstanceManagerFromConfig: Create instance manager from config
 func NewInstanceManagerFromConfig(config *qcconfig.Config) (InstanceManager, error) {
 	// initial qingcloud iaas service
 	qs, err := qcservice.Init(config)
@@ -60,6 +61,8 @@ func NewInstanceManagerFromConfig(config *qcconfig.Config) (InstanceManager, err
 	return &im, nil
 }
 
+// NewInstanceManagerFromFile
+// Create instance manager from file
 func NewInstanceManagerFromFile(filePath string) (InstanceManager, error) {
 	// create config
 	config, err := ReadConfigFromFile(filePath)
@@ -94,7 +97,7 @@ func (iv *instanceManager) FindInstance(id string) (instance *qcservice.Instance
 	case 0:
 		return nil, nil
 	case 1:
-		if *output.InstanceSet[0].Status == Instance_Status_CEASED || *output.InstanceSet[0].Status == Instance_Status_TERMINATED {
+		if *output.InstanceSet[0].Status == InstanceStatusCreased || *output.InstanceSet[0].Status == InstanceStatusTerminated {
 			return nil, nil
 		}
 		return output.InstanceSet[0], nil

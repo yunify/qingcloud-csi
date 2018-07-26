@@ -39,8 +39,7 @@ type nodeServer struct {
 //									target path			+ Required
 //									volume capability	+ Required
 //									read only			+ Required (This field is NOT provided when requesting in Kubernetes)
-func (ns *nodeServer) NodePublishVolume(
-	ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
+func (ns *nodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
 	glog.Info("----- Start NodePublishVolume -----")
 	defer glog.Info("===== End NodePublishVolume =====")
 	// 0. Preflight
@@ -132,8 +131,7 @@ func (ns *nodeServer) NodePublishVolume(
 
 // csi.NodeUnpublishVolumeRequest:	volume id	+ Required
 //									target path	+ Required
-func (ns *nodeServer) NodeUnpublishVolume(
-	ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
+func (ns *nodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
 	glog.Info("----- Start NodeUnpublishVolume -----")
 	defer glog.Info("===== End NodeUnpublishVolume =====")
 	// 0. Preflight
