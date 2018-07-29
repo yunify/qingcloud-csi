@@ -26,7 +26,7 @@ $ make blockplugin-container
 You can find image in your local image store
 ```
 $ docker images | grep csi-qingcloud
-dockerhub.qingcloud.com/wiley/csi-qingcloud		latest		640a9519e59b		55 minutes ago		333MB
+dockerhub.qingcloud.com/wiley/csi-qingcloud	v0.2.0.1	640a9519e59b		55 minutes ago		40MB
 ```
 
 ### Configuration
@@ -58,7 +58,7 @@ $ ./create-cm.sh
 kubectl create secret docker-registry csi-registry --docker-server=dockerhub.qingcloud.com --docker-username=<YOUR_USERNAME> --docker-password=<YOUR_PASSWORD> --docker-email=<YOUR_EMAIL> --namespace=csi-qingcloud
 ```
 
-- Create object releated to access control
+- Create access control objects
 ```
 $ kubectl create -f deploy/block/kubernetes/csi-controller-rbac.yaml
 $ kubectl create -f deploy/block/kubernetes/csi-node-rbac.yaml
@@ -70,7 +70,7 @@ $ kubectl create -f deploy/block/kubernetes/csi-controller-sts.yaml
 $ kubectl create -f deploy/block/kubernetes/csi-node-ds.yaml
 ```
 
-- Check status of CSI plugin
+- Check CSI plugin
 ```
 $ kubectl get pods -n csi-qingcloud | grep csi
 csi-qingcloud-controller-0      3/3       Running       0          5m
@@ -94,7 +94,7 @@ $ kubectl create -f deploy/block/kubernetes/pvc.yaml
 $ kubectl create -f deploy/block/kubernetes/deploy.yaml
 ```
 
-- Check Pods status
+- Check Pod status
 ```
 $ kubectl get po | grep deploy
 nginx-84474cf674-zfhbs   1/1       Running   0          1m

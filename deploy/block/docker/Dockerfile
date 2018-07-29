@@ -15,12 +15,11 @@
 # +-------------------------------------------------------------------------
 
 
-FROM ubuntu:16.04
-MAINTAINER "Yunify"
+FROM alpine
+LABEL maintainers="Yunify"
+LABEL description="CSI plugin"
 
-RUN apt-get update && \
-    apt-get install -y ca-certificates ca-certificates-java && \
-    apt-get install -y xfsprogs
+RUN  apk add --no-cache xfsprogs e2fsprogs ca-certificates
 COPY blockplugin /blockplugin
 RUN chmod +x /blockplugin && \
     mkdir -p /var/log/blockplugin
