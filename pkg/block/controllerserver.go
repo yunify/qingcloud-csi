@@ -88,7 +88,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	if exVol != nil {
 		glog.Infof("Request volume name: %s, capacity range [%d,%d] bytes, type: %d, zone: %s",
 			volumeName, requiredByte, limitByte, sc.VolumeType, vm.GetZone())
-		glog.Infof("Exist volume name: %s, id: %s, capacity: %d GB, type: %d, zone: %s",
+		glog.Infof("Exist volume name: %s, id: %s, capacity: %d Bytes, type: %d, zone: %s",
 			*exVol.VolumeName, *exVol.VolumeID, GibToByte(*exVol.Size), *exVol.VolumeType, vm.GetZone())
 		if *exVol.Size >= requiredGib && int64(*exVol.Size)*gib <= limitByte && *exVol.VolumeType == sc.VolumeType {
 			// exisiting volume is compatible with new request and should be reused.

@@ -18,22 +18,31 @@ kind: DaemonSet
 apiVersion: apps/v1
 metadata:
   name: csi-qingcloud-node
-  namespace: csi-qingcloud
+  namespace: kube-system
+  labels:
+    app: "csi-qingcloud"
+    role: "node"
+    csi: "v0.2.0"
+    owner: "yunify"
 spec:
   selector:
     matchLabels:
-      app: csi-qingcloud
-      tier: node
+      app: "csi-qingcloud"
+      role: "node"
+      csi: "v0.2.0"
+      owner: "yunify"
   template:
     metadata:
       labels:
-        app: csi-qingcloud
-        tier: node
+        app: "csi-qingcloud"
+        role: "node"
+        csi: "v0.2.0"
+        owner: "yunify"
     spec:
       serviceAccount: csi-qingcloud-node
-      hostNetwork: true
       imagePullSecrets:
-        - name: csi-registry
+      - name: csi-registry
+      hostNetwork: true
       containers:
         - name: driver-registrar
           image: quay.io/k8scsi/driver-registrar:v0.2.0
@@ -56,7 +65,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dockerhub.qingcloud.com/wiley/csi-qingcloud:v0.2.0.1
+          image: dockerhub.qingcloud.com/csiplugin/csi-qingcloud:v0.2.0.1
           args :
             - "--nodeid=$(NODE_ID)"
             - "--endpoint=$(CSI_ENDPOINT)"
