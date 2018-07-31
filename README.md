@@ -64,17 +64,18 @@ parameters:
   type: "0"
   maxSize: "500"
   minSize: "10"
+  stepSize: "10"
   fsType: "ext4"
 reclaimPolicy: Delete 
 ```
 
-- `type`: The type of volume in QingCloud IaaS platform. See [QingCloud docs](https://docs.qingcloud.com/product/api/action/volume/create_volumes.html) for details.
+- `type`: The type of volume in QingCloud IaaS platform. Generally, `0` represents high performance volume. `3` respresents super high performance volume. `1` or `2` represents high capacity volume depending on your zone. See [QingCloud docs](https://docs.qingcloud.com/product/api/action/volume/create_volumes.html) for details.
 
-- `maxSize`, `minSize`: The maximum and minimum volume size with specific volume type.
+- `maxSize`, `minSize`: The range of volume size in specific volume type.
+
+- `stepSize`: Step size is used to control the size of volumes allowed to create on QingCloud IaaS platform.
 
 - `fsType`: `ext3`, `ext4`, `xfs`. Default `ext4`.
-
-
 
 ### Installation
 This guide will deploy CSI plugin in *kube-system* namespace. You can deploy the plugin in other namespace. DO NOT disable [Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) feature gate in Kubernetes control plane.
@@ -87,7 +88,7 @@ $ ./create-cm.sh
 
 - Create Docker image registry secret
 ```
-kubectl create secret docker-registry csi-registry --docker-server=dockerhub.qingcloud.com --docker-username=<YOUR_USERNAME> --docker-password=<YOUR_PASSWORD> --docker-email=<YOUR_EMAIL> --namespace=kube-system
+kubectl create -f deploy/block/kubernetes/csi-secret.yaml
 ```
 
 - Create access control objects

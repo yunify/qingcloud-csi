@@ -8,8 +8,7 @@
 
 ## Compatibility: CSI plugin <-> QingCloud IaaS Platform
 
-|   | HP Instance    | SHP Instance   | HP Instance in AppCenter    | SHP Instance in AppCenter |
-|---|----------------|----------------|-----------------------------|---------------------------|
-|HP Volume| ✓        | -              | ✓                           | -                         |
-|SHP Volume| -       | ✓              | -                           | ✓                         |
-|HC Volume| ✓        | ✓              | ✓                           | ✓                         |
+|          | HP Volume (0)    | SHP Volume (3)   | HC Volume (1,2) |
+|-----------|------------------|------------------|-----------------|
+|HP Instance| ✓        | -                | ✓               |
+|SHP Instance| -       | ✓                | ✓               |

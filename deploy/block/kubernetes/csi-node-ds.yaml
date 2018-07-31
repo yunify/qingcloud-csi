@@ -41,7 +41,7 @@ spec:
     spec:
       serviceAccount: csi-qingcloud-node
       imagePullSecrets:
-      - name: csi-registry
+      - name: csi-qingcloud
       hostNetwork: true
       containers:
         - name: driver-registrar

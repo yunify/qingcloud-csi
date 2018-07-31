@@ -61,12 +61,8 @@ spec:
         owner: "yunify"
     spec:
       serviceAccount: csi-qingcloud-controller
-# The private registry secret must exist before creating this workload.
-# Create csi-registry secret command:
-#   kubectl create secret docker-registry csi-registry --docker-server=dockerhub.qingcloud.com \\
-#     --docker-username=<your-name> --docker-password=<your-password> --docker-email=<your-email>
       imagePullSecrets:
-      - name: csi-registry
+      - name: csi-qingcloud
       containers:
       - name: csi-provisioner
         image: quay.io/k8scsi/csi-provisioner:v0.2.1
