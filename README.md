@@ -28,12 +28,10 @@ dockerhub.qingcloud.com/csiplugin/csi-qingcloud		v0.2.0.1	640a9519e59b		55 minut
 ```
 
 ### Configuration
-#### Config YAML file
+#### Config File
 
-
-
-*[config.yaml](deploy/block/kubernetes/config.yaml)* file shown below would be referenced by a ConfigMap.
-> IMPORTANT: In QingCloud AppCenter, please modify [script](deploy/block/kubernetes/create-cm.sh) and create a ConfigMap which references another YAML file(*/etc/qingcloud/client.yaml*) on the host machine.
+Config [file](deploy/block/kubernetes/config.yaml) shown below would be referenced by a ConfigMap.
+> IMPORTANT: In QingCloud AppCenter, please modify [script](deploy/block/kubernetes/create-cm.sh) and create a ConfigMap which references another config file(*/etc/qingcloud/client.yaml*) on the host machine.
 
 ```
 qy_access_key_id: 'ACCESS_KEY_ID'
@@ -55,7 +53,7 @@ connection_timeout: 30
 
 ### StorageClass
 
-*[sc.yaml](deploy/block/example/sc.yaml)* file shown below is used to create StorageClass object.
+SotrageClass definition [file](deploy/block/example/sc.yaml) shown below is used to create StorageClass object.
 ```
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -79,7 +77,7 @@ reclaimPolicy: Delete
 
 
 ### Installation
-This guide will deploy CSI plugin in *kube-system* namespace. You can modify YAML files mentioned as follows and deploy the plugin in other namespace. DO NOT disable [Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) feature gate in Kubernetes control plane.
+This guide will deploy CSI plugin in *kube-system* namespace. You can deploy the plugin in other namespace. DO NOT disable [Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) feature gate in Kubernetes control plane.
 
 - Create ConfigMap
 ```
