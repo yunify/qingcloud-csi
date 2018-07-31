@@ -3,13 +3,15 @@
 [![Build Status](https://travis-ci.org/yunify/qingcloud-csi.svg?branch=master)](https://travis-ci.org/yunify/qingcloud-csi)
 [![Go Report Card](https://goreportcard.com/badge/github.com/yunify/qingcloud-csi)](https://goreportcard.com/report/github.com/yunify/qingcloud-csi)
 
+English|[中文](README_zh.md)
+
 ## Description
 QingCloud CSI plugin implements an interface between Container Storage Interface([CSI](https://github.com/container-storage-interface/)) enabled Container Orchestrator(CO) and the storage of QingCloud. Currently, QingCloud CSI plugin has been passed the [CSI test](https://github.com/kubernetes-csi/csi-test) in Kubernetes v1.10 environment.
 
 ## Block Plugin
 
 ### Compiling
-QingCloud CSI plugin can be complied as a binary file or a container.  We can get a binary file in _output folder. When compiled as a container, the image is stored in a local Docker's image store. 
+QingCloud CSI plugin can be complied as a binary file or be built as a image.  We can get a binary file in _output folder. When built as a image, the image is stored in a local Docker's image store. 
 
 To compile a binary file:
 ```
@@ -53,7 +55,7 @@ connection_timeout: 30
 
 ### StorageClass
 
-SotrageClass definition [file](deploy/block/example/sc.yaml) shown below is used to create StorageClass object.
+StorageClass definition [file](deploy/block/example/sc.yaml) shown below is used to create StorageClass object.
 ```
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
