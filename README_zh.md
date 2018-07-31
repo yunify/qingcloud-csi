@@ -3,11 +3,15 @@
 [![Build Status](https://travis-ci.org/yunify/qingcloud-csi.svg?branch=master)](https://travis-ci.org/yunify/qingcloud-csi)
 [![Go Report Card](https://goreportcard.com/badge/github.com/yunify/qingcloud-csi)](https://goreportcard.com/report/github.com/yunify/qingcloud-csi)
 
-[English](README.md) | 中文
+> [English](README.md) | 中文
 ## 描述
 QingCloud CSI插件实现了[CSI](https://github.com/container-storage-interface/)接口，并使容器编排平台能够使用QingCloud云平台的存储资源。目前，QingCloud CSI插件已经在Kubernetes v1.10环境中通过了[CSI测试](https://github.com/kubernetes-csi/csi-test)。
 
 ## 块存储插件
+
+插件的设计和安装使用Kubernetes社区推荐的CSI插件[架构](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/storage/container-storage-interface.md#recommended-mechanism-for-deploying-csi-drivers-on-kubernetes)，插件架构包含Controller和Node两部分，在Controller部分，由有状态副本集（StatefulSet）在Kubernetes集群内创建一个Pod副本。在Node部分，每个可调度的节点由守护进程集（DaemonSet）创建一个Pod副本。
+
+块存储插件部署后, 用户可创建访问模式（Access Mode）为单节点读写（ReadWriteOnce）的基于QingCloud的超高性能型，性能型或容量型硬盘的存储卷并挂载至工作负载。
 
 ### 编译
 QingCloud CSI插件可编译为二进制文件或镜像。编译后的二进制文件存放在_output文件夹内。当编译为镜像时，镜像存储在本地的Docker镜像仓库内。

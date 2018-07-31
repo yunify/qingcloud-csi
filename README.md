@@ -3,15 +3,19 @@
 [![Build Status](https://travis-ci.org/yunify/qingcloud-csi.svg?branch=master)](https://travis-ci.org/yunify/qingcloud-csi)
 [![Go Report Card](https://goreportcard.com/badge/github.com/yunify/qingcloud-csi)](https://goreportcard.com/report/github.com/yunify/qingcloud-csi)
 
-English|[中文](README_zh.md)
+> English | [中文](README_zh.md)
 
 ## Description
 QingCloud CSI plugin implements an interface between Container Storage Interface([CSI](https://github.com/container-storage-interface/)) enabled Container Orchestrator(CO) and the storage of QingCloud. Currently, QingCloud CSI plugin has been passed the [CSI test](https://github.com/kubernetes-csi/csi-test) in Kubernetes v1.10 environment.
 
-## Block Plugin
+## Block Storage Plugin
+
+Block storage plugin's design and installation use Kubernetes community recommended CSI plugin [architecture](ttps://github.com/kubernetes/community/blob/master/contributors/design-proposals/storage/container-storage-interface.md#recommended-mechanism-for-deploying-csi-drivers-on-kubernetes). Plugin architecture contains Controller part and Node part. In the part of Controller, one Pod is created by StatefulSet in Kubernetes cluster. In the part of Node, one Pod is created by DaemonSet on every node. 
+
+After plugin installation completes, user can create volumes based on several types of disk, such as super high performance disk, high performance disk and high capacity disk, with ReadWriteOnce access mode and mount volumes on workloads.
 
 ### Compiling
-QingCloud CSI plugin can be complied as a binary file or be built as a image.  We can get a binary file in _output folder. When built as a image, the image is stored in a local Docker's image store. 
+QingCloud CSI plugin can be complied as a binary file or be built as an image.  We can get a binary file in _output folder. When built as an image, the image is stored in local Docker's image store. 
 
 To compile a binary file:
 ```
