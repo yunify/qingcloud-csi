@@ -22,28 +22,28 @@ import (
 )
 
 type qingStorageClass struct {
-	VolumeType    int    `json:"type"`
-	VolumeMaxSize int    `json:"maxSize"`
-	VolumeMinSize int    `json:"minSize"`
-	VolumeFsType  string `json:"fsType"`
+	VolumeType     int    `json:"type"`
+	VolumeMaxSize  int    `json:"maxSize"`
+	VolumeMinSize  int    `json:"minSize"`
+	VolumeStepSize int    `json:"stepSize"`
+	VolumeFsType   string `json:"fsType"`
 }
 
-// NewDefaultQingStorageClass
-// Create default qingStorageClass object
+// NewDefaultQingStorageClass create default qingStorageClass object
 func NewDefaultQingStorageClass() *qingStorageClass {
 	return &qingStorageClass{
-		VolumeType:    0,
-		VolumeMaxSize: 500,
-		VolumeMinSize: 10,
-		VolumeFsType:  FileSystemDefault,
+		VolumeType:     0,
+		VolumeMaxSize:  500,
+		VolumeMinSize:  10,
+		VolumeStepSize: 10,
+		VolumeFsType:   FileSystemDefault,
 	}
 }
 
-// NewQingStorageClassFromMap
-// Create qingStorageClass object from map
+// NewQingStorageClassFromMap create qingStorageClass object from map
 func NewQingStorageClassFromMap(opt map[string]string) (*qingStorageClass, error) {
 	sc := NewDefaultQingStorageClass()
-	// volume type +required
+	// volume type
 	if sVolType, ok := opt["type"]; ok {
 		iVolType, err := strconv.Atoi(sVolType)
 		if err != nil {
@@ -52,7 +52,7 @@ func NewQingStorageClassFromMap(opt map[string]string) (*qingStorageClass, error
 		sc.VolumeType = iVolType
 	}
 
-	// Get volume FsType +optional
+	// Get volume FsType
 	// Default is ext4
 	if sFsType, ok := opt["fsType"]; ok {
 		if !IsValidFileSystemType(sFsType) {
@@ -61,7 +61,7 @@ func NewQingStorageClassFromMap(opt map[string]string) (*qingStorageClass, error
 		sc.VolumeFsType = sFsType
 	}
 
-	// Get volume maxsize +optional
+	// Get volume maxsize
 	if sMaxSize, ok := opt["maxSize"]; ok {
 		iMaxSize, err := strconv.Atoi(sMaxSize)
 		if err != nil {
@@ -73,7 +73,7 @@ func NewQingStorageClassFromMap(opt map[string]string) (*qingStorageClass, error
 		sc.VolumeMaxSize = iMaxSize
 	}
 
-	// Get volume minsize +optional
+	// Get volume minsize
 	if sMinSize, ok := opt["minSize"]; ok {
 		iMinSize, err := strconv.Atoi(sMinSize)
 		if err != nil {
@@ -83,7 +83,18 @@ func NewQingStorageClassFromMap(opt map[string]string) (*qingStorageClass, error
 			return nil, fmt.Errorf("MinSize must not less than zero")
 		}
 		sc.VolumeMinSize = iMinSize
+	}
 
+	// Get volume step
+	if sStepSize, ok := opt["stepSize"]; ok {
+		iStepSize, err := strconv.Atoi(sStepSize)
+		if err != nil {
+			return nil, err
+		}
+		if iStepSize <= 0 {
+			return nil, fmt.Errorf("StepSize must greate than zero")
+		}
+		sc.VolumeStepSize = iStepSize
 	}
 
 	// Ensure volume minSize less than volume maxSize
@@ -93,16 +104,15 @@ func NewQingStorageClassFromMap(opt map[string]string) (*qingStorageClass, error
 	return sc, nil
 }
 
-// FormatVolumeSize
-// Transfer to proper volume size
-func (sc qingStorageClass) FormatVolumeSize(size int) int {
+// FormatVolumeSize transfer to proper volume size
+func (sc qingStorageClass) FormatVolumeSize(size int, step int) int {
 	if size <= sc.VolumeMinSize {
 		return sc.VolumeMinSize
 	} else if size >= sc.VolumeMaxSize {
 		return sc.VolumeMaxSize
 	}
-	if size%10 != 0 {
-		size = (size/10 + 1) * 10
+	if size%step != 0 {
+		size = (size/step + 1) * step
 	}
 	if size >= sc.VolumeMaxSize {
 		return sc.VolumeMaxSize

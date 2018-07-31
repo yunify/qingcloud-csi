@@ -171,7 +171,7 @@ func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc qin
 	count := 1
 	input.Count = &count
 	// volume provisioner size
-	size := sc.FormatVolumeSize(requestSize)
+	size := sc.FormatVolumeSize(requestSize, sc.VolumeStepSize)
 	input.Size = &size
 	// create volume name
 	input.VolumeName = &volumeName

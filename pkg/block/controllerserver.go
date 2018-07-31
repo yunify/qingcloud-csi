@@ -67,13 +67,13 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	}
 	// get request volume capacity range
 	requiredByte := req.GetCapacityRange().GetRequiredBytes()
-	requiredGib := sc.FormatVolumeSize(ByteCeilToGib(requiredByte))
+	requiredGib := sc.FormatVolumeSize(ByteCeilToGib(requiredByte), sc.VolumeStepSize)
 	limitByte := req.GetCapacityRange().GetLimitBytes()
 	if limitByte == 0 {
 		limitByte = Int64Max
 	}
 	// check volume range
-	if GibToByte(requiredGib) > limitByte || requiredGib > sc.VolumeMaxSize {
+	if GibToByte(requiredGib) < requiredByte || GibToByte(requiredGib) > limitByte || requiredGib < sc.VolumeMinSize || requiredGib > sc.VolumeMaxSize {
 		glog.Errorf("Request capacity range [%d, %d] bytes, storage class capacity range [%d, %d] GB, format required size: %d gb",
 			requiredByte, limitByte, sc.VolumeMinSize, sc.VolumeMaxSize, requiredGib)
 		return nil, status.Error(codes.OutOfRange, "Unsupport capacity range")
@@ -88,7 +88,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	if exVol != nil {
 		glog.Infof("Request volume name: %s, capacity range [%d,%d] bytes, type: %d, zone: %s",
 			volumeName, requiredByte, limitByte, sc.VolumeType, vm.GetZone())
-		glog.Infof("Exist volume name: %s, id: %s, capacity: %d GB, type: %d, zone: %s",
+		glog.Infof("Exist volume name: %s, id: %s, capacity: %d bytes, type: %d, zone: %s",
 			*exVol.VolumeName, *exVol.VolumeID, GibToByte(*exVol.Size), *exVol.VolumeType, vm.GetZone())
 		if *exVol.Size >= requiredGib && int64(*exVol.Size)*gib <= limitByte && *exVol.VolumeType == sc.VolumeType {
 			// exisiting volume is compatible with new request and should be reused.

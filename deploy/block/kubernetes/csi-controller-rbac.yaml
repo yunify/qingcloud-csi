@@ -22,7 +22,10 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: csi-qingcloud-controller
-  namespace: csi-qingcloud
+  namespace: kube-system
+  labels:
+    csi: "v0.2.0"
+    owner: "yunify"
 
 ---
 kind: ClusterRole
@@ -31,6 +34,8 @@ metadata:
   name: csi-qingcloud-provisioner
   labels:
     qingcloud.com/csi-controller: "true"
+    csi: "v0.2.0"
+    owner: "yunify"
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
@@ -58,6 +63,8 @@ metadata:
   name: csi-qingcloud-attacher
   labels:
     qingcloud.com/csi-controller: "true"
+    csi: "v0.2.0"
+    owner: "yunify"
 rules:
   - apiGroups: [""]
     resources: ["events"]
@@ -77,6 +84,9 @@ kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: csi-qingcloud-controller
+  labels:
+    csi: "v0.2.0"
+    owner: "yunify"
 aggregationRule:
   clusterRoleSelectors:
   - matchLabels:
@@ -88,10 +98,13 @@ kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: csi-qingcloud-controller
+  labels:
+    csi: "v0.2.0"
+    owner: "yunify"
 subjects:
   - kind: ServiceAccount
     name: csi-qingcloud-controller
-    namespace: csi-qingcloud
+    namespace: kube-system
 roleRef:
   kind: ClusterRole
   name: csi-qingcloud-controller
