@@ -33,7 +33,7 @@ connection_timeout: 30
 
 - `qy_access_key_id`, `qy_secret_access_key`: 在 QingCloud 控制台创建 Access key 密钥. 此密钥需要有操作 QingCloud IaaS 平台资源的权限。
 
-- `zone`: Zone字段应与 Kubernetes 集群所在区相同。CSI 插件将会操作此区内的存储卷资源。
+- `zone`: Zone字段应与 Kubernetes 集群所在区相同。CSI 插件将会操作此区的存储卷资源。
 
 - `host`, `prot`. `protocol`, `uri`: 共同构成 QingCloud IaaS 平台服务的 url.
 
