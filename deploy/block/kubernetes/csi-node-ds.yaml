@@ -65,7 +65,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dockerhub.qingcloud.com/csiplugin/csi-qingcloud:v0.2.0.1
+          image: dockerhub.qingcloud.com/csiplugin/csi-qingcloud:v0.2.0
           args :
             - "--nodeid=$(NODE_ID)"
             - "--endpoint=$(CSI_ENDPOINT)"
