@@ -9,9 +9,9 @@ QingCloud CSI插件实现了[CSI](https://github.com/container-storage-interface
 
 ## 块存储插件
 
-插件的设计和安装使用Kubernetes社区推荐的CSI插件[架构](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/storage/container-storage-interface.md#recommended-mechanism-for-deploying-csi-drivers-on-kubernetes)，插件架构包含Controller和Node两部分，在Controller部分，由有状态副本集（StatefulSet）在Kubernetes集群内创建一个Pod副本。在Node部分，每个可调度的节点由守护进程集（DaemonSet）创建一个Pod副本。
+插件的设计和安装使用Kubernetes社区推荐的CSI插件[架构](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/storage/container-storage-interface.md#recommended-mechanism-for-deploying-csi-drivers-on-kubernetes)，插件架构包含Controller和Node两部分，在Controller部分，由有状态副本集（StatefulSet）在Kubernetes集群内创建一个Pod副本。在Node部分，每个可调度的节点由守护进程集（DaemonSet）创建一个Pod副本。
 
-块存储插件部署后, 用户可创建访问模式（Access Mode）为单节点读写（ReadWriteOnce）的基于QingCloud的超高性能型，性能型或容量型硬盘的存储卷并挂载至工作负载。
+块存储插件部署后, 用户可创建访问模式（Access Mode）为单节点读写（ReadWriteOnce）的基于QingCloud的超高性能型，性能型或容量型硬盘的存储卷并挂载至工作负载。
 
 ### 编译
 QingCloud CSI插件可编译为二进制文件或镜像。编译后的二进制文件存放在_output文件夹内。当编译为镜像时，镜像存储在本地的Docker镜像仓库内。
@@ -29,7 +29,7 @@ $ make blockplugin-container
 本地镜像仓库存储镜像：
 ```
 $ docker images | grep csi-qingcloud
-dockerhub.qingcloud.com/csiplugin/csi-qingcloud		v0.2.0.1	640a9519e59b		55 minutes ago		40MB
+dockerhub.qingcloud.com/csiplugin/csi-qingcloud		v0.2.0	  c75dc27cbfd7		55 minutes ago		40MB
 ```
 
 ### 配置
@@ -83,7 +83,7 @@ reclaimPolicy: Delete
 - `fsType`: 支持`ext3`, `ext4`, `xfs`. 默认为`ext4`.
 
 ### 安装
-此安装指南将CSI插件部署在*kube-system* namespace内。用户也可以将插件部署在其他namespace内。Kubernetes控制平面内请勿禁用[Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation)特性。
+此安装指南将CSI插件部署在*kube-system* namespace内。用户也可以将插件部署在其他namespace内。Kubernetes控制平面内请勿禁用[Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation)特性。
 
 - 创建ConfigMap
 ```

@@ -10,7 +10,7 @@ QingCloud CSI plugin implements an interface between Container Storage Interface
 
 ## Block Storage Plugin
 
-Block storage plugin's design and installation use Kubernetes community recommended CSI plugin [architecture](ttps://github.com/kubernetes/community/blob/master/contributors/design-proposals/storage/container-storage-interface.md#recommended-mechanism-for-deploying-csi-drivers-on-kubernetes). Plugin architecture contains Controller part and Node part. In the part of Controller, one Pod is created by StatefulSet in Kubernetes cluster. In the part of Node, one Pod is created by DaemonSet on every node. 
+Block storage plugin's design and installation use Kubernetes community recommended CSI plugin [architecture](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/storage/container-storage-interface.md#recommended-mechanism-for-deploying-csi-drivers-on-kubernetes). Plugin architecture contains Controller part and Node part. In the part of Controller, one Pod is created by StatefulSet in Kubernetes cluster. In the part of Node, one Pod is created by DaemonSet on every node. 
 
 After plugin installation completes, user can create volumes based on several types of disk, such as super high performance disk, high performance disk and high capacity disk, with ReadWriteOnce access mode and mount volumes on workloads.
 
@@ -30,7 +30,7 @@ $ make blockplugin-container
 You can find image in your local image store
 ```
 $ docker images | grep csi-qingcloud
-dockerhub.qingcloud.com/csiplugin/csi-qingcloud		v0.2.0.1	640a9519e59b		55 minutes ago		40MB
+dockerhub.qingcloud.com/csiplugin/csi-qingcloud		v0.2.0	   c75dc27cbfd7		55 minutes ago		40MB
 ```
 
 ### Configuration

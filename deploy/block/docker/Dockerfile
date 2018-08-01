@@ -17,7 +17,7 @@
 
 FROM alpine
 LABEL maintainers="Yunify"
-LABEL description="CSI plugin"
+LABEL description="QingCloud CSI plugin"
 
 RUN  apk add --no-cache xfsprogs e2fsprogs ca-certificates
 COPY blockplugin /blockplugin
