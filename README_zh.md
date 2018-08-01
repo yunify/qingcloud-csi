@@ -64,7 +64,7 @@ reclaimPolicy: Delete
 - `fsType`: 支持 `ext3`, `ext4`, `xfs`. 默认为 `ext4`.
 
 ### 安装
-此安装指南将 CSI 插件安装在 *kube-system* namespace 内。用户也可以将插件部署在其他 namespace 内。为了CSI插件的正常使用，请确保在Kubernetes控制平面内 `--allow-privileged` 设置项设为 `true` 并且启用（默认开启）[Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) 特性。
+此安装指南将 CSI 插件安装在 *kube-system* namespace 内。用户也可以将插件部署在其他 namespace 内。为了CSI插件的正常使用，请确保在Kubernetes控制平面内将 `--allow-privileged` 项设置为 `true` 并且启用（默认开启）[Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) 特性。
 
 - 创建 ConfigMap
 ```
