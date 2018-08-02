@@ -37,7 +37,7 @@ connection_timeout: 30
 
 - `host`, `prot`. `protocol`, `uri`: 共同构成 QingCloud IaaS 平台服务的 url.
 
-### StorageClass
+#### StorageClass
 
 如下所示的 StorageClass 资源定义[文件](deploy/block/example/sc.yaml)可用来创建 StorageClass 对象.
 ```
