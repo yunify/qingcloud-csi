@@ -77,7 +77,7 @@ $ kubectl apply -f ./csi-node-ds.yaml
 
 - Check CSI plugin
 ```
-$ kubectl get pods -n csi-qingcloud | grep csi
+$ kubectl get pods -n kube-system | grep csi
 csi-qingcloud-controller-0      3/3       Running       0          5m
 csi-qingcloud-node-kks3q        2/2       Running       0          2m
 csi-qingcloud-node-pgsbn        2/2       Running       0          2m
