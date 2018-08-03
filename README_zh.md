@@ -69,7 +69,7 @@ reclaimPolicy: Delete
 - 创建 ConfigMap
 ```
 $ chmod +x deploy/block/kubernetes/create-cm.sh
-$ ./create-cm.sh
+$ ./deploy/block/kubernetes/create-cm.sh
 ```
 
 - 创建 Docker 镜像仓库密钥

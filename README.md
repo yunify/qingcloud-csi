@@ -70,7 +70,7 @@ This guide will install CSI plugin in *kube-system* namespace. You can also depl
 - Create ConfigMap
 ```
 $ chmod +x deploy/block/kubernetes/create-cm.sh
-$ ./create-cm.sh
+$ ./deploy/block/kubernetes/create-cm.sh
 ```
 
 - Create Docker image registry secret
