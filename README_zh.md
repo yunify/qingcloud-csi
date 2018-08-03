@@ -13,7 +13,108 @@ QingCloud CSI 插件实现了 [CSI](https://github.com/container-storage-interfa
 
 块存储插件部署后, 用户可创建访问模式（Access Mode）为单节点读写（ReadWriteOnce）的基于 QingCloud 的超高性能型，性能型或容量型硬盘的存储卷并挂载至工作负载。
 
-### StorageClass参数说明
+### 安装
+此安装指南将 CSI 插件安装在 *kube-system* namespace 内。用户也可以将插件部署在其他 namespace 内。为了CSI插件的正常使用，请确保在Kubernetes控制平面内将 `--allow-privileged` 项设置为 `true` 并且启用（默认开启）[Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) 特性。
+
+- 下载安装包并解压
+```
+$ wget $(curl --silent "https://api.github.com/repos/yunify/qingcloud-csi/releases/latest" | \
+  grep browser_download_url | grep install|cut -d '"' -f 4)
+$ tar -xvf csi-qingcloud-install.tar.gz
+$ cd csi-qingcloud-install
+```
+
+- 创建 ConfigMap
+  * 在基于 QingCloud IaaS 平台的 Kubernetes 集群内
+    1. 修改安装包内配置文件（config.yaml）
+    ```
+    qy_access_key_id: 'ACCESS_KEY_ID'
+    qy_secret_access_key: 'ACCESS_KEY_SECRET'
+    zone: 'ZONE'
+    host: 'api.qingcloud.com'
+    port: 443
+    protocol: 'https'
+    uri: '/iaas'
+    connection_retries: 3
+    connection_timeout: 30
+    ```
+    - `qy_access_key_id`, `qy_secret_access_key`: 在 QingCloud 控制台创建 Access key 密钥. 此密钥需要有操作 QingCloud IaaS 平台资源的权限。
+
+    - `zone`: Zone 字段应与 Kubernetes 集群所在区相同。CSI 插件将会操作此区的存储卷资源。
+    
+    - `host`, `prot`. `protocol`, `uri`: 共同构成 QingCloud IaaS 平台服务的 url.
+
+    2. 创建 ConfigMap
+    ```
+    $ kubectl apply configmap csi-qingcloud --from-file=config.yaml=./config.yaml --namespace=kube-system
+    ```
+
+  * 在基于 QingCloud Appcenter 的 Kubernetes 集群内
+
+    1. 创建 ConfigMap
+    ```
+    $ kubectl apply configmap csi-qingcloud --from-file=config.yaml=/etc/qingcloud/client.yaml --namespace=kube-system
+    ```
+
+- 创建 Docker 镜像仓库密钥
+```
+$ kubectl apply -f ./csi-secret.yaml
+```
+
+- 创建访问控制相关对象
+```
+$ kubectl apply -f ./csi-controller-rbac.yaml
+$ kubectl apply -f ./csi-node-rbac.yaml
+```
+
+- 部署 CSI 插件
+> 注: 在通过 QingCloud AppCenter 创建的 Kubernetes 集群内, 请将 [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML 文件的 *"/var/lib/kubelet"* 字段替换为 *"/data/var/lib/kubelet"*。
+
+```
+$ kubectl apply -f ./csi-controller-sts.yaml
+$ kubectl apply -f ./csi-node-ds.yaml
+```
+
+- 检查 CSI 插件状态
+```
+$ kubectl get pods -n kube-system | grep csi
+csi-qingcloud-controller-0      3/3       Running       0          5m
+csi-qingcloud-node-kks3q        2/2       Running       0          2m
+csi-qingcloud-node-pgsbn        2/2       Running       0          2m
+```
+
+### 验证
+- 由 Kubernetes 集群管理员创建 StorageClass
+> 注：用户应按照后续部分的说明设置 StorageClass 的参数，示例将创建 `type` 值为 `1` 的 StorageClass 
+```
+$ kubectl apply -f https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/block/example/sc.yaml
+```
+
+- 创建 PVC
+```
+$ kubectl apply -f https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/block/example/pvc.yaml
+```
+
+- 创建挂载 PVC 的 Deployment
+```
+$ kubectl apply -f https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/block/example/deploy.yaml
+```
+
+- 检查 Pod 状态
+```
+$ kubectl get po | grep deploy
+nginx-84474cf674-zfhbs   1/1       Running   0          1m
+```
+
+- 访问容器内挂载存储卷的目录
+```
+$ kubectl exec -ti deploy-nginx-qingcloud-84474cf674-zfhbs /bin/bash
+# cd /mnt
+# ls
+lost+found
+```
+
+### StorageClass参数
 
 如下所示的 StorageClass 资源定义[文件](deploy/block/example/sc.yaml)可用来创建 StorageClass 对象.
 ```
@@ -38,105 +139,6 @@ reclaimPolicy: Delete
 - `stepSize`: 步长用来控制所创建存储卷的容量。
 
 - `fsType`: 支持 `ext3`, `ext4`, `xfs`. 默认为 `ext4`.
-
-### 安装
-此安装指南将 CSI 插件安装在 *kube-system* namespace 内。用户也可以将插件部署在其他 namespace 内。为了CSI插件的正常使用，请确保在Kubernetes控制平面内将 `--allow-privileged` 项设置为 `true` 并且启用（默认开启）[Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) 特性。
-
-- 下载安装包并解压
-```
-$ wget $(curl --silent "https://api.github.com/repos/yunify/qingcloud-csi/releases/latest" | grep browser_download_url | grep install|cut -d '"' -f 4)
-$ tar -xvf csi-qingcloud-install.tar.gz
-$ cd csi-qingcloud-install
-```
-
-- 创建 ConfigMap
-  * 在基于 QingCloud IaaS 平台的 Kubernetes 集群内
-    1. 修改配置文件（client.yaml）
-    ```
-    qy_access_key_id: 'ACCESS_KEY_ID'
-    qy_secret_access_key: 'ACCESS_KEY_SECRET'
-    zone: 'ZONE'
-    host: 'api.qingcloud.com'
-    port: 443
-    protocol: 'https'
-    uri: '/iaas'
-    connection_retries: 3
-    connection_timeout: 30
-    ```
-    - `qy_access_key_id`, `qy_secret_access_key`: 在 QingCloud 控制台创建 Access key 密钥. 此密钥需要有操作 QingCloud IaaS 平台资源的权限。
-
-    - `zone`: Zone 字段应与 Kubernetes 集群所在区相同。CSI 插件将会操作此区的存储卷资源。
-    
-    - `host`, `prot`. `protocol`, `uri`: 共同构成 QingCloud IaaS 平台服务的 url.
-
-    2. 创建 ConfigMap
-    ```
-    $ kubectl create configmap csi-qingcloud --from-file=config.yaml=./config.yaml --namespace=kube-system
-    ```
-
-  * 在基于 QingCloud Appcenter 的 Kubernetes 集群内
-
-    1. 创建 ConfigMap
-    ```
-    $ kubectl create configmap csi-qingcloud --from-file=config.yaml=./client.yaml --namespace=kube-system
-    ```
-
-- 创建 Docker 镜像仓库密钥
-```
-$ kubectl create -f ./csi-secret.yaml
-```
-
-- 创建访问控制相关对象
-```
-$ kubectl create -f ./csi-controller-rbac.yaml
-$ kubectl create -f ./csi-node-rbac.yaml
-```
-
-- 部署 CSI 插件
-> 注: 在通过 QingCloud AppCenter 创建的 Kubernetes 集群内, 请将 [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML 文件的 *"/var/lib/kubelet"* 字段替换为 *"/data/var/lib/kubelet"*。
-
-```
-$ kubectl create -f ./csi-controller-sts.yaml
-$ kubectl create -f ./csi-node-ds.yaml
-```
-
-- 检查 CSI 插件状态
-```
-$ kubectl get pods -n csi-qingcloud | grep csi
-csi-qingcloud-controller-0      3/3       Running       0          5m
-csi-qingcloud-node-kks3q        2/2       Running       0          2m
-csi-qingcloud-node-pgsbn        2/2       Running       0          2m
-```
-
-### 验证
-- 由 Kubernetes 集群管理员创建 StorageClass
-```
-$ kubectl create -f https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/block/example/sc.yaml
-```
-
-- 创建 PVC
-```
-$ kubectl create -f https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/block/example/pvc.yaml
-```
-
-- 创建挂载 PVC 的 Deployment
-```
-$ kubectl create -f https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/block/example/deploy.yaml
-```
-
-- 检查 Pod 状态
-```
-$ kubectl get po | grep deploy
-nginx-84474cf674-zfhbs   1/1       Running   0          1m
-```
-
-- 访问容器内挂载存储卷的目录
-```
-$ kubectl exec -ti deploy-nginx-qingcloud-84474cf674-zfhbs /bin/bash
-# cd /mnt
-# ls
-lost+found
-```
 
 ## 支持
 如果有任何问题或建议, 请在 [qingcloud-csi](https://github.com/yunify/qingcloud-csi/issues) 项目提 issue。
