@@ -14,31 +14,107 @@ Block storage plugin's design and installation use Kubernetes community recommen
 
 After plugin installation completes, user can create volumes based on several types of disk, such as super high performance disk, high performance disk and high capacity disk, with ReadWriteOnce access mode and mount volumes on workloads.
 
-### Configuration
-#### Config File
+### Installation
+This guide will install CSI plugin in *kube-system* namespace. You can also deploy the plugin in other namespace. To use this CSI plugin, please ensure `--allow-privileged` flag set to `true` and enable [Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) (Default enalbed) feature gate in Kubernetes control plane.
 
-Config [file](deploy/block/kubernetes/config.yaml) shown below would be referenced by a ConfigMap.
-> IMPORTANT: In Kubernetes cluster created through QingCloud AppCenter, please modify [script](deploy/block/kubernetes/create-cm.sh) and create a ConfigMap which references another config file (*/etc/qingcloud/client.yaml*) on the host machine.
-
+- Download and decompress installation package 
 ```
-qy_access_key_id: 'ACCESS_KEY_ID'
-qy_secret_access_key: 'ACCESS_KEY_SECRET'
-zone: 'ZONE'
-host: 'api.qingcloud.com'
-port: 443
-protocol: 'https'
-uri: '/iaas'
-connection_retries: 3
-connection_timeout: 30
+$ wget $(curl --silent "https://api.github.com/repos/yunify/qingcloud-csi/releases/latest" | \
+  grep browser_download_url | grep install|cut -d '"' -f 4)
+$ tar -xvf csi-qingcloud-install.tar.gz
+$ cd csi-qingcloud-install
 ```
 
-- `qy_access_key_id`, `qy_secret_access_key`: Access key pair can be created in QingCloud console. The access key pair must have the power to manipulate QingCloud IaaS platform resource.
+- Create ConfigMap
+  * In Kubernetes cluster based on QingCloud IaaS platform
+    1. Modify config file (./config.yaml) in installation package
+    ```
+    qy_access_key_id: 'ACCESS_KEY_ID'
+    qy_secret_access_key: 'ACCESS_KEY_SECRET'
+    zone: 'ZONE'
+    host: 'api.qingcloud.com'
+    port: 443
+    protocol: 'https'
+    uri: '/iaas'
+    connection_retries: 3
+    connection_timeout: 30
+    ```
+    - `qy_access_key_id`, `qy_secret_access_key`: Access key pair can be created in QingCloud console. The access key pair must have the power to manipulate QingCloud IaaS platform resource.
 
-- `zone`: Zone should be the same as Kubernetes cluster. CSI plugin will operate block storage volumes in this zone.
+    - `zone`: Zone should be the same as Kubernetes cluster. CSI plugin will operate block storage volumes in this zone.
 
-- `host`, `prot`. `protocol`, `uri`: QingCloud IaaS platform service url.
+    - `host`, `prot`. `protocol`, `uri`: QingCloud IaaS platform service url.
 
-#### StorageClass
+    2. Create ConfigMap
+    ```
+    $ kubectl create configmap csi-qingcloud --from-file=config.yaml=./config.yaml --namespace=kube-system
+    ```
+  * In Kubernetes cluster based on QingCloud AppCenter
+
+    1. Create ConfigMap
+    ```
+    $ kubectl create configmap csi-qingcloud --from-file=config.yaml=/etc/qingcloud/client.yaml --namespace=kube-system
+    ```
+
+- Create Docker image registry secret
+```
+kubectl apply -f ./csi-secret.yaml
+```
+
+- Create access control objects
+```
+$ kubectl apply -f ./csi-controller-rbac.yaml
+$ kubectl apply -f ./csi-node-rbac.yaml
+```
+
+- Deploy CSI plugin
+> IMPORTANT: In Kubernetes cluster created through QingCloud AppCenter, please replace *"/var/lib/kubelet"* with *"/data/var/lib/kubelet"* in [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML file.
+
+```
+$ kubectl apply -f ./csi-controller-sts.yaml
+$ kubectl apply -f ./csi-node-ds.yaml
+```
+
+- Check CSI plugin
+```
+$ kubectl get pods -n kube-system | grep csi
+csi-qingcloud-controller-0      3/3       Running       0          5m
+csi-qingcloud-node-kks3q        2/2       Running       0          2m
+csi-qingcloud-node-pgsbn        2/2       Running       0          2m
+```
+
+### Verification
+- Create a StorageClass by Kubernetes cluster administrator
+> NOTE: This guide will create a StorageClass which sets `type` to `0`. User could set StorageClass parameters according to following instruction.
+```
+$ kubectl apply -f https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/block/example/sc.yaml
+```
+
+- Create a PVC
+```
+$ kubectl apply -f https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/block/example/pvc.yaml
+```
+
+- Create a Deployment mounting the PVC
+```
+$ kubectl apply -f https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/block/example/deploy.yaml
+```
+
+- Check Pod status
+```
+$ kubectl get po | grep deploy
+nginx-84474cf674-zfhbs   1/1       Running   0          1m
+```
+
+- Access container's directory which mounting volume
+```
+$ kubectl exec -ti deploy-nginx-qingcloud-84474cf674-zfhbs /bin/bash
+# cd /mnt
+# ls
+lost+found
+```
+
+### StorageClass Parameters
 
 StorageClass definition [file](deploy/block/example/sc.yaml) shown below is used to create StorageClass object.
 ```
@@ -63,72 +139,6 @@ reclaimPolicy: Delete
 - `stepSize`: Step size is used to control the size of volumes allowed to create on QingCloud IaaS platform.
 
 - `fsType`: `ext3`, `ext4`, `xfs`. Default `ext4`.
-
-### Installation
-This guide will install CSI plugin in *kube-system* namespace. You can also deploy the plugin in other namespace. To use this CSI plugin, please ensure `--allow-privileged` flag set to `true` and enable [Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) (Default enalbed) feature gate in Kubernetes control plane.
-
-- Create ConfigMap
-```
-$ chmod +x deploy/block/kubernetes/create-cm.sh
-$ ./deploy/block/kubernetes/create-cm.sh
-```
-
-- Create Docker image registry secret
-```
-kubectl create -f deploy/block/kubernetes/csi-secret.yaml
-```
-
-- Create access control objects
-```
-$ kubectl create -f deploy/block/kubernetes/csi-controller-rbac.yaml
-$ kubectl create -f deploy/block/kubernetes/csi-node-rbac.yaml
-```
-
-- Deploy CSI plugin
-> IMPORTANT: In Kubernetes cluster created through QingCloud AppCenter, please replace *"/var/lib/kubelet"* with *"/data/var/lib/kubelet"* in [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML file.
-
-```
-$ kubectl create -f deploy/block/kubernetes/csi-controller-sts.yaml
-$ kubectl create -f deploy/block/kubernetes/csi-node-ds.yaml
-```
-
-- Check CSI plugin
-```
-$ kubectl get pods -n csi-qingcloud | grep csi
-csi-qingcloud-controller-0      3/3       Running       0          5m
-csi-qingcloud-node-kks3q        2/2       Running       0          2m
-csi-qingcloud-node-pgsbn        2/2       Running       0          2m
-```
-
-### Verification
-- Create a StorageClass by Kubernetes cluster administrator
-```
-$ kubectl create -f deploy/block/example/sc.yaml
-```
-
-- Create a PVC
-```
-$ kubectl create -f deploy/block/example/pvc.yaml
-```
-
-- Create a Deployment mounting the PVC
-```
-$ kubectl create -f deploy/block/example/deploy.yaml
-```
-
-- Check Pod status
-```
-$ kubectl get po | grep deploy
-nginx-84474cf674-zfhbs   1/1       Running   0          1m
-```
-
-- Access container's directory which mounting volume
-```
-$ kubectl exec -ti deploy-nginx-qingcloud-84474cf674-zfhbs /bin/bash
-# cd /mnt
-# ls
-lost+found
-```
 
 ## Support
 If you have any qustions or suggestions, please submit an issue at [qingcloud-csi](https://github.com/yunify/qingcloud-csi/issues)
