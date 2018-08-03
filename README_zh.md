@@ -13,31 +13,7 @@ QingCloud CSI 插件实现了 [CSI](https://github.com/container-storage-interfa
 
 块存储插件部署后, 用户可创建访问模式（Access Mode）为单节点读写（ReadWriteOnce）的基于 QingCloud 的超高性能型，性能型或容量型硬盘的存储卷并挂载至工作负载。
 
-### 配置
-#### 配置文件
-
-如下所示的[配置文件](deploy/block/kubernetes/config.yaml)将会被 ConfigMap 所使用。
-> 注: 在通过 QingCloud AppCenter 创建的 Kubernetes 集群内, 请修改创建 ConfigMap 的[脚本](deploy/block/kubernetes/create-cm.sh)并创建引用存放在主机内的配置文件（*/etc/qingcloud/client.yaml*）的 ConfigMap。
-
-```
-qy_access_key_id: 'ACCESS_KEY_ID'
-qy_secret_access_key: 'ACCESS_KEY_SECRET'
-zone: 'ZONE'
-host: 'api.qingcloud.com'
-port: 443
-protocol: 'https'
-uri: '/iaas'
-connection_retries: 3
-connection_timeout: 30
-```
-
-- `qy_access_key_id`, `qy_secret_access_key`: 在 QingCloud 控制台创建 Access key 密钥. 此密钥需要有操作 QingCloud IaaS 平台资源的权限。
-
-- `zone`: Zone字段应与 Kubernetes 集群所在区相同。CSI 插件将会操作此区的存储卷资源。
-
-- `host`, `prot`. `protocol`, `uri`: 共同构成 QingCloud IaaS 平台服务的 url.
-
-#### StorageClass
+### StorageClass参数说明
 
 如下所示的 StorageClass 资源定义[文件](deploy/block/example/sc.yaml)可用来创建 StorageClass 对象.
 ```
@@ -55,7 +31,7 @@ parameters:
 reclaimPolicy: Delete 
 ```
 
-- `type`: QingCloud 云平台存储卷类型。总体上， `0` 代表性能型硬盘。`3` 代表超高性能型硬盘。`1` 或 `2`（根据集群所在区不同而参数不同）代表容量型硬盘。 详情见[ QingCloud 文档](https://docs.qingcloud.com/product/api/action/volume/create_volumes.html)。
+- `type`: QingCloud 云平台存储卷类型。总体上， `0` 代表性能型硬盘。`3` 代表超高性能型硬盘。`1` 或 `2`（根据集群所在区不同而参数不同）代表容量型硬盘。 详情见 [QingCloud 文档](https://docs.qingcloud.com/product/api/action/volume/create_volumes.html)。
 
 - `maxSize`, `minSize`: 某种存储卷类型的存储卷容量范围。
 
@@ -66,29 +42,62 @@ reclaimPolicy: Delete
 ### 安装
 此安装指南将 CSI 插件安装在 *kube-system* namespace 内。用户也可以将插件部署在其他 namespace 内。为了CSI插件的正常使用，请确保在Kubernetes控制平面内将 `--allow-privileged` 项设置为 `true` 并且启用（默认开启）[Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) 特性。
 
+- 下载安装包并解压
+```
+$ wget $(curl --silent "https://api.github.com/repos/yunify/qingcloud-csi/releases/latest" | grep browser_download_url | grep install|cut -d '"' -f 4)
+$ tar -xvf csi-qingcloud-install.tar.gz
+$ cd csi-qingcloud-install
+```
+
 - 创建 ConfigMap
-```
-$ chmod +x deploy/block/kubernetes/create-cm.sh
-$ ./deploy/block/kubernetes/create-cm.sh
-```
+  * 在基于 QingCloud IaaS 平台的 Kubernetes 集群内
+    1. 修改配置文件（client.yaml）
+    ```
+    qy_access_key_id: 'ACCESS_KEY_ID'
+    qy_secret_access_key: 'ACCESS_KEY_SECRET'
+    zone: 'ZONE'
+    host: 'api.qingcloud.com'
+    port: 443
+    protocol: 'https'
+    uri: '/iaas'
+    connection_retries: 3
+    connection_timeout: 30
+    ```
+    - `qy_access_key_id`, `qy_secret_access_key`: 在 QingCloud 控制台创建 Access key 密钥. 此密钥需要有操作 QingCloud IaaS 平台资源的权限。
+
+    - `zone`: Zone 字段应与 Kubernetes 集群所在区相同。CSI 插件将会操作此区的存储卷资源。
+    
+    - `host`, `prot`. `protocol`, `uri`: 共同构成 QingCloud IaaS 平台服务的 url.
+
+    2. 创建 ConfigMap
+    ```
+    $ kubectl create configmap csi-qingcloud --from-file=config.yaml=./config.yaml --namespace=kube-system
+    ```
+
+  * 在基于 QingCloud Appcenter 的 Kubernetes 集群内
+
+    1. 创建 ConfigMap
+    ```
+    $ kubectl create configmap csi-qingcloud --from-file=config.yaml=./client.yaml --namespace=kube-system
+    ```
 
 - 创建 Docker 镜像仓库密钥
 ```
-kubectl create -f deploy/block/kubernetes/csi-secret.yaml
+$ kubectl create -f ./csi-secret.yaml
 ```
 
 - 创建访问控制相关对象
 ```
-$ kubectl create -f deploy/block/kubernetes/csi-controller-rbac.yaml
-$ kubectl create -f deploy/block/kubernetes/csi-node-rbac.yaml
+$ kubectl create -f ./csi-controller-rbac.yaml
+$ kubectl create -f ./csi-node-rbac.yaml
 ```
 
 - 部署 CSI 插件
-> 注: 在通过 QingCloud AppCenter 创建的 Kubernetes 集群内, 请将 [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML 文件的 *"/var/lib/kubelet"* 替换为 *"/data/var/lib/kubelet"*。
+> 注: 在通过 QingCloud AppCenter 创建的 Kubernetes 集群内, 请将 [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML 文件的 *"/var/lib/kubelet"* 字段替换为 *"/data/var/lib/kubelet"*。
 
 ```
-$ kubectl create -f deploy/block/kubernetes/csi-controller-sts.yaml
-$ kubectl create -f deploy/block/kubernetes/csi-node-ds.yaml
+$ kubectl create -f ./csi-controller-sts.yaml
+$ kubectl create -f ./csi-node-ds.yaml
 ```
 
 - 检查 CSI 插件状态
@@ -102,17 +111,17 @@ csi-qingcloud-node-pgsbn        2/2       Running       0          2m
 ### 验证
 - 由 Kubernetes 集群管理员创建 StorageClass
 ```
-$ kubectl create -f deploy/block/example/sc.yaml
+$ kubectl create -f https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/block/example/sc.yaml
 ```
 
 - 创建 PVC
 ```
-$ kubectl create -f deploy/block/example/pvc.yaml
+$ kubectl create -f https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/block/example/pvc.yaml
 ```
 
 - 创建挂载 PVC 的 Deployment
 ```
-$ kubectl create -f deploy/block/example/deploy.yaml
+$ kubectl create -f https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/block/example/deploy.yaml
 ```
 
 - 检查 Pod 状态
