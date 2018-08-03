@@ -46,14 +46,14 @@ $ cd csi-qingcloud-install
 
     2. 创建 ConfigMap
     ```
-    $ kubectl apply configmap csi-qingcloud --from-file=config.yaml=./config.yaml --namespace=kube-system
+    $ kubectl create configmap csi-qingcloud --from-file=config.yaml=./config.yaml --namespace=kube-system
     ```
 
   * 在基于 QingCloud Appcenter 的 Kubernetes 集群内
 
     1. 创建 ConfigMap
     ```
-    $ kubectl apply configmap csi-qingcloud --from-file=config.yaml=/etc/qingcloud/client.yaml --namespace=kube-system
+    $ kubectl create configmap csi-qingcloud --from-file=config.yaml=/etc/qingcloud/client.yaml --namespace=kube-system
     ```
 
 - 创建 Docker 镜像仓库密钥
@@ -85,7 +85,7 @@ csi-qingcloud-node-pgsbn        2/2       Running       0          2m
 
 ### 验证
 - 由 Kubernetes 集群管理员创建 StorageClass
-> 注：用户应按照后续部分的说明设置 StorageClass 的参数，示例将创建 `type` 值为 `1` 的 StorageClass 
+> 注：示例将创建 `type` 值为 `0` 的 StorageClass，用户可按照后续部分的说明设置 StorageClass 的参数。
 ```
 $ kubectl apply -f https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/block/example/sc.yaml
 ```

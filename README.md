@@ -47,13 +47,13 @@ $ cd csi-qingcloud-install
 
     2. Create ConfigMap
     ```
-    $ kubectl apply configmap csi-qingcloud --from-file=config.yaml=./config.yaml --namespace=kube-system
+    $ kubectl create configmap csi-qingcloud --from-file=config.yaml=./config.yaml --namespace=kube-system
     ```
   * In Kubernetes cluster based on QingCloud AppCenter
 
     1. Create ConfigMap
     ```
-    $ kubectl apply configmap csi-qingcloud --from-file=config.yaml=/etc/qingcloud/client.yaml --namespace=kube-system
+    $ kubectl create configmap csi-qingcloud --from-file=config.yaml=/etc/qingcloud/client.yaml --namespace=kube-system
     ```
 
 - Create Docker image registry secret
@@ -85,7 +85,7 @@ csi-qingcloud-node-pgsbn        2/2       Running       0          2m
 
 ### Verification
 - Create a StorageClass by Kubernetes cluster administrator
-> NOTE: User should set StorageClass parameters according to following instruction. This guide will create a StorageClass which sets `type` to `0`.
+> NOTE: This guide will create a StorageClass which sets `type` to `0`. User could set StorageClass parameters according to following instruction.
 ```
 $ kubectl apply -f https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/block/example/sc.yaml
 ```
