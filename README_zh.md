@@ -102,7 +102,7 @@ $ kubectl apply -f https://raw.githubusercontent.com/yunify/qingcloud-csi/master
 
 - 检查 Pod 状态
 ```
-$ kubectl get po | grep deploy
+$ kubectl get po | grep nginx
 nginx-84474cf674-zfhbs   1/1       Running   0          1m
 ```
 
