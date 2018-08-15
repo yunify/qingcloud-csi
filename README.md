@@ -41,7 +41,7 @@ $ cd csi-qingcloud-install
     ```
     - `qy_access_key_id`, `qy_secret_access_key`: Access key pair can be created in QingCloud console. The access key pair must have the power to manipulate QingCloud IaaS platform resource.
 
-    - `zone`: Zone should be the same as Kubernetes cluster. CSI plugin will operate block storage volumes in this zone.
+    - `zone`: `Zone` should be the same as Kubernetes cluster. CSI plugin will operate block storage volumes in this zone. For example, `zone` can be set to `sh1a` and `ap2a`.
 
     - `host`, `prot`. `protocol`, `uri`: QingCloud IaaS platform service url.
 
@@ -58,7 +58,7 @@ $ cd csi-qingcloud-install
 
 - Create Docker image registry secret
 ```
-kubectl apply -f ./csi-secret.yaml
+$ kubectl apply -f ./csi-secret.yaml
 ```
 
 - Create access control objects
@@ -68,7 +68,7 @@ $ kubectl apply -f ./csi-node-rbac.yaml
 ```
 
 - Deploy CSI plugin
-> IMPORTANT: In Kubernetes cluster created through QingCloud AppCenter, please replace *"/var/lib/kubelet"* with *"/data/var/lib/kubelet"* in [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML file.
+> IMPORTANT: If kubelet's `--root-dir` option (default: *"/var/lib/kubelet"*) is set, please replace *"/var/lib/kubelet"* with the value of `--root-dir` on the CSI [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML file line 89 and line 105. For instance, in Kubernetes cluster based on QingCloud AppCenter, you should replace *"/var/lib/kubelet"* with *"/data/var/lib/kubelet"* on the CSI [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML file line 89 and line 105.
 
 ```
 $ kubectl apply -f ./csi-controller-sts.yaml
@@ -77,7 +77,8 @@ $ kubectl apply -f ./csi-node-ds.yaml
 
 - Check CSI plugin
 ```
-$ kubectl get pods -n kube-system | grep csi
+$ kubectl get pods -n kube-system --selector=app=csi-qingcloud
+NAME                            READY     STATUS        RESTARTS   AGE
 csi-qingcloud-controller-0      3/3       Running       0          5m
 csi-qingcloud-node-kks3q        2/2       Running       0          2m
 csi-qingcloud-node-pgsbn        2/2       Running       0          2m
@@ -132,11 +133,11 @@ parameters:
 reclaimPolicy: Delete 
 ```
 
-- `type`: The type of volume in QingCloud IaaS platform. Generally, `0` represents high performance volume. `3` respresents super high performance volume. `1` or `2` represents high capacity volume depending on cluster‘s zone. See [QingCloud docs](https://docs.qingcloud.com/product/api/action/volume/create_volumes.html) for details.
+- `type`: The type of volume in QingCloud IaaS platform. In QingCloud public cloud platform, `0` represents high performance volume. `3` respresents super high performance volume. `1` or `2` represents high capacity volume depending on cluster‘s zone. See [QingCloud docs](https://docs.qingcloud.com/product/api/action/volume/create_volumes.html) for details.
 
-- `maxSize`, `minSize`: The range of volume size in specific volume type.
+- `maxSize`, `minSize`: Limit the range of volume size in GiB.
 
-- `stepSize`: Step size is used to control the size of volumes allowed to create on QingCloud IaaS platform.
+- `stepSize`: Set the increment of volumes size in GiB.
 
 - `fsType`: `ext3`, `ext4`, `xfs`. Default `ext4`.
 

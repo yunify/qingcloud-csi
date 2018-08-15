@@ -40,7 +40,7 @@ $ cd csi-qingcloud-install
     ```
     - `qy_access_key_id`, `qy_secret_access_key`: 在 QingCloud 控制台创建 Access key 密钥. 此密钥需要有操作 QingCloud IaaS 平台资源的权限。
 
-    - `zone`: Zone 字段应与 Kubernetes 集群所在区相同。CSI 插件将会操作此区的存储卷资源。
+    - `zone`: `zone` 应与 Kubernetes 集群所在区相同。CSI 插件将会操作此区的存储卷资源。例如：`zone` 可以设置为 `sh1a` 和 `ap2a`。
     
     - `host`, `prot`. `protocol`, `uri`: 共同构成 QingCloud IaaS 平台服务的 url.
 
@@ -68,7 +68,7 @@ $ kubectl apply -f ./csi-node-rbac.yaml
 ```
 
 - 部署 CSI 插件
-> 注: 在通过 QingCloud AppCenter 创建的 Kubernetes 集群内, 请将 [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML 文件的 *"/var/lib/kubelet"* 字段替换为 *"/data/var/lib/kubelet"*。
+> 注:  如果 [kubelet](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/) 设置了 `--root-dir` 选项（默认值为 *"/var/lib/kubelet"*），请将 [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML 文件第 89 行和第 105 行的 *"/var/lib/kubelet"* 字段替换为 `--root-dir` 选项的值。例如：在通过 QingCloud AppCenter 创建的 Kubernetes 集群内, 需要将 [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML 文件第 89 行和第 105 行的 *"/var/lib/kubelet"* 字段替换为 *"/data/var/lib/kubelet"*。
 
 ```
 $ kubectl apply -f ./csi-controller-sts.yaml
@@ -77,7 +77,8 @@ $ kubectl apply -f ./csi-node-ds.yaml
 
 - 检查 CSI 插件状态
 ```
-$ kubectl get pods -n kube-system | grep csi
+$ kubectl get pods -n kube-system --selector=app=csi-qingcloud
+NAME                            READY     STATUS        RESTARTS   AGE
 csi-qingcloud-controller-0      3/3       Running       0          5m
 csi-qingcloud-node-kks3q        2/2       Running       0          2m
 csi-qingcloud-node-pgsbn        2/2       Running       0          2m
@@ -132,11 +133,11 @@ parameters:
 reclaimPolicy: Delete 
 ```
 
-- `type`: QingCloud 云平台存储卷类型。总体上， `0` 代表性能型硬盘。`3` 代表超高性能型硬盘。`1` 或 `2`（根据集群所在区不同而参数不同）代表容量型硬盘。 详情见 [QingCloud 文档](https://docs.qingcloud.com/product/api/action/volume/create_volumes.html)。
+- `type`: 青云云平台存储卷类型。在青云公有云中， `0` 代表性能型硬盘。`3` 代表超高性能型硬盘。`1` 或 `2`（根据集群所在区不同而参数不同）代表容量型硬盘。 详情见 [QingCloud 文档](https://docs.qingcloud.com/product/api/action/volume/create_volumes.html)。
 
-- `maxSize`, `minSize`: 某种存储卷类型的存储卷容量范围。
+- `maxSize`, `minSize`: 限制存储卷类型的存储卷容量范围，单位为GiB。
 
-- `stepSize`: 步长用来控制所创建存储卷的容量。
+- `stepSize`: 设置用户所创建存储卷容量的增量，单位为GiB。
 
 - `fsType`: 支持 `ext3`, `ext4`, `xfs`. 默认为 `ext4`.
 
