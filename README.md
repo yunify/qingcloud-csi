@@ -41,7 +41,7 @@ $ cd csi-qingcloud-install
     ```
     - `qy_access_key_id`, `qy_secret_access_key`: Access key pair can be created in QingCloud console. The access key pair must have the power to manipulate QingCloud IaaS platform resource.
 
-    - `zone`: `Zone` should be the same as Kubernetes cluster. CSI plugin will operate block storage volumes in this zone. such as `sh1a` and `ap2a`.
+    - `zone`: `Zone` should be the same as Kubernetes cluster. CSI plugin will operate block storage volumes in this zone. For example, `zone` can be set to `sh1a` and `ap2a`.
 
     - `host`, `prot`. `protocol`, `uri`: QingCloud IaaS platform service url.
 
