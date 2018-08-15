@@ -58,7 +58,7 @@ $ cd csi-qingcloud-install
 
 - Create Docker image registry secret
 ```
-kubectl apply -f ./csi-secret.yaml
+$ kubectl apply -f ./csi-secret.yaml
 ```
 
 - Create access control objects
