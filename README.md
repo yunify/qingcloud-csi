@@ -43,7 +43,7 @@ $ cd csi-qingcloud-install
 
     - `zone`: `Zone` should be the same as Kubernetes cluster. CSI plugin will operate block storage volumes in this zone. For example, `zone` can be set to `sh1a` and `ap2a`.
 
-    - `host`, `prot`. `protocol`, `uri`: QingCloud IaaS platform service url.
+    - `host`, `port`. `protocol`, `uri`: QingCloud IaaS platform service url.
 
     2. Create ConfigMap
     ```

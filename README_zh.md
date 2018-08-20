@@ -42,7 +42,7 @@ $ cd csi-qingcloud-install
 
     - `zone`: `zone` 应与 Kubernetes 集群所在区相同。CSI 插件将会操作此区的存储卷资源。例如：`zone` 可以设置为 `sh1a` 和 `ap2a`。
     
-    - `host`, `prot`. `protocol`, `uri`: 共同构成 QingCloud IaaS 平台服务的 url.
+    - `host`, `port`. `protocol`, `uri`: 共同构成 QingCloud IaaS 平台服务的 url.
 
     2. 创建 ConfigMap
     ```
