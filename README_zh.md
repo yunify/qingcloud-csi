@@ -68,7 +68,7 @@ $ kubectl apply -f ./csi-node-rbac.yaml
 ```
 
 - 部署 CSI 插件
-> 注:  如果 [kubelet](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/) 设置了 `--root-dir` 选项（默认值为 *"/var/lib/kubelet"*），请将 [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML 文件第 89 行和第 105 行的 *"/var/lib/kubelet"* 字段替换为 `--root-dir` 选项的值。例如：在通过 QingCloud AppCenter 创建的 Kubernetes 集群内, 需要将 [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML 文件第 89 行和第 105 行的 *"/var/lib/kubelet"* 字段替换为 *"/data/var/lib/kubelet"*。
+> 注:  如果 Kubernetes 集群的 [kubelet](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/) 设置了 `--root-dir` 选项（默认值为 *"/var/lib/kubelet"*），请将 [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML 文件 `spec.template.spec.containers[name=csi-qingcloud].volumeMounts[name=mount-dir].mountPath` 和 `spec.template.spec.volumes[name=mount-dir].hostPath.path` 的值 *"/var/lib/kubelet"* 替换为 `--root-dir` 选项的值。例如：在通过 QingCloud AppCenter 创建的 Kubernetes 集群内, 需要将 [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML 文件的 *"/var/lib/kubelet"* 字段替换为 *"/data/var/lib/kubelet"*。
 
 ```
 $ kubectl apply -f ./csi-controller-sts.yaml
