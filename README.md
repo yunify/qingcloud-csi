@@ -43,7 +43,7 @@ $ cd csi-qingcloud-install
 
     - `zone`: `Zone` should be the same as Kubernetes cluster. CSI plugin will operate block storage volumes in this zone. For example, `zone` can be set to `sh1a` and `ap2a`.
 
-    - `host`, `prot`. `protocol`, `uri`: QingCloud IaaS platform service url.
+    - `host`, `port`. `protocol`, `uri`: QingCloud IaaS platform service url.
 
     2. Create ConfigMap
     ```
@@ -68,7 +68,7 @@ $ kubectl apply -f ./csi-node-rbac.yaml
 ```
 
 - Deploy CSI plugin
-> IMPORTANT: If kubelet's `--root-dir` option (default: *"/var/lib/kubelet"*) is set, please replace *"/var/lib/kubelet"* with the value of `--root-dir` on the CSI [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML file line 89 and line 105. For instance, in Kubernetes cluster based on QingCloud AppCenter, you should replace *"/var/lib/kubelet"* with *"/data/var/lib/kubelet"* on the CSI [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML file line 89 and line 105.
+> IMPORTANT: If kubelet, a component of Kubernetes, set the `--root-dir` option (default: *"/var/lib/kubelet"*), please replace *"/var/lib/kubelet"* with the value of `--root-dir` at the CSI [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML file's `spec.template.spec.containers[name=csi-qingcloud].volumeMounts[name=mount-dir].mountPath` and `spec.template.spec.volumes[name=mount-dir].hostPath.path` fields. For instance, in Kubernetes cluster based on QingCloud AppCenter, you should replace *"/var/lib/kubelet"* with *"/data/var/lib/kubelet"* in the CSI [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML file.
 
 ```
 $ kubectl apply -f ./csi-controller-sts.yaml

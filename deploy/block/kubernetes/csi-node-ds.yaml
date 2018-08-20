@@ -40,6 +40,16 @@ spec:
         owner: "yunify"
     spec:
       serviceAccount: csi-qingcloud-node
+      tolerations:
+      - key: CriticalAddonsOnly
+        operator: Exists
+      - key: dedicated
+        operator: Exists
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+      - effect: NoSchedule
+        key: node.cloudprovider.kubernetes.io/uninitialized
+        value: "true"
       imagePullSecrets:
       - name: csi-qingcloud
       hostNetwork: true
