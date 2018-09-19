@@ -144,39 +144,39 @@ pv-static   20Gi       RWO            Delete           Bound     default/pvc-sta
     apiVersion: v1
     kind: PersistentVolume
     metadata:
-    annotations:
+      annotations:
         Provisioner_Id: qingcloud/volume-provisioner
         kubernetes.io/createdby: qingcloud-volume-provisioner
         pv.kubernetes.io/provisioned-by: qingcloud/volume-provisioner
-    creationTimestamp: 2018-09-11T04:01:34Z
-    finalizers:
-    - kubernetes.io/pv-protection
-    name: pvc-55754c8c-b577-11e8-a480-525445c0b555
-    resourceVersion: "14041782"
-    selfLink: /api/v1/persistentvolumes/pvc-55754c8c-b577-11e8-a480-525445c0b555
-    uid: 5fa6cb8e-b577-11e8-a480-525445c0b555
+      creationTimestamp: 2018-09-11T04:01:34Z
+      finalizers:
+      - kubernetes.io/pv-protection
+      name: pvc-55754c8c-b577-11e8-a480-525445c0b555
+      resourceVersion: "14041782"
+      selfLink: /api/v1/persistentvolumes/pvc-55754c8c-b577-11e8-a480-525445c0b555
+      uid: 5fa6cb8e-b577-11e8-a480-525445c0b555
     spec:
-    accessModes:
-    - ReadWriteOnce
-    capacity:
+      accessModes:
+      - ReadWriteOnce
+      capacity:
         storage: 10Gi
-    claimRef:
+      claimRef:
         apiVersion: v1
         kind: PersistentVolumeClaim
         name: old-pvc
         namespace: default
         resourceVersion: "14041596"
         uid: 55754c8c-b577-11e8-a480-525445c0b555
-    flexVolume:
+      flexVolume:
         driver: qingcloud/flex-volume
         fsType: ext4
         options:
-        volumeID: vol-djwgkjil
-    persistentVolumeReclaimPolicy: Delete
-    storageClassName: qingcloud-storageclass
-    volumeMode: Filesystem
+          volumeID: vol-djwgkjil
+      persistentVolumeReclaimPolicy: Delete
+      storageClassName: qingcloud-storageclass
+      volumeMode: Filesystem
     status:
-    phase: Bound
+      phase: Bound
     ```
 
   - 块存储内已有tmp文件
@@ -194,12 +194,12 @@ pv-static   20Gi       RWO            Delete           Bound     default/pvc-sta
     apiVersion: v1
     kind: PersistentVolume
     metadata:
-    ...
-    name: pvc-55754c8c-b577-11e8-a480-525445c0b555
+      ...
+      name: pvc-55754c8c-b577-11e8-a480-525445c0b555
     spec
-    ...
-    persistentVolumeReclaimPolicy: Retain
-    ...
+      ...
+      persistentVolumeReclaimPolicy: Retain
+      ...
     ```
 
     - 删除 PVC 和 PV
@@ -218,33 +218,32 @@ pv-static   20Gi       RWO            Delete           Bound     default/pvc-sta
     apiVersion: v1
     kind: PersistentVolume
     metadata:
-    annotations:
+      annotations:
         pv.kubernetes.io/provisioned-by: csi-qingcloud
-    name: new-pv
+      name: new-pv
     spec:
-    capacity:
+      capacity:
         storage: 10Gi
-    volumeMode: Filesystem
-    accessModes:
-        - ReadWriteOnce
-    persistentVolumeReclaimPolicy: Delete
-    storageClassName: csi-qingcloud
-    csi:
+      volumeMode: Filesystem
+      accessModes:
+      - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Delete
+      storageClassName: csi-qingcloud
+      csi:
         driver: csi-qingcloud
         fsType: ext4
         volumeAttributes:
-        fsType: ext4
-        maxSize: "500"
-        minSize: "10"
-        stepSize: "10"
-        type: "0"
+          fsType: ext4
+          maxSize: "500"
+          minSize: "10"
+          stepSize: "10"
+          type: "0"
         volumeHandle: vol-djwgkjil
     ```
 
     - 创建 PV
     ```
     $ kubectl create -f pv.yaml
-
     ```
 
     - 编辑 PVC 资源定义文件
@@ -253,18 +252,18 @@ pv-static   20Gi       RWO            Delete           Bound     default/pvc-sta
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
-    annotations:
+      annotations:
         volume.beta.kubernetes.io/storage-provisioner: csi-qingcloud
-    name: pvc-static
+      name: pvc-static
     spec:
-    accessModes:
-    - ReadWriteOnce
-    resources:
+      accessModes:
+      - ReadWriteOnce
+      resources:
         requests:
-        storage: 10Gi
-    storageClassName: csi-qingcloud
-    volumeMode: Filesystem
-    volumeName: new-pv
+          storage: 10Gi
+      storageClassName: csi-qingcloud
+      volumeMode: Filesystem
+      volumeName: new-pv
     ```
    
     - 查看 PVC 和 PV
@@ -272,6 +271,7 @@ pv-static   20Gi       RWO            Delete           Bound     default/pvc-sta
     i-lcsolq8c# kubectl get pv new-pv
     NAME      CAPACITY   ACCESS MODES   RECLAIM POLICY   STATUS    CLAIM             STORAGECLASS    REASON    AGE
     new-pv    10Gi       RWO            Delete           Bound     default/new-pvc   csi-qingcloud             44s
+
     i-lcsolq8c# kubectl get pvc new-pvc
     NAME      STATUS    VOLUME    CAPACITY   ACCESS MODES   STORAGECLASS    AGE
     new-pvc   Bound     new-pv    10Gi       RWO            csi-qingcloud   32s
