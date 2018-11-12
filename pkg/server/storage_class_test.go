@@ -14,7 +14,7 @@
 // | limitations under the License.
 // +-------------------------------------------------------------------------
 
-package block
+package server
 
 import (
 	"reflect"
@@ -26,7 +26,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 	testcases := []struct {
 		name     string
 		mp       map[string]string
-		sc       qingStorageClass
+		sc       QingStorageClass
 		isError  bool
 		strError string
 	}{
@@ -39,7 +39,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				"stepSize": "10",
 				"fsType":   "ext4",
 			},
-			sc: qingStorageClass{
+			sc: QingStorageClass{
 				VolumeType:     0,
 				VolumeMaxSize:  1000,
 				VolumeMinSize:  10,
@@ -52,7 +52,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 		{
 			name: "default storageclass",
 			mp:   map[string]string{},
-			sc: qingStorageClass{
+			sc: QingStorageClass{
 				VolumeType:     0,
 				VolumeMaxSize:  500,
 				VolumeMinSize:  10,
@@ -83,7 +83,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				"stepSize": "10",
 				"fsType":   "xfs",
 			},
-			sc:       qingStorageClass{},
+			sc:       QingStorageClass{},
 			isError:  true,
 			strError: "strconv.Atoi: parsing",
 		},
@@ -96,7 +96,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				"stepSize": "10",
 				"fsType":   "ext3",
 			},
-			sc:       qingStorageClass{},
+			sc:       QingStorageClass{},
 			isError:  true,
 			strError: "Volume maxSize must greater than or equal to volume minSize",
 		},
@@ -109,7 +109,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				"stepSize": "10",
 				"fsType":   "ext4",
 			},
-			sc: qingStorageClass{
+			sc: QingStorageClass{
 				VolumeType:     0,
 				VolumeMaxSize:  1000,
 				VolumeMinSize:  1000,
@@ -128,7 +128,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				"stepSize": "10",
 				"fsType":   "ext4",
 			},
-			sc:       qingStorageClass{},
+			sc:       QingStorageClass{},
 			isError:  true,
 			strError: "MinSize must not less than zero",
 		},
@@ -141,7 +141,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				"stepSize": "0",
 				"fsType":   "ext4",
 			},
-			sc:       qingStorageClass{},
+			sc:       QingStorageClass{},
 			isError:  true,
 			strError: "StepSize must greate than zero",
 		},
@@ -154,7 +154,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				"stepSize": "2",
 				"fsType":   "",
 			},
-			sc: qingStorageClass{
+			sc: QingStorageClass{
 				VolumeType:     0,
 				VolumeMaxSize:  1000,
 				VolumeMinSize:  1000,
@@ -172,7 +172,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				"minSize": "1000",
 				"fsType":  "wrong",
 			},
-			sc:       qingStorageClass{},
+			sc:       QingStorageClass{},
 			isError:  true,
 			strError: "Does not support fsType",
 		},
@@ -183,7 +183,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				"maxSize": "1000",
 				"minSize": "1000",
 			},
-			sc: qingStorageClass{
+			sc: QingStorageClass{
 				VolumeType:     0,
 				VolumeMaxSize:  1000,
 				VolumeMinSize:  1000,
@@ -211,13 +211,13 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 func TestFormatVolumeSize(t *testing.T) {
 	testcases := []struct {
 		name   string
-		sc     qingStorageClass
+		sc     QingStorageClass
 		size   int
 		result int
 	}{
 		{
 			name: "normal sc, normal size",
-			sc: qingStorageClass{
+			sc: QingStorageClass{
 				VolumeMinSize:  10,
 				VolumeMaxSize:  500,
 				VolumeStepSize: 10,
@@ -227,7 +227,7 @@ func TestFormatVolumeSize(t *testing.T) {
 		},
 		{
 			name: "normal sc, size less than zero",
-			sc: qingStorageClass{
+			sc: QingStorageClass{
 				VolumeMinSize:  10,
 				VolumeMaxSize:  500,
 				VolumeStepSize: 10,
@@ -237,7 +237,7 @@ func TestFormatVolumeSize(t *testing.T) {
 		},
 		{
 			name: "normal sc, size less than min size",
-			sc: qingStorageClass{
+			sc: QingStorageClass{
 				VolumeMinSize:  10,
 				VolumeMaxSize:  500,
 				VolumeStepSize: 10,
@@ -247,7 +247,7 @@ func TestFormatVolumeSize(t *testing.T) {
 		},
 		{
 			name: "normal sc, size equal to max size",
-			sc: qingStorageClass{
+			sc: QingStorageClass{
 				VolumeMinSize:  10,
 				VolumeMaxSize:  500,
 				VolumeStepSize: 10,
@@ -257,7 +257,7 @@ func TestFormatVolumeSize(t *testing.T) {
 		},
 		{
 			name: "normal sc, size greater than max size",
-			sc: qingStorageClass{
+			sc: QingStorageClass{
 				VolumeMinSize:  10,
 				VolumeMaxSize:  500,
 				VolumeStepSize: 10,
@@ -267,7 +267,7 @@ func TestFormatVolumeSize(t *testing.T) {
 		},
 		{
 			name: "equal sc, size less than min size 1",
-			sc: qingStorageClass{
+			sc: QingStorageClass{
 				VolumeMinSize:  502,
 				VolumeMaxSize:  502,
 				VolumeStepSize: 10,
@@ -277,7 +277,7 @@ func TestFormatVolumeSize(t *testing.T) {
 		},
 		{
 			name: "step size is 100",
-			sc: qingStorageClass{
+			sc: QingStorageClass{
 				VolumeMinSize:  100,
 				VolumeMaxSize:  6000,
 				VolumeStepSize: 100,
@@ -287,7 +287,7 @@ func TestFormatVolumeSize(t *testing.T) {
 		},
 		{
 			name: "step size is 50",
-			sc: qingStorageClass{
+			sc: QingStorageClass{
 				VolumeMinSize:  100,
 				VolumeMaxSize:  6000,
 				VolumeStepSize: 50,

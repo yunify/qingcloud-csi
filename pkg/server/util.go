@@ -14,7 +14,7 @@
 // | limitations under the License.
 // +-------------------------------------------------------------------------
 
-package block
+package server
 
 import (
 	"github.com/container-storage-interface/spec/lib/go/csi/v0"
@@ -37,12 +37,12 @@ const (
 )
 
 const (
-	kib    int64 = 1024
-	mib    int64 = kib * 1024
-	gib    int64 = mib * 1024
-	gib100 int64 = gib * 100
-	tib    int64 = gib * 1024
-	tib100 int64 = tib * 100
+	Kib    int64 = 1024
+	Mib    int64 = Kib * 1024
+	Gib    int64 = Mib * 1024
+	Gib100 int64 = Gib * 100
+	Tib    int64 = Gib * 1024
+	Tib100 int64 = Tib * 100
 )
 
 const (
@@ -139,7 +139,7 @@ func GibToByte(num int) int64 {
 	if num < 0 {
 		return 0
 	}
-	return int64(num) * gib
+	return int64(num) * Gib
 }
 
 // ByteCeilToGib
@@ -148,8 +148,8 @@ func ByteCeilToGib(num int64) int {
 	if num <= 0 {
 		return 0
 	}
-	res := num / gib
-	if res*gib < num {
+	res := num / Gib
+	if res*Gib < num {
 		res += 1
 	}
 	return int(res)

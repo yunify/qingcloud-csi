@@ -14,7 +14,7 @@
 // | limitations under the License.
 // +-------------------------------------------------------------------------
 
-package block
+package volume
 
 import (
 	"fmt"
@@ -24,6 +24,7 @@ import (
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"github.com/yunify/qingcloud-csi/pkg/server"
 )
 
 const (
@@ -38,7 +39,7 @@ const (
 type VolumeManager interface {
 	FindVolume(id string) (volume *qcservice.Volume, err error)
 	FindVolumeByName(name string) (volume *qcservice.Volume, err error)
-	CreateVolume(volumeName string, requestSize int, sc qingStorageClass) (volumeId string, err error)
+	CreateVolume(volumeName string, requestSize int, sc server.QingStorageClass) (volumeId string, err error)
 	DeleteVolume(id string) error
 	IsAttachedToInstance(volumeId string, instanceId string) (flag bool, err error)
 	AttachVolume(volumeId string, instanceId string) error
@@ -76,7 +77,7 @@ func NewVolumeManagerFromConfig(config *qcconfig.Config) (VolumeManager, error) 
 // NewVolumeManagerFromFile
 // Create volume manager from file
 func NewVolumeManagerFromFile(filePath string) (VolumeManager, error) {
-	config, err := ReadConfigFromFile(filePath)
+	config, err := server.ReadConfigFromFile(filePath)
 	if err != nil {
 		glog.Errorf("Failed read config file [%s], error: [%s]", filePath, err.Error())
 		return nil, err
@@ -163,7 +164,7 @@ func (vm *volumeManager) FindVolumeByName(name string) (volume *qcservice.Volume
 // 1. format volume size
 // 2. create volume
 // 3. wait job
-func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc qingStorageClass) (volumeId string, err error) {
+func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc server.QingStorageClass) (volumeId string, err error) {
 	// 0. Set CreateVolume args
 	// set input value
 	input := &qcservice.CreateVolumesInput{}
@@ -346,7 +347,7 @@ func (vm *volumeManager) GetZone() string {
 }
 
 func (vm *volumeManager) waitJob(jobId string) error {
-	err := qcclient.WaitJob(vm.jobService, jobId, OperationWaitTimeout, WaitInterval)
+	err := qcclient.WaitJob(vm.jobService, jobId, server.OperationWaitTimeout, server.WaitInterval)
 	if err != nil {
 		glog.Error("Call Iaas WaitJob: ", jobId)
 		return err

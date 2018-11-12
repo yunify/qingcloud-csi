@@ -14,11 +14,12 @@
 // | limitations under the License.
 // +-------------------------------------------------------------------------
 
-package block
+package instance
 
 import (
 	"fmt"
 	"github.com/golang/glog"
+	"github.com/yunify/qingcloud-csi/pkg/server"
 	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
 )
@@ -65,7 +66,7 @@ func NewInstanceManagerFromConfig(config *qcconfig.Config) (InstanceManager, err
 // Create instance manager from file
 func NewInstanceManagerFromFile(filePath string) (InstanceManager, error) {
 	// create config
-	config, err := ReadConfigFromFile(filePath)
+	config, err := server.ReadConfigFromFile(filePath)
 	if err != nil {
 		return nil, err
 	}

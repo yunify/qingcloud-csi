@@ -14,14 +14,14 @@
 // | limitations under the License.
 // +-------------------------------------------------------------------------
 
-package block
+package server
 
 import (
 	"fmt"
 	"strconv"
 )
 
-type qingStorageClass struct {
+type QingStorageClass struct {
 	VolumeType     int    `json:"type"`
 	VolumeMaxSize  int    `json:"maxSize"`
 	VolumeMinSize  int    `json:"minSize"`
@@ -30,8 +30,8 @@ type qingStorageClass struct {
 }
 
 // NewDefaultQingStorageClass create default qingStorageClass object
-func NewDefaultQingStorageClass() *qingStorageClass {
-	return &qingStorageClass{
+func NewDefaultQingStorageClass() *QingStorageClass {
+	return &QingStorageClass{
 		VolumeType:     0,
 		VolumeMaxSize:  500,
 		VolumeMinSize:  10,
@@ -41,7 +41,7 @@ func NewDefaultQingStorageClass() *qingStorageClass {
 }
 
 // NewQingStorageClassFromMap create qingStorageClass object from map
-func NewQingStorageClassFromMap(opt map[string]string) (*qingStorageClass, error) {
+func NewQingStorageClassFromMap(opt map[string]string) (*QingStorageClass, error) {
 	sc := NewDefaultQingStorageClass()
 	// volume type
 	if sVolType, ok := opt["type"]; ok {
@@ -105,7 +105,7 @@ func NewQingStorageClassFromMap(opt map[string]string) (*qingStorageClass, error
 }
 
 // FormatVolumeSize transfer to proper volume size
-func (sc qingStorageClass) FormatVolumeSize(size int, step int) int {
+func (sc QingStorageClass) FormatVolumeSize(size int, step int) int {
 	if size <= sc.VolumeMinSize {
 		return sc.VolumeMinSize
 	} else if size >= sc.VolumeMaxSize {

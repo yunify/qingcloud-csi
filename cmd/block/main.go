@@ -19,6 +19,7 @@ package main
 import (
 	"flag"
 	"github.com/yunify/qingcloud-csi/pkg/block"
+	"github.com/yunify/qingcloud-csi/pkg/server"
 	"os"
 )
 
@@ -40,7 +41,7 @@ func main() {
 }
 
 func handle() {
-	block.ConfigFilePath = *configPath
+	server.ConfigFilePath = *configPath
 	driver := block.GetBlockDriver()
 	driver.Run(*driverName, *nodeID, *endpoint)
 }
