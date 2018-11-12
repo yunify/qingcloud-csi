@@ -19,6 +19,8 @@
 BLOCK_IMAGE_NAME=dockerhub.qingcloud.com/csiplugin/csi-qingcloud
 BLOCK_IMAGE_VERSION=v0.2.0
 BLOCK_PLUGIN_NAME=blockplugin
+ROOT_PATH=$(pwd)
+PACKAGE_LIST=./cmd/block ./pkg/block ./pkg/server ./pkg/server/instance ./pkg/server/volume
 
 blockplugin:
 	if [ ! -d ./vendor ]; then dep ensure; fi
@@ -27,6 +29,10 @@ blockplugin:
 blockplugin-container: blockplugin
 	cp _output/${BLOCK_PLUGIN_NAME} deploy/block/docker
 	docker build -t $(BLOCK_IMAGE_NAME):$(BLOCK_IMAGE_VERSION) deploy/block/docker
+
+fmt:
+	go fmt ${PACKAGE_LIST}
+	gofmt -s -w -l ${PACKAGE_LIST}
 
 clean:
 	go clean -r -x
