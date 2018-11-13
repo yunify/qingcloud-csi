@@ -16,8 +16,12 @@
 
 package block
 
-import "github.com/kubernetes-csi/drivers/pkg/csi-common"
+import (
+	"github.com/kubernetes-csi/drivers/pkg/csi-common"
+	"github.com/yunify/qingcloud-csi/pkg/server"
+)
 
 type identityServer struct {
 	*csicommon.DefaultIdentityServer
+	server *server.ServerConfig
 }

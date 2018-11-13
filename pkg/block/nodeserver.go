@@ -32,6 +32,7 @@ import (
 
 type nodeServer struct {
 	*csicommon.DefaultNodeServer
+	server *server.ServerConfig
 }
 
 // This operation MUST be idempotent
@@ -76,7 +77,7 @@ func (ns *nodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	fsType := qc.VolumeFsType
 
 	// Create VolumeManager object
-	vm, err := volume.NewVolumeManagerFromFile(server.ConfigFilePath)
+	vm, err := volume.NewVolumeManagerFromFile(ns.server.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -149,7 +150,7 @@ func (ns *nodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 	targetPath := req.GetTargetPath()
 
 	// Create VolumeManager object
-	vm, err := volume.NewVolumeManagerFromFile(server.ConfigFilePath)
+	vm, err := volume.NewVolumeManagerFromFile(ns.server.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -218,7 +219,7 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	fsType := qc.VolumeFsType
 
 	// Create VolumeManager object
-	vm, err := volume.NewVolumeManagerFromFile(server.ConfigFilePath)
+	vm, err := volume.NewVolumeManagerFromFile(ns.server.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -291,7 +292,7 @@ func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstag
 	targetPath := req.GetStagingTargetPath()
 
 	// Create VolumeManager object
-	vm, err := volume.NewVolumeManagerFromFile(server.ConfigFilePath)
+	vm, err := volume.NewVolumeManagerFromFile(ns.server.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -332,7 +333,7 @@ func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstag
 	cnt--
 	glog.Infof("block image: mount count: %d", cnt)
 	if cnt > 0 {
-		glog.Errorf("image %s still mounted in instance %s", volumeId, server.GetCurrentInstanceId())
+		glog.Errorf("image %s still mounted in instance %s", volumeId, ns.server.GetCurrentInstanceId())
 		return nil, status.Error(codes.Internal, "unmount failed")
 	}
 
@@ -355,11 +356,12 @@ func (ns *nodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetC
 	}, nil
 }
 
-func (ns *nodeServer) NodeGetId(ctx context.Context, req *csi.NodeGetIdRequest) (*csi.NodeGetIdResponse, error) {
-	glog.Info("----- Start NodeGetId -----")
-	defer glog.Info("===== End NodeGetId =====")
+func (ns *nodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
+	glog.V(2).Info("----- Start NodeGetInfo -----")
+	defer glog.Info("===== End NodeGetInfo =====")
 
-	return &csi.NodeGetIdResponse{
-		NodeId: server.GetCurrentInstanceId(),
+	return &csi.NodeGetInfoResponse{
+		NodeId:            ns.server.GetCurrentInstanceId(),
+		MaxVolumesPerNode: ns.server.GetMaxVolumePerNode(),
 	}, nil
 }

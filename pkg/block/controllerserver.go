@@ -33,6 +33,7 @@ import (
 
 type controllerServer struct {
 	*csicommon.DefaultControllerServer
+	server *server.ServerConfig
 }
 
 // This operation MUST be idempotent
@@ -59,7 +60,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	volumeName := req.GetName()
 
 	// create VolumeManager object
-	vm, err := volume.NewVolumeManagerFromFile(server.ConfigFilePath)
+	vm, err := volume.NewVolumeManagerFromFile(cs.server.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -144,7 +145,7 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 	// Deleting block image
 	glog.Infof("deleting volume %s", volumeId)
 	// Create VolumeManager object
-	vm, err := volume.NewVolumeManagerFromFile(server.ConfigFilePath)
+	vm, err := volume.NewVolumeManagerFromFile(cs.server.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -208,12 +209,12 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	}
 
 	// create volume manager object
-	vm, err := volume.NewVolumeManagerFromFile(server.ConfigFilePath)
+	vm, err := volume.NewVolumeManagerFromFile(cs.server.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	// create instance manager object
-	im, err := instance.NewInstanceManagerFromFile(server.ConfigFilePath)
+	im, err := instance.NewInstanceManagerFromFile(cs.server.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -277,12 +278,12 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 
 	// 1. Detach
 	// create volume provisioner object
-	vm, err := volume.NewVolumeManagerFromFile(server.ConfigFilePath)
+	vm, err := volume.NewVolumeManagerFromFile(cs.server.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	// create instance manager object
-	im, err := instance.NewInstanceManagerFromFile(server.ConfigFilePath)
+	im, err := instance.NewInstanceManagerFromFile(cs.server.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -335,7 +336,7 @@ func (cs *controllerServer) ValidateVolumeCapabilities(ctx context.Context, req 
 	}
 
 	// check volume exist
-	vm, err := volume.NewVolumeManagerFromFile(server.ConfigFilePath)
+	vm, err := volume.NewVolumeManagerFromFile(cs.server.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

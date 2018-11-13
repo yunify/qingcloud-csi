@@ -52,39 +52,48 @@ const (
 	FileSystemDefault string = FileSystemExt4
 )
 
-var instanceIdFromFile string
-var ConfigFilePath string
-
-// CreatePath
-// Create file path if it does not exits.
-func CreatePath(persistentStoragePath string) error {
-	if _, err := os.Stat(persistentStoragePath); os.IsNotExist(err) {
-		if err := os.MkdirAll(persistentStoragePath, os.FileMode(0755)); err != nil {
-			return err
-		}
-	} else {
-	}
-	return nil
+type ServerConfig struct {
+	instanceId       string
+	configFilePath   string
+	maxVolumePerNode int64
 }
 
-func readCurrentInstanceId() {
+// NewServerConfig create ServerConfig object to get server config
+func NewServerConfig(id string, filePath string, volumeNumber int64) *ServerConfig {
+	return &ServerConfig{
+		instanceId:       id,
+		configFilePath:   filePath,
+		maxVolumePerNode: volumeNumber,
+	}
+}
+
+// GetConfigFilePath get config file path
+func (cfg *ServerConfig) GetConfigFilePath() string {
+	return cfg.configFilePath
+}
+
+// GetMaxVolumePerNode gets maximum number of volumes that controller can publish to the node
+func (cfg *ServerConfig) GetMaxVolumePerNode() int64 {
+	return cfg.maxVolumePerNode
+}
+
+// GetCurrentInstanceId gets instance id
+func (cfg *ServerConfig) GetCurrentInstanceId() string {
+	if len(cfg.instanceId) == 0 {
+		cfg.readCurrentInstanceId()
+	}
+	return cfg.instanceId
+}
+
+func (cfg *ServerConfig) readCurrentInstanceId() {
 	bytes, err := ioutil.ReadFile(InstanceFilePath)
 	if err != nil {
 		glog.Errorf("Getting current instance-id error: %s", err.Error())
 		os.Exit(1)
 	}
-	instanceIdFromFile = string(bytes[:])
-	instanceIdFromFile = strings.Replace(instanceIdFromFile, "\n", "", -1)
-	glog.Infof("Getting current instance-id: \"%s\"", instanceIdFromFile)
-}
-
-// GetCurrentInstanceId
-// Get instance id
-func GetCurrentInstanceId() string {
-	if len(instanceIdFromFile) == 0 {
-		readCurrentInstanceId()
-	}
-	return instanceIdFromFile
+	cfg.instanceId = string(bytes[:])
+	cfg.instanceId = strings.Replace(cfg.instanceId, "\n", "", -1)
+	glog.Infof("Getting current instance-id: \"%s\"", cfg.instanceId)
 }
 
 // ReadConfigFromFile
