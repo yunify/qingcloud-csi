@@ -18,7 +18,7 @@ package block
 
 import (
 	"fmt"
-	"github.com/container-storage-interface/spec/lib/go/csi/v0"
+	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/glog"
 	"github.com/kubernetes-csi/drivers/pkg/csi-common"
 	"github.com/yunify/qingcloud-csi/pkg/server"
@@ -70,7 +70,7 @@ func (ns *nodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	volumeId := req.GetVolumeId()
 
 	// set fsType
-	qc, err := server.NewQingStorageClassFromMap(req.GetVolumeAttributes())
+	qc, err := server.NewQingStorageClassFromMap(req.GetVolumeContext())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -212,7 +212,7 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	volumeId := req.GetVolumeId()
 	targetPath := req.GetStagingTargetPath()
 	// set fsType
-	qc, err := server.NewQingStorageClassFromMap(req.GetVolumeAttributes())
+	qc, err := server.NewQingStorageClassFromMap(req.GetPublishContext())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

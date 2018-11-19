@@ -17,7 +17,7 @@
 package server
 
 import (
-	"github.com/container-storage-interface/spec/lib/go/csi/v0"
+	"github.com/container-storage-interface/spec/lib/go/csi"
 	"testing"
 )
 

@@ -2,12 +2,12 @@
 
 
 [[projects]]
-  digest = "1:a54dc69ec3668e0e57ad159a0a8c0ce1ec571174bb4eb6b3915833a8c21d40f3"
+  digest = "1:94ffc0947c337d618b6ff5ed9abaddc1217b090c1b3a1ae4739b35b7b25851d5"
   name = "github.com/container-storage-interface/spec"
-  packages = ["lib/go/csi/v0"]
+  packages = ["lib/go/csi"]
   pruneopts = "UT"
-  revision = "2178fdeea87f1150a17a63252eee28d4d8141f72"
-  version = "v0.3.0"
+  revision = "ed0bb0e1557548aa028307f48728767cfe8f6345"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -18,10 +18,11 @@
   revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
 
 [[projects]]
-  digest = "1:4f506581876d380af43c2a3a424abd7c8f4431569165baa72208b456c4f5c106"
+  digest = "1:35676c12b04030d448744065729d65e6f1d159447cf4d993e80cc7d4f28bfe20"
   name = "github.com/golang/protobuf"
   packages = [
     "proto",
+    "protoc-gen-go/descriptor",
     "ptypes",
     "ptypes/any",
     "ptypes/duration",
@@ -33,11 +34,12 @@
   version = "v1.1.0"
 
 [[projects]]
-  digest = "1:c486ed8ec89f0702d16043caada5a9ad0be2f639ca33621665d2614582d32154"
+  digest = "1:596505ce72821ef663980f7ce826984a30da406f9356a92c10ac8b44012d549c"
   name = "github.com/kubernetes-csi/drivers"
   packages = ["pkg/csi-common"]
   pruneopts = "UT"
-  revision = "a38ee8520f16657511de3d1063ddbe06aeeee4c6"
+  revision = "df8026fe9418ed9d7d59837b468f5be40e719ab1"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:9e9193aa51197513b3abcb108970d831fbcf40ef96aa845c4f03276e1fa316d2"
@@ -204,7 +206,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/container-storage-interface/spec/lib/go/csi/v0",
+    "github.com/container-storage-interface/spec/lib/go/csi",
     "github.com/golang/glog",
     "github.com/kubernetes-csi/drivers/pkg/csi-common",
     "github.com/yunify/qingcloud-sdk-go/client",

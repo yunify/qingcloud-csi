@@ -18,7 +18,7 @@ package block
 
 import (
 	"fmt"
-	"github.com/container-storage-interface/spec/lib/go/csi/v0"
+	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/glog"
 	"github.com/kubernetes-csi/drivers/pkg/csi-common"
 	"github.com/yunify/qingcloud-csi/pkg/server"
@@ -100,9 +100,9 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 			// exisiting volume is compatible with new request and should be reused.
 			return &csi.CreateVolumeResponse{
 				Volume: &csi.Volume{
-					Id:            *exVol.VolumeID,
+					VolumeId:      *exVol.VolumeID,
 					CapacityBytes: int64(*exVol.Size) * server.Gib,
-					Attributes:    req.GetParameters(),
+					VolumeContext: req.GetParameters(),
 				},
 			}, nil
 		}
@@ -119,9 +119,9 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 
 	return &csi.CreateVolumeResponse{
 		Volume: &csi.Volume{
-			Id:            volumeId,
+			VolumeId:      volumeId,
 			CapacityBytes: int64(requiredGib) * server.Gib,
-			Attributes:    req.GetParameters(),
+			VolumeContext: req.GetParameters(),
 		},
 	}, nil
 }
@@ -359,13 +359,10 @@ func (cs *controllerServer) ValidateVolumeCapabilities(ctx context.Context, req 
 		}
 		if !found {
 			return &csi.ValidateVolumeCapabilitiesResponse{
-				Supported: false,
-				Message:   "Driver does not support mode:" + c.GetAccessMode().GetMode().String(),
+				Message: "Driver does not support mode:" + c.GetAccessMode().GetMode().String(),
 			}, nil
 		}
 	}
 
-	return &csi.ValidateVolumeCapabilitiesResponse{
-		Supported: true,
-	}, nil
+	return &csi.ValidateVolumeCapabilitiesResponse{}, nil
 }

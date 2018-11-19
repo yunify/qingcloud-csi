@@ -17,7 +17,7 @@
 package block
 
 import (
-	"github.com/container-storage-interface/spec/lib/go/csi/v0"
+	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/glog"
 	"github.com/kubernetes-csi/drivers/pkg/csi-common"
 	"github.com/yunify/qingcloud-csi/pkg/server"
@@ -81,9 +81,11 @@ func (blk *block) Run(driverName, nodeID, endpoint string, server *server.Server
 	if blk.driver == nil {
 		glog.Fatalln("Failed to initialize CSI Driver.")
 	}
+
 	blk.driver.AddControllerServiceCapabilities([]csi.ControllerServiceCapability_RPC_Type{
 		csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME,
-		csi.ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME})
+		csi.ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME,
+	})
 	blk.driver.AddVolumeCapabilityAccessModes([]csi.VolumeCapability_AccessMode_Mode{
 		csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER})
 
@@ -95,4 +97,5 @@ func (blk *block) Run(driverName, nodeID, endpoint string, server *server.Server
 	s := csicommon.NewNonBlockingGRPCServer()
 	s.Start(endpoint, blk.ids, blk.cs, blk.ns)
 	s.Wait()
+
 }

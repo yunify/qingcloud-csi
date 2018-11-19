@@ -43,8 +43,8 @@
 
 [[constraint]]
   name = "github.com/kubernetes-csi/drivers"
-  revision = "a38ee8520f16657511de3d1063ddbe06aeeee4c6"
+  version = "1.0.0"
 
 [[constraint]]
   name = "github.com/container-storage-interface/spec"
-  version = "0.3.0"
+  version = "1.0.0"
