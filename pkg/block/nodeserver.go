@@ -32,7 +32,7 @@ import (
 
 type nodeServer struct {
 	*csicommon.DefaultNodeServer
-	server *server.ServerConfig
+	cloudServer *server.ServerConfig
 }
 
 // This operation MUST be idempotent
@@ -77,7 +77,7 @@ func (ns *nodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	fsType := qc.VolumeFsType
 
 	// Create VolumeManager object
-	vm, err := volume.NewVolumeManagerFromFile(ns.server.GetConfigFilePath())
+	vm, err := volume.NewVolumeManagerFromFile(ns.cloudServer.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -150,7 +150,7 @@ func (ns *nodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 	targetPath := req.GetTargetPath()
 
 	// Create VolumeManager object
-	vm, err := volume.NewVolumeManagerFromFile(ns.server.GetConfigFilePath())
+	vm, err := volume.NewVolumeManagerFromFile(ns.cloudServer.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -219,7 +219,7 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	fsType := qc.VolumeFsType
 
 	// Create VolumeManager object
-	vm, err := volume.NewVolumeManagerFromFile(ns.server.GetConfigFilePath())
+	vm, err := volume.NewVolumeManagerFromFile(ns.cloudServer.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -292,7 +292,7 @@ func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstag
 	targetPath := req.GetStagingTargetPath()
 
 	// Create VolumeManager object
-	vm, err := volume.NewVolumeManagerFromFile(ns.server.GetConfigFilePath())
+	vm, err := volume.NewVolumeManagerFromFile(ns.cloudServer.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -333,7 +333,7 @@ func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstag
 	cnt--
 	glog.Infof("block image: mount count: %d", cnt)
 	if cnt > 0 {
-		glog.Errorf("image %s still mounted in instance %s", volumeId, ns.server.GetCurrentInstanceId())
+		glog.Errorf("image %s still mounted in instance %s", volumeId, ns.cloudServer.GetInstanceId())
 		return nil, status.Error(codes.Internal, "unmount failed")
 	}
 
@@ -361,7 +361,7 @@ func (ns *nodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoReque
 	defer glog.Info("===== End NodeGetInfo =====")
 
 	return &csi.NodeGetInfoResponse{
-		NodeId:            ns.server.GetCurrentInstanceId(),
-		MaxVolumesPerNode: ns.server.GetMaxVolumePerNode(),
+		NodeId:            ns.cloudServer.GetInstanceId(),
+		MaxVolumesPerNode: ns.cloudServer.GetMaxVolumePerNode(),
 	}, nil
 }

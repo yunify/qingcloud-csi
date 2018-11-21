@@ -60,11 +60,17 @@ type ServerConfig struct {
 
 // NewServerConfig create ServerConfig object to get server config
 func NewServerConfig(id string, filePath string, volumeNumber int64) *ServerConfig {
-	return &ServerConfig{
+	sc := &ServerConfig{
 		instanceId:       id,
 		configFilePath:   filePath,
 		maxVolumePerNode: volumeNumber,
 	}
+	// If instance file existed, plugin SHOULD get instance id
+	// from instance file (/etc/qingcloud/instance-id).
+	if _, err := os.Stat(InstanceFilePath); !os.IsNotExist(err) {
+		sc.readInstanceId()
+	}
+	return sc
 }
 
 // GetConfigFilePath get config file path
@@ -78,22 +84,19 @@ func (cfg *ServerConfig) GetMaxVolumePerNode() int64 {
 }
 
 // GetCurrentInstanceId gets instance id
-func (cfg *ServerConfig) GetCurrentInstanceId() string {
-	if len(cfg.instanceId) == 0 {
-		cfg.readCurrentInstanceId()
-	}
+func (cfg *ServerConfig) GetInstanceId() string {
 	return cfg.instanceId
 }
 
-func (cfg *ServerConfig) readCurrentInstanceId() {
+func (cfg *ServerConfig) readInstanceId() {
 	bytes, err := ioutil.ReadFile(InstanceFilePath)
 	if err != nil {
-		glog.Errorf("Getting current instance-id error: %s", err.Error())
+		glog.Errorf("Getting instance-id error: %s", err.Error())
 		os.Exit(1)
 	}
 	cfg.instanceId = string(bytes[:])
 	cfg.instanceId = strings.Replace(cfg.instanceId, "\n", "", -1)
-	glog.Infof("Getting current instance-id: \"%s\"", cfg.instanceId)
+	glog.Infof("Getting instance-id: \"%s\"", cfg.instanceId)
 }
 
 // ReadConfigFromFile

@@ -23,7 +23,7 @@ import (
 	"github.com/yunify/qingcloud-csi/pkg/server"
 )
 
-const version = "0.2.0"
+const version = "1.0.0"
 
 type block struct {
 	driver *csicommon.CSIDriver
@@ -35,7 +35,7 @@ type block struct {
 	cap   []*csi.VolumeCapability_AccessMode
 	cscap []*csi.ControllerServiceCapability
 
-	server *server.ServerConfig
+	cloud *server.ServerConfig
 }
 
 // GetBlockDriver
@@ -49,7 +49,7 @@ func GetBlockDriver() *block {
 func NewIdentityServer(d *csicommon.CSIDriver, svr *server.ServerConfig) *identityServer {
 	return &identityServer{
 		DefaultIdentityServer: csicommon.NewDefaultIdentityServer(d),
-		server:                svr,
+		cloudServer:           svr,
 	}
 }
 
@@ -58,7 +58,7 @@ func NewIdentityServer(d *csicommon.CSIDriver, svr *server.ServerConfig) *identi
 func NewControllerServer(d *csicommon.CSIDriver, svr *server.ServerConfig) *controllerServer {
 	return &controllerServer{
 		DefaultControllerServer: csicommon.NewDefaultControllerServer(d),
-		server:                  svr,
+		cloudServer:             svr,
 	}
 }
 
@@ -67,13 +67,13 @@ func NewControllerServer(d *csicommon.CSIDriver, svr *server.ServerConfig) *cont
 func NewNodeServer(d *csicommon.CSIDriver, svr *server.ServerConfig) *nodeServer {
 	return &nodeServer{
 		DefaultNodeServer: csicommon.NewDefaultNodeServer(d),
-		server:            svr,
+		cloudServer:       svr,
 	}
 }
 
 // Run
 // Initial and start CSI driver
-func (blk *block) Run(driverName, nodeID, endpoint string, server *server.ServerConfig) {
+func (blk *block) Run(driverName, nodeID, endpoint string, serverConfig *server.ServerConfig) {
 	glog.Infof("Driver: %v version: %v", driverName, version)
 
 	// Initialize default library driver
@@ -90,9 +90,9 @@ func (blk *block) Run(driverName, nodeID, endpoint string, server *server.Server
 		csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER})
 
 	// Create GRPC servers
-	blk.ids = NewIdentityServer(blk.driver, server)
-	blk.ns = NewNodeServer(blk.driver, server)
-	blk.cs = NewControllerServer(blk.driver, server)
+	blk.ids = NewIdentityServer(blk.driver, serverConfig)
+	blk.ns = NewNodeServer(blk.driver, serverConfig)
+	blk.cs = NewControllerServer(blk.driver, serverConfig)
 
 	s := csicommon.NewNonBlockingGRPCServer()
 	s.Start(endpoint, blk.ids, blk.cs, blk.ns)

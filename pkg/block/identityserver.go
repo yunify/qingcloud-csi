@@ -23,5 +23,5 @@ import (
 
 type identityServer struct {
 	*csicommon.DefaultIdentityServer
-	server *server.ServerConfig
+	cloudServer *server.ServerConfig
 }
