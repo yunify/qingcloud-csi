@@ -14,7 +14,7 @@
 // | limitations under the License.
 // +-------------------------------------------------------------------------
 
-package block
+package instance
 
 import (
 	"runtime"
@@ -47,7 +47,7 @@ func TestFindInstance(t *testing.T) {
 	}{
 		{
 			name:  "Available",
-			id:    instanceId1,
+			id:    "fake",
 			found: true,
 		},
 		{

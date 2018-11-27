@@ -14,10 +14,10 @@
 // | limitations under the License.
 // +-------------------------------------------------------------------------
 
-package block
+package server
 
 import (
-	"github.com/container-storage-interface/spec/lib/go/csi/v0"
+	"github.com/container-storage-interface/spec/lib/go/csi"
 	"testing"
 )
 
@@ -278,10 +278,10 @@ func TestGibToByte(t *testing.T) {
 	}{
 		{"-1Gb", -1, 0},
 		{"0Gb", 0, 0},
-		{"1GB", 1, gib},
-		{"10GB", 10, 10 * gib},
-		{"100GB", 100, 100 * gib},
-		{"1000GB", 1000, 1000 * gib},
+		{"1GB", 1, Gib},
+		{"10GB", 10, 10 * Gib},
+		{"100GB", 100, 100 * Gib},
+		{"1000GB", 1000, 1000 * Gib},
 	}
 
 	for _, v := range testcases {
@@ -301,13 +301,13 @@ func TestByteCeilToGib(t *testing.T) {
 		{"-1 Byte", -1, 0},
 		{"0 Byte", 0, 0},
 		{"1 Byte", 1, 1},
-		{"1 Gib - 1 Byte", gib - 1, 1},
-		{"1 Gib + 1 Byte", gib + 1, 2},
-		{"10 Gib - 1 Byte", 10*gib - 1, 10},
-		{"10 Gib", 10 * gib, 10},
-		{"10 Gib + 1024 Byte", 10*gib + kib, 11},
-		{"99 Gib - 1 Mib", 99*gib - mib, 99},
-		{"99 Gib + 1 Mib", 99*gib + mib, 100},
+		{"1 Gib - 1 Byte", Gib - 1, 1},
+		{"1 Gib + 1 Byte", Gib + 1, 2},
+		{"10 Gib - 1 Byte", 10*Gib - 1, 10},
+		{"10 Gib", 10 * Gib, 10},
+		{"10 Gib + 1024 Byte", 10*Gib + Kib, 11},
+		{"99 Gib - 1 Mib", 99*Gib - Mib, 99},
+		{"99 Gib + 1 Mib", 99*Gib + Mib, 100},
 	}
 
 	for _, v := range testcases {

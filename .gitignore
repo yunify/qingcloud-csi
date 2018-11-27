@@ -20,4 +20,8 @@ tmp/
 
 .DS_store
 
+# Binary file
 _output
+
+# Docker build context
+deploy/block/docker/blockplugin

@@ -18,9 +18,12 @@ package block
 
 import (
 	"fmt"
-	"github.com/container-storage-interface/spec/lib/go/csi/v0"
+	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/glog"
 	"github.com/kubernetes-csi/drivers/pkg/csi-common"
+	"github.com/yunify/qingcloud-csi/pkg/server"
+	"github.com/yunify/qingcloud-csi/pkg/server/instance"
+	"github.com/yunify/qingcloud-csi/pkg/server/volume"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -30,6 +33,7 @@ import (
 
 type controllerServer struct {
 	*csicommon.DefaultControllerServer
+	cloudServer *server.ServerConfig
 }
 
 // This operation MUST be idempotent
@@ -46,7 +50,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	// Required volume capability
 	if req.VolumeCapabilities == nil {
 		return nil, status.Error(codes.InvalidArgument, "Volume capabilities missing in request")
-	} else if !ContainsVolumeCapabilities(cs.Driver.GetVolumeCapabilityAccessModes(), req.GetVolumeCapabilities()) {
+	} else if !server.ContainsVolumeCapabilities(cs.Driver.GetVolumeCapabilityAccessModes(), req.GetVolumeCapabilities()) {
 		return nil, status.Error(codes.InvalidArgument, "Volume capabilities not match")
 	}
 	// Check sanity of request Name, Volume Capabilities
@@ -56,24 +60,25 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	volumeName := req.GetName()
 
 	// create VolumeManager object
-	vm, err := NewVolumeManagerFromFile(ConfigFilePath)
+	vm, err := volume.NewVolumeManagerFromFile(cs.cloudServer.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	// create StorageClass object
-	sc, err := NewQingStorageClassFromMap(req.GetParameters())
+	sc, err := server.NewQingStorageClassFromMap(req.GetParameters())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 	// get request volume capacity range
 	requiredByte := req.GetCapacityRange().GetRequiredBytes()
-	requiredGib := sc.FormatVolumeSize(ByteCeilToGib(requiredByte), sc.VolumeStepSize)
+	requiredGib := sc.FormatVolumeSize(server.ByteCeilToGib(requiredByte), sc.VolumeStepSize)
 	limitByte := req.GetCapacityRange().GetLimitBytes()
 	if limitByte == 0 {
-		limitByte = Int64Max
+		limitByte = server.Int64Max
 	}
 	// check volume range
-	if GibToByte(requiredGib) < requiredByte || GibToByte(requiredGib) > limitByte || requiredGib < sc.VolumeMinSize || requiredGib > sc.VolumeMaxSize {
+	if server.GibToByte(requiredGib) < requiredByte || server.GibToByte(requiredGib) > limitByte || requiredGib < sc.
+		VolumeMinSize || requiredGib > sc.VolumeMaxSize {
 		glog.Errorf("Request capacity range [%d, %d] bytes, storage class capacity range [%d, %d] GB, format required size: %d gb",
 			requiredByte, limitByte, sc.VolumeMinSize, sc.VolumeMaxSize, requiredGib)
 		return nil, status.Error(codes.OutOfRange, "Unsupport capacity range")
@@ -89,14 +94,15 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		glog.Infof("Request volume name: %s, capacity range [%d,%d] bytes, type: %d, zone: %s",
 			volumeName, requiredByte, limitByte, sc.VolumeType, vm.GetZone())
 		glog.Infof("Exist volume name: %s, id: %s, capacity: %d bytes, type: %d, zone: %s",
-			*exVol.VolumeName, *exVol.VolumeID, GibToByte(*exVol.Size), *exVol.VolumeType, vm.GetZone())
-		if *exVol.Size >= requiredGib && int64(*exVol.Size)*gib <= limitByte && *exVol.VolumeType == sc.VolumeType {
+			*exVol.VolumeName, *exVol.VolumeID, server.GibToByte(*exVol.Size), *exVol.VolumeType, vm.GetZone())
+		if *exVol.Size >= requiredGib && int64(*exVol.Size)*server.Gib <= limitByte && *exVol.VolumeType == sc.
+			VolumeType {
 			// exisiting volume is compatible with new request and should be reused.
 			return &csi.CreateVolumeResponse{
 				Volume: &csi.Volume{
-					Id:            *exVol.VolumeID,
-					CapacityBytes: int64(*exVol.Size) * gib,
-					Attributes:    req.GetParameters(),
+					VolumeId:      *exVol.VolumeID,
+					CapacityBytes: int64(*exVol.Size) * server.Gib,
+					VolumeContext: req.GetParameters(),
 				},
 			}, nil
 		}
@@ -113,9 +119,9 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 
 	return &csi.CreateVolumeResponse{
 		Volume: &csi.Volume{
-			Id:            volumeId,
-			CapacityBytes: int64(requiredGib) * gib,
-			Attributes:    req.GetParameters(),
+			VolumeId:      volumeId,
+			CapacityBytes: int64(requiredGib) * server.Gib,
+			VolumeContext: req.GetParameters(),
 		},
 	}, nil
 }
@@ -139,7 +145,7 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 	// Deleting block image
 	glog.Infof("deleting volume %s", volumeId)
 	// Create VolumeManager object
-	vm, err := NewVolumeManagerFromFile(ConfigFilePath)
+	vm, err := volume.NewVolumeManagerFromFile(cs.cloudServer.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -153,7 +159,7 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 		return &csi.DeleteVolumeResponse{}, nil
 	}
 	// Is volume in use
-	if *volInfo.Status == BlockVolumeStatusInuse {
+	if *volInfo.Status == volume.BlockVolumeStatusInuse {
 		return nil, status.Errorf(codes.FailedPrecondition, "volume is in use by another resource")
 	}
 	// Do delete volume
@@ -165,7 +171,7 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 		err = vm.DeleteVolume(volumeId)
 		if err != nil {
 			glog.Infof("Failed to delete block volume: %s in %s with error: %v", volumeId, vm.GetZone(), err)
-			if strings.Contains(err.Error(), RetryString) {
+			if strings.Contains(err.Error(), server.RetryString) {
 				time.Sleep(time.Duration(i) * time.Second)
 			} else {
 				return nil, status.Error(codes.Internal, err.Error())
@@ -203,12 +209,12 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	}
 
 	// create volume manager object
-	vm, err := NewVolumeManagerFromFile(ConfigFilePath)
+	vm, err := volume.NewVolumeManagerFromFile(cs.cloudServer.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	// create instance manager object
-	im, err := NewInstanceManagerFromFile(ConfigFilePath)
+	im, err := instance.NewInstanceManagerFromFile(cs.cloudServer.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -272,12 +278,12 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 
 	// 1. Detach
 	// create volume provisioner object
-	vm, err := NewVolumeManagerFromFile(ConfigFilePath)
+	vm, err := volume.NewVolumeManagerFromFile(cs.cloudServer.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	// create instance manager object
-	im, err := NewInstanceManagerFromFile(ConfigFilePath)
+	im, err := instance.NewInstanceManagerFromFile(cs.cloudServer.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -330,7 +336,7 @@ func (cs *controllerServer) ValidateVolumeCapabilities(ctx context.Context, req 
 	}
 
 	// check volume exist
-	vm, err := NewVolumeManagerFromFile(ConfigFilePath)
+	vm, err := volume.NewVolumeManagerFromFile(cs.cloudServer.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -353,13 +359,10 @@ func (cs *controllerServer) ValidateVolumeCapabilities(ctx context.Context, req 
 		}
 		if !found {
 			return &csi.ValidateVolumeCapabilitiesResponse{
-				Supported: false,
-				Message:   "Driver does not support mode:" + c.GetAccessMode().GetMode().String(),
+				Message: "Driver does not support mode:" + c.GetAccessMode().GetMode().String(),
 			}, nil
 		}
 	}
 
-	return &csi.ValidateVolumeCapabilitiesResponse{
-		Supported: true,
-	}, nil
+	return &csi.ValidateVolumeCapabilitiesResponse{}, nil
 }

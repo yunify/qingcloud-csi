@@ -14,9 +14,10 @@
 // | limitations under the License.
 // +-------------------------------------------------------------------------
 
-package block
+package volume
 
 import (
+	"github.com/yunify/qingcloud-csi/pkg/server"
 	"runtime"
 	"testing"
 )
@@ -131,7 +132,7 @@ func TestFindVolumeByName(t *testing.T) {
 }
 
 func TestCreateVolume(t *testing.T) {
-	sc := NewDefaultQingStorageClass()
+	sc := server.NewDefaultQingStorageClass()
 	vm := getvm()
 
 	testcases := []struct {

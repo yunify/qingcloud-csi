@@ -19,6 +19,7 @@ package main
 import (
 	"flag"
 	"github.com/yunify/qingcloud-csi/pkg/block"
+	"github.com/yunify/qingcloud-csi/pkg/server"
 	"os"
 )
 
@@ -30,7 +31,9 @@ var (
 	endpoint   = flag.String("endpoint", "unix://tmp/csi.sock", "CSI endpoint")
 	driverName = flag.String("drivername", "csi-qingcloud", "name of the driver")
 	nodeID     = flag.String("nodeid", "", "node id")
-	configPath = flag.String("config", "/etc/config/config.yaml", "server config file path")
+	config     = flag.String("config", "/etc/config/config.yaml", "server config file path")
+	maxVolume  = flag.Int64("maxvolume", 10,
+		"Maximum number of volumes that controller can publish to the node.")
 )
 
 func main() {
@@ -40,7 +43,7 @@ func main() {
 }
 
 func handle() {
-	block.ConfigFilePath = *configPath
+	cloud := server.NewServerConfig(*nodeID, *config, *maxVolume)
 	driver := block.GetBlockDriver()
-	driver.Run(*driverName, *nodeID, *endpoint)
+	driver.Run(*driverName, *nodeID, *endpoint, cloud)
 }
