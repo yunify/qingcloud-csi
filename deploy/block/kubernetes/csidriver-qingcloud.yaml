@@ -12,12 +12,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-qy_access_key_id: 'ACCESS_KEY_ID'
-qy_secret_access_key: 'ACCESS_KEY_SECRET'
-zone: 'ZONE'
-host: 'api.qingcloud.com'
-port: 443
-protocol: 'https'
-uri: '/iaas'
-connection_retries: 3
-connection_timeout: 30
+apiVersion: csi.storage.k8s.io/v1alpha1
+kind: CSIDriver
+metadata:
+  name: csi.qingcloud.com
+spec:
+  attachRequired: true
+  podInfoOnMountVersion: "v1"

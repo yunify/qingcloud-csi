@@ -18,7 +18,7 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: csi-qingcloud
-provisioner: csi-qingcloud
+provisioner: csi.qingcloud.com
 parameters:
   type: "0"
   maxSize: "500"
