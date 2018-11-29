@@ -17,7 +17,7 @@
 .PHONY: all blockplugin
 
 BLOCK_IMAGE_NAME=dockerhub.qingcloud.com/csiplugin/csi-qingcloud
-BLOCK_IMAGE_VERSION=v0.2.0
+BLOCK_IMAGE_VERSION=latest
 BLOCK_PLUGIN_NAME=blockplugin
 ROOT_PATH=$(pwd)
 PACKAGE_LIST=./cmd/block ./pkg/block ./pkg/server ./pkg/server/instance ./pkg/server/volume
