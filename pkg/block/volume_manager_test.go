@@ -135,36 +135,55 @@ func TestCreateVolume(t *testing.T) {
 	vm := getvm()
 
 	testcases := []struct {
-		name    string
-		volName string
-		reqSize int
-		result  bool
-		volId   string
+		name         string
+		volName      string
+		reqSize      int
+		storageClass qingStorageClass
+		result       bool
+		volId        string
 	}{
 		{
-			name:    "create volume name test-1",
-			volName: "test-1",
-			reqSize: 1,
-			result:  true,
-			volId:   "",
+			name:         "create volume name test-1",
+			volName:      "test-1",
+			reqSize:      1,
+			storageClass: *sc,
+			result:       true,
+			volId:        "",
 		},
 		{
-			name:    "create volume name test-1 repeatedly",
-			volName: "test-1",
-			reqSize: 3,
-			result:  false,
-			volId:   "",
+			name:         "create volume name test-1 repeatedly",
+			volName:      "test-1",
+			reqSize:      3,
+			storageClass: *sc,
+			result:       false,
+			volId:        "",
 		},
 		{
-			name:    "create volume name test-2",
-			volName: "test-2",
+			name:         "create volume name test-2",
+			volName:      "test-2",
+			reqSize:      20,
+			storageClass: *sc,
+			result:       true,
+			volId:        "",
+		},
+		{
+			name:    "create volume name test-3 for single replica",
+			volName: "test-3",
 			reqSize: 20,
-			result:  true,
-			volId:   "",
+			storageClass: qingStorageClass{
+				VolumeType:     100,
+				VolumeMaxSize:  500,
+				VolumeMinSize:  10,
+				VolumeStepSize: 10,
+				VolumeFsType:   FileSystemDefault,
+				VolumeReplica:  SingleReplica,
+			},
+			result: true,
+			volId:  "",
 		},
 	}
 	for i, v := range testcases {
-		volId, err := vm.CreateVolume(v.volName, v.reqSize, *sc)
+		volId, err := vm.CreateVolume(v.volName, v.reqSize, v.storageClass)
 		if err != nil {
 			t.Errorf("test %s: %s", v.name, err.Error())
 		} else {

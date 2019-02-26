@@ -117,7 +117,7 @@ lost+found
 
 ### StorageClass参数
 
-如下所示的 StorageClass 资源定义[文件](deploy/block/example/sc.yaml)可用来创建 StorageClass 对象.
+如下所示的 StorageClass 资源定义[文件](deploy/block/example/sc.yaml)可用来创建 StorageClass 对象。
 ```
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -130,16 +130,27 @@ parameters:
   minSize: "10"
   stepSize: "10"
   fsType: "ext4"
+  replica: "2"
 reclaimPolicy: Delete 
 ```
 
-- `type`: 青云云平台存储卷类型。在青云公有云中， `0` 代表性能型硬盘。`3` 代表超高性能型硬盘。`1` 或 `2`（根据集群所在区不同而参数不同）代表容量型硬盘。 详情见 [QingCloud 文档](https://docs.qingcloud.com/product/api/action/volume/create_volumes.html)。
+- `type`: 青云云平台存储卷类型。在青云公有云中， `0` 代表性能型硬盘, `3` 代表超高性能型硬盘, `1` 或 `2`（根据集群所在区不同而参数不同）代表容量型硬盘, `5` 代表企业级分布式 SAN 
+(NeonSAN) 硬盘, `100` 
+代表基础型硬盘， 
+`200` 
+代表 SSD 企业型硬盘。 
+详情见 
+[QingCloud
+ 文档]
+(https://docs.qingcloud.com/product/api/action/volume/create_volumes.html)。
 
-- `maxSize`, `minSize`: 限制存储卷类型的存储卷容量范围，单位为GiB。
+- `maxSize`, `minSize`: 限制存储卷类型的存储卷容量范围，单位为GiB。青云公有云用户可参考[文档](docs/block-volume-parameter-zh.md)设置。
 
-- `stepSize`: 设置用户所创建存储卷容量的增量，单位为GiB。
+- `stepSize`: 设置用户所创建存储卷容量的增量，单位为GiB。青云公有云用户可参考[文档](docs/block-volume-parameter-zh.md)设置。
 
-- `fsType`: 支持 `ext3`, `ext4`, `xfs`. 默认为 `ext4`.
+- `fsType`: 支持 `ext3`, `ext4`, `xfs`。 默认为 `ext4`。
+
+- `replica`: `1` 代表单副本硬盘，`2` 代表多副本硬盘。 默认为 `2`
 
 ## 支持
 如果有任何问题或建议, 请在 [qingcloud-csi](https://github.com/yunify/qingcloud-csi/issues) 项目提 issue。

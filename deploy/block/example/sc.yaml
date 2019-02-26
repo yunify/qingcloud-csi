@@ -25,4 +25,5 @@ parameters:
   minSize: "10"
   stepSize: "10"
   fsType: "ext4"
+  replica: "2"
 reclaimPolicy: Delete 

@@ -25,13 +25,13 @@ metadata:
   labels:
     app: "csi-qingcloud"
     role: "controller"
-    csi: "v0.2.0"
+    csi: "v0.2.1"
     owner: "yunify"
 spec:
   selector:
     app: "csi-qingcloud"
     role: "controller"
-    csi: "v0.2.0"
+    csi: "v0.2.1"
     owner: "yunify"
   ports:
     - name: dummy
@@ -49,7 +49,7 @@ spec:
     matchLabels:
       app: "csi-qingcloud"
       role: "controller"
-      csi: "v0.2.0"
+      csi: "v0.2.1"
       owner: "yunify"
   replicas: 1
   template:
@@ -57,7 +57,7 @@ spec:
       labels:
         app: "csi-qingcloud"
         role: "controller"
-        csi: "v0.2.0"
+        csi: "v0.2.1"
         owner: "yunify"
     spec:
       serviceAccount: csi-qingcloud-controller
@@ -69,6 +69,7 @@ spec:
         args:
         - "--provisioner=csi-qingcloud"
         - "--csi-address=$(ADDRESS)"
+        - "--connection-timeout=60s"
         - "--v=5"
         env:
         - name: ADDRESS
@@ -90,7 +91,7 @@ spec:
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy
       - name: csi-qingcloud
-        image: dockerhub.qingcloud.com/csiplugin/csi-qingcloud:v0.2.0
+        image: dockerhub.qingcloud.com/csiplugin/csi-qingcloud:v0.2.1
         args :
         - "--nodeid=$(NODE_ID)"
         - "--endpoint=$(CSI_ENDPOINT)"
@@ -104,7 +105,7 @@ spec:
               fieldPath: spec.nodeName
         - name: CSI_ENDPOINT
           value: unix://var/lib/csi/sockets/pluginproxy/csi.sock
-        imagePullPolicy: "Always"
+        imagePullPolicy: "IfNotPresent"
         volumeMounts:
         - name: socket-dir
           mountPath: /var/lib/csi/sockets/pluginproxy

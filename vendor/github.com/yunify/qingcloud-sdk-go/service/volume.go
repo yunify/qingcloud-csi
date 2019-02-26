@@ -133,6 +133,7 @@ func (s *VolumeService) CreateVolumes(i *CreateVolumesInput) (*CreateVolumesOutp
 type CreateVolumesInput struct {
 	Count      *int    `json:"count" name:"count" default:"1" location:"params"`
 	Size       *int    `json:"size" name:"size" location:"params"` // Required
+	Repl       *string `json:"repl" name:"repl" default:"" location:"params"`
 	VolumeName *string `json:"volume_name" name:"volume_name" location:"params"`
 	// VolumeType's available values: 0, 1, 2, 3, 4, 5, 10, 100, 200
 	VolumeType *int `json:"volume_type" name:"volume_type" default:"0" location:"params"`
@@ -144,6 +145,26 @@ func (v *CreateVolumesInput) Validate() error {
 		return errors.ParameterRequiredError{
 			ParameterName: "Size",
 			ParentName:    "CreateVolumesInput",
+		}
+	}
+
+	if v.Repl != nil && *v.Repl != "" {
+		volumeReplValidValues := []string{"rpp-00000001", "rpp-00000002"}
+		volumeReplParameterValue := fmt.Sprint(*v.Repl)
+
+		volumeReplIsValid := false
+		for _, value := range volumeReplValidValues {
+			if value == volumeReplParameterValue {
+				volumeReplIsValid = true
+			}
+		}
+
+		if !volumeReplIsValid {
+			return errors.ParameterValueNotAllowedError{
+				ParameterName:  "Repl",
+				ParameterValue: volumeReplParameterValue,
+				AllowedValues:  volumeReplValidValues,
+			}
 		}
 	}
 

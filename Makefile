@@ -17,7 +17,7 @@
 .PHONY: all blockplugin
 
 BLOCK_IMAGE_NAME=dockerhub.qingcloud.com/csiplugin/csi-qingcloud
-BLOCK_IMAGE_VERSION=v0.2.0
+BLOCK_IMAGE_VERSION=v0.2.1
 BLOCK_PLUGIN_NAME=blockplugin
 
 blockplugin:
@@ -27,6 +27,13 @@ blockplugin:
 blockplugin-container: blockplugin
 	cp _output/${BLOCK_PLUGIN_NAME} deploy/block/docker
 	docker build -t $(BLOCK_IMAGE_NAME):$(BLOCK_IMAGE_VERSION) deploy/block/docker
+
+fmt:
+	go fmt ./cmd/block
+	go fmt ./pkg/block/
+
+fmt-deep: fmt
+	gofmt -s -w -l ./cmd/block/ ./pkg/block/
 
 clean:
 	go clean -r -x

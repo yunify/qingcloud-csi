@@ -27,16 +27,18 @@ type qingStorageClass struct {
 	VolumeMinSize  int    `json:"minSize"`
 	VolumeStepSize int    `json:"stepSize"`
 	VolumeFsType   string `json:"fsType"`
+	VolumeReplica  int    `json:"replica"`
 }
 
 // NewDefaultQingStorageClass create default qingStorageClass object
 func NewDefaultQingStorageClass() *qingStorageClass {
 	return &qingStorageClass{
-		VolumeType:     0,
+		VolumeType:     200,
 		VolumeMaxSize:  500,
 		VolumeMinSize:  10,
 		VolumeStepSize: 10,
 		VolumeFsType:   FileSystemDefault,
+		VolumeReplica:  DefaultReplica,
 	}
 }
 
@@ -97,10 +99,23 @@ func NewQingStorageClassFromMap(opt map[string]string) (*qingStorageClass, error
 		sc.VolumeStepSize = iStepSize
 	}
 
+	// Get volume replicas
+	if sReplica, ok := opt["replica"]; ok {
+		iReplica, err := strconv.Atoi(sReplica)
+		if err != nil {
+			return nil, err
+		}
+		if !IsValidReplica(iReplica) {
+			return nil, fmt.Errorf("Does not support replicas \"%s\"", sReplica)
+		}
+		sc.VolumeReplica = iReplica
+	}
+
 	// Ensure volume minSize less than volume maxSize
 	if sc.VolumeMaxSize < sc.VolumeMinSize {
 		return nil, fmt.Errorf("Volume maxSize must greater than or equal to volume minSize")
 	}
+
 	return sc, nil
 }
 

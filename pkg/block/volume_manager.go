@@ -177,10 +177,13 @@ func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc qin
 	input.VolumeName = &volumeName
 	// volume provisioner type
 	input.VolumeType = &sc.VolumeType
+	// volume replicas
+	replica := QingCloudReplName[sc.VolumeReplica]
+	input.Repl = &replica
 
 	// 1. Create volume
-	glog.Infof("Call IaaS CreateVolume request size: %d GB, zone: %s, type: %d, count: %d, name: %s",
-		*input.Size, *vm.volumeService.Properties.Zone, *input.VolumeType, *input.Count, *input.VolumeName)
+	glog.Infof("Call IaaS CreateVolume request size: %d GB, zone: %s, type: %d, count: %d, replica: %s, name: %s",
+		*input.Size, *vm.volumeService.Properties.Zone, *input.VolumeType, *input.Count, *input.Repl, *input.VolumeName)
 	output, err := vm.volumeService.CreateVolumes(input)
 	if err != nil {
 		return "", err
