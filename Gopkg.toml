@@ -31,7 +31,7 @@
 
 [[constraint]]
   name = "github.com/yunify/qingcloud-sdk-go"
-  version = "2.0.0-alpha.9"
+  revision = "ecebf151dc50a068ce6b5c896fbeb07b08d8bf4b"
 
 [prune]
   go-tests = true
@@ -39,7 +39,7 @@
 
 [[constraint]]
   name = "k8s.io/kubernetes"
-  version = "1.10.4"
+  version = "v1.10.4"
 
 [[constraint]]
   name = "github.com/kubernetes-csi/drivers"

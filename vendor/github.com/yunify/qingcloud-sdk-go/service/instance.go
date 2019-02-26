@@ -47,6 +47,55 @@ func (s *QingCloudService) Instance(zone string) (*InstanceService, error) {
 	return &InstanceService{Config: s.Config, Properties: properties}, nil
 }
 
+// Documentation URL: https://docs.qingcloud.com/api/instance/cease_instances.html
+func (s *InstanceService) CeaseInstances(i *CeaseInstancesInput) (*CeaseInstancesOutput, error) {
+	if i == nil {
+		i = &CeaseInstancesInput{}
+	}
+	o := &data.Operation{
+		Config:        s.Config,
+		Properties:    s.Properties,
+		APIName:       "CeaseInstances",
+		RequestMethod: "GET",
+	}
+
+	x := &CeaseInstancesOutput{}
+	r, err := request.New(o, i, x)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.Send()
+	if err != nil {
+		return nil, err
+	}
+
+	return x, err
+}
+
+type CeaseInstancesInput struct {
+	Instances []*string `json:"instances" name:"instances" location:"params"` // Required
+}
+
+func (v *CeaseInstancesInput) Validate() error {
+
+	if len(v.Instances) == 0 {
+		return errors.ParameterRequiredError{
+			ParameterName: "Instances",
+			ParentName:    "CeaseInstancesInput",
+		}
+	}
+
+	return nil
+}
+
+type CeaseInstancesOutput struct {
+	Message *string `json:"message" name:"message"`
+	Action  *string `json:"action" name:"action" location:"elements"`
+	JobID   *string `json:"job_id" name:"job_id" location:"elements"`
+	RetCode *int    `json:"ret_code" name:"ret_code" location:"elements"`
+}
+
 // Documentation URL: https://docs.qingcloud.com/api/instance/describe_instance_types.html
 func (s *InstanceService) DescribeInstanceTypes(i *DescribeInstanceTypesInput) (*DescribeInstanceTypesOutput, error) {
 	if i == nil {
@@ -125,6 +174,7 @@ type DescribeInstancesInput struct {
 	IsClusterNode *int      `json:"is_cluster_node" name:"is_cluster_node" default:"0" location:"params"`
 	Limit         *int      `json:"limit" name:"limit" default:"20" location:"params"`
 	Offset        *int      `json:"offset" name:"offset" default:"0" location:"params"`
+	Owner         *string   `json:"owner" name:"owner" location:"params"`
 	SearchWord    *string   `json:"search_word" name:"search_word" location:"params"`
 	Status        []*string `json:"status" name:"status" location:"params"`
 	Tags          []*string `json:"tags" name:"tags" location:"params"`
@@ -183,95 +233,6 @@ type DescribeInstancesOutput struct {
 	InstanceSet []*Instance `json:"instance_set" name:"instance_set" location:"elements"`
 	RetCode     *int        `json:"ret_code" name:"ret_code" location:"elements"`
 	TotalCount  *int        `json:"total_count" name:"total_count" location:"elements"`
-}
-
-// Documentation URL: https://docs.qingcloud.com/api/monitor/get_monitor.html
-func (s *InstanceService) GetInstanceMonitor(i *GetInstanceMonitorInput) (*GetInstanceMonitorOutput, error) {
-	if i == nil {
-		i = &GetInstanceMonitorInput{}
-	}
-	o := &data.Operation{
-		Config:        s.Config,
-		Properties:    s.Properties,
-		APIName:       "GetMonitor",
-		RequestMethod: "GET",
-	}
-
-	x := &GetInstanceMonitorOutput{}
-	r, err := request.New(o, i, x)
-	if err != nil {
-		return nil, err
-	}
-
-	err = r.Send()
-	if err != nil {
-		return nil, err
-	}
-
-	return x, err
-}
-
-type GetInstanceMonitorInput struct {
-	EndTime   *time.Time `json:"end_time" name:"end_time" format:"ISO 8601" location:"params"`     // Required
-	Meters    []*string  `json:"meters" name:"meters" location:"params"`                           // Required
-	Resource  *string    `json:"resource" name:"resource" location:"params"`                       // Required
-	StartTime *time.Time `json:"start_time" name:"start_time" format:"ISO 8601" location:"params"` // Required
-	// Step's available values: 5m, 15m, 2h, 1d
-	Step *string `json:"step" name:"step" location:"params"` // Required
-}
-
-func (v *GetInstanceMonitorInput) Validate() error {
-
-	if len(v.Meters) == 0 {
-		return errors.ParameterRequiredError{
-			ParameterName: "Meters",
-			ParentName:    "GetInstanceMonitorInput",
-		}
-	}
-
-	if v.Resource == nil {
-		return errors.ParameterRequiredError{
-			ParameterName: "Resource",
-			ParentName:    "GetInstanceMonitorInput",
-		}
-	}
-
-	if v.Step == nil {
-		return errors.ParameterRequiredError{
-			ParameterName: "Step",
-			ParentName:    "GetInstanceMonitorInput",
-		}
-	}
-
-	if v.Step != nil {
-		stepValidValues := []string{"5m", "15m", "2h", "1d"}
-		stepParameterValue := fmt.Sprint(*v.Step)
-
-		stepIsValid := false
-		for _, value := range stepValidValues {
-			if value == stepParameterValue {
-				stepIsValid = true
-			}
-		}
-
-		if !stepIsValid {
-			return errors.ParameterValueNotAllowedError{
-				ParameterName:  "Step",
-				ParameterValue: stepParameterValue,
-				AllowedValues:  stepValidValues,
-			}
-		}
-	}
-
-	return nil
-}
-
-type GetInstanceMonitorOutput struct {
-	Message    *string  `json:"message" name:"message"`
-	Action     *string  `json:"action" name:"action" location:"elements"`
-	MeterSet   []*Meter `json:"meter_set" name:"meter_set" location:"elements"`
-	ResourceID *string  `json:"resource_id" name:"resource_id" location:"elements"`
-	RetCode    *int     `json:"ret_code" name:"ret_code" location:"elements"`
 }
 
 // Documentation URL: https://docs.qingcloud.com/api/instance/modify_instance_attributes.html
@@ -456,10 +417,13 @@ type ResizeInstancesInput struct {
 
 	// CPU's available values: 1, 2, 4, 8, 16
 	CPU          *int      `json:"cpu" name:"cpu" location:"params"`
+	CPUModel     *string   `json:"cpu_model" name:"cpu_model" location:"params"`
+	Gpu          *int      `json:"gpu" name:"gpu" location:"params"`
 	InstanceType *string   `json:"instance_type" name:"instance_type" location:"params"`
 	Instances    []*string `json:"instances" name:"instances" location:"params"` // Required
 	// Memory's available values: 1024, 2048, 4096, 6144, 8192, 12288, 16384, 24576, 32768
-	Memory *int `json:"memory" name:"memory" location:"params"`
+	Memory     *int `json:"memory" name:"memory" location:"params"`
+	OSDiskSize *int `json:"os_disk_size" name:"os_disk_size" location:"params"`
 }
 
 func (v *ResizeInstancesInput) Validate() error {
@@ -600,10 +564,15 @@ type RunInstancesInput struct {
 	BillingID *string `json:"billing_id" name:"billing_id" location:"params"`
 	Count     *int    `json:"count" name:"count" default:"1" location:"params"`
 	// CPU's available values: 1, 2, 4, 8, 16
-	CPU      *int    `json:"cpu" name:"cpu" default:"1" location:"params"`
+	CPU *int `json:"cpu" name:"cpu" default:"1" location:"params"`
+	// CPUMax's available values: 1, 2, 4, 8, 16
+	CPUMax *int `json:"cpu_max" name:"cpu_max" location:"params"`
+	// CPUModel's available values: Westmere, SandyBridge, IvyBridge, Haswell, Broadwell
+	CPUModel *string `json:"cpu_model" name:"cpu_model" default:"Westmere" location:"params"`
+	Gpu      *int    `json:"gpu" name:"gpu" default:"0" location:"params"`
 	Hostname *string `json:"hostname" name:"hostname" location:"params"`
 	ImageID  *string `json:"image_id" name:"image_id" location:"params"` // Required
-	// InstanceClass's available values: 0, 1
+	// InstanceClass's available values: 0, 1, 2, 3, 4, 5, 6, 100, 101, 200, 201, 300, 301
 	InstanceClass *int    `json:"instance_class" name:"instance_class" location:"params"`
 	InstanceName  *string `json:"instance_name" name:"instance_name" location:"params"`
 	InstanceType  *string `json:"instance_type" name:"instance_type" location:"params"`
@@ -611,16 +580,19 @@ type RunInstancesInput struct {
 	// LoginMode's available values: keypair, passwd
 	LoginMode   *string `json:"login_mode" name:"login_mode" location:"params"` // Required
 	LoginPasswd *string `json:"login_passwd" name:"login_passwd" location:"params"`
+	// MemMax's available values: 1024, 2048, 4096, 6144, 8192, 12288, 16384, 24576, 32768
+	MemMax *int `json:"mem_max" name:"mem_max" location:"params"`
 	// Memory's available values: 1024, 2048, 4096, 6144, 8192, 12288, 16384, 24576, 32768
 	Memory *int `json:"memory" name:"memory" default:"1024" location:"params"`
 	// NeedNewSID's available values: 0, 1
 	NeedNewSID *int `json:"need_newsid" name:"need_newsid" default:"0" location:"params"`
 	// NeedUserdata's available values: 0, 1
 	NeedUserdata  *int    `json:"need_userdata" name:"need_userdata" default:"0" location:"params"`
+	OSDiskSize    *int    `json:"os_disk_size" name:"os_disk_size" location:"params"`
 	SecurityGroup *string `json:"security_group" name:"security_group" location:"params"`
 	UIType        *string `json:"ui_type" name:"ui_type" location:"params"`
-	UserdataFile  *string `json:"userdata_file" name:"userdata_file" default:"etc/rc.local" location:"params"`
-	UserdataPath  *string `json:"userdata_path" name:"userdata_path" default:"etc/qingcloud/userdata" location:"params"`
+	UserdataFile  *string `json:"userdata_file" name:"userdata_file" default:"/etc/rc.local" location:"params"`
+	UserdataPath  *string `json:"userdata_path" name:"userdata_path" default:"/etc/qingcloud/userdata" location:"params"`
 	// UserdataType's available values: plain, exec, tar
 	UserdataType  *string   `json:"userdata_type" name:"userdata_type" location:"params"`
 	UserdataValue *string   `json:"userdata_value" name:"userdata_value" location:"params"`
@@ -650,6 +622,46 @@ func (v *RunInstancesInput) Validate() error {
 		}
 	}
 
+	if v.CPUMax != nil {
+		cpuMaxValidValues := []string{"1", "2", "4", "8", "16"}
+		cpuMaxParameterValue := fmt.Sprint(*v.CPUMax)
+
+		cpuMaxIsValid := false
+		for _, value := range cpuMaxValidValues {
+			if value == cpuMaxParameterValue {
+				cpuMaxIsValid = true
+			}
+		}
+
+		if !cpuMaxIsValid {
+			return errors.ParameterValueNotAllowedError{
+				ParameterName:  "CPUMax",
+				ParameterValue: cpuMaxParameterValue,
+				AllowedValues:  cpuMaxValidValues,
+			}
+		}
+	}
+
+	if v.CPUModel != nil {
+		cpuModelValidValues := []string{"Westmere", "SandyBridge", "IvyBridge", "Haswell", "Broadwell"}
+		cpuModelParameterValue := fmt.Sprint(*v.CPUModel)
+
+		cpuModelIsValid := false
+		for _, value := range cpuModelValidValues {
+			if value == cpuModelParameterValue {
+				cpuModelIsValid = true
+			}
+		}
+
+		if !cpuModelIsValid {
+			return errors.ParameterValueNotAllowedError{
+				ParameterName:  "CPUModel",
+				ParameterValue: cpuModelParameterValue,
+				AllowedValues:  cpuModelValidValues,
+			}
+		}
+	}
+
 	if v.ImageID == nil {
 		return errors.ParameterRequiredError{
 			ParameterName: "ImageID",
@@ -658,7 +670,7 @@ func (v *RunInstancesInput) Validate() error {
 	}
 
 	if v.InstanceClass != nil {
-		instanceClassValidValues := []string{"0", "1"}
+		instanceClassValidValues := []string{"0", "1", "2", "3", "4", "5", "6", "100", "101", "200", "201", "300", "301"}
 		instanceClassParameterValue := fmt.Sprint(*v.InstanceClass)
 
 		instanceClassIsValid := false
@@ -700,6 +712,26 @@ func (v *RunInstancesInput) Validate() error {
 				ParameterName:  "LoginMode",
 				ParameterValue: loginModeParameterValue,
 				AllowedValues:  loginModeValidValues,
+			}
+		}
+	}
+
+	if v.MemMax != nil {
+		memMaxValidValues := []string{"1024", "2048", "4096", "6144", "8192", "12288", "16384", "24576", "32768"}
+		memMaxParameterValue := fmt.Sprint(*v.MemMax)
+
+		memMaxIsValid := false
+		for _, value := range memMaxValidValues {
+			if value == memMaxParameterValue {
+				memMaxIsValid = true
+			}
+		}
+
+		if !memMaxIsValid {
+			return errors.ParameterValueNotAllowedError{
+				ParameterName:  "MemMax",
+				ParameterValue: memMaxParameterValue,
+				AllowedValues:  memMaxValidValues,
 			}
 		}
 	}

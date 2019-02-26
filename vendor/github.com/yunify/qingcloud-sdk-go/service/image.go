@@ -230,6 +230,7 @@ type DescribeImagesInput struct {
 	Limit    *int      `json:"limit" name:"limit" default:"20" location:"params"`
 	Offset   *int      `json:"offset" name:"offset" default:"0" location:"params"`
 	OSFamily *string   `json:"os_family" name:"os_family" location:"params"`
+	Owner    *string   `json:"owner" name:"owner" location:"params"`
 	// ProcessorType's available values: 64bit, 32bit
 	ProcessorType *string `json:"processor_type" name:"processor_type" location:"params"`
 	// Provider's available values: system, self
