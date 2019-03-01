@@ -5,7 +5,7 @@
 
 > [English](README.md) | 中文
 ## 描述
-QingCloud CSI 插件实现了 [CSI](https://github.com/container-storage-interface/) 接口，并使容器编排平台能够使用 QingCloud 云平台的存储资源。目前，QingCloud CSI 插件已经在 Kubernetes v1.10 环境中通过了 [CSI 测试](https://github.com/kubernetes-csi/csi-test)。
+QingCloud CSI 插件实现了 [CSI](https://github.com/container-storage-interface/) 接口，并使容器编排平台能够使用 QingCloud 云平台的存储资源。目前，QingCloud CSI 插件已经在 Kubernetes v1.10 和 v1.12 环境中通过了 [CSI 测试](https://github.com/kubernetes-csi/csi-test)。
 
 ## 块存储插件
 
@@ -14,12 +14,12 @@ QingCloud CSI 插件实现了 [CSI](https://github.com/container-storage-interfa
 块存储插件部署后, 用户可创建访问模式（Access Mode）为单节点读写（ReadWriteOnce）的基于 QingCloud 的超高性能型，性能型或容量型硬盘的存储卷并挂载至工作负载。
 
 ### 安装
-此安装指南将 CSI 插件安装在 *kube-system* namespace 内。用户也可以将插件部署在其他 namespace 内。为了CSI插件的正常使用，请确保在Kubernetes控制平面内将 `--allow-privileged` 项设置为 `true` 并且启用（默认开启）[Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) 特性。
+此安装指南将 CSI 插件安装在 *kube-system* namespace 内。用户也可以将插件部署在其他 namespace 内。为了 CSI 插件的正常使用，请设置 Kubernetes 控制平面内 `--allow-privileged=true` 并且启用（默认开启）[Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) 特性。此外，在 Kubernetes v1.12 的控制平面中, 需要设置参数 `--feature-gates=KubeletPluginsWatcher=false,CSINodeInfo=false,CSIDriverRegistry=false`。
+
 
 - 下载安装包并解压
 ```
-$ wget $(curl --silent "https://api.github.com/repos/yunify/qingcloud-csi/releases/latest" | \
-  grep browser_download_url | grep install|cut -d '"' -f 4)
+$ wget https://github.com/yunify/qingcloud-csi/releases/download/v0.2.1/csi-qingcloud-install.tar.gz
 $ tar -xvf csi-qingcloud-install.tar.gz
 $ cd csi-qingcloud-install
 ```
@@ -88,17 +88,17 @@ csi-qingcloud-node-pgsbn        2/2       Running       0          2m
 - 由 Kubernetes 集群管理员创建 StorageClass
 > 注：示例将创建 `type` 值为 `0` 的 StorageClass，用户可按照后续部分的说明设置 StorageClass 的参数。
 ```
-$ kubectl apply -f https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/block/example/sc.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/yunify/qingcloud-csi/release-0.2.0/deploy/block/example/sc.yaml
 ```
 
 - 创建 PVC
 ```
-$ kubectl apply -f https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/block/example/pvc.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/yunify/qingcloud-csi/release-0.2.0/deploy/block/example/pvc.yaml
 ```
 
 - 创建挂载 PVC 的 Deployment
 ```
-$ kubectl apply -f https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/block/example/deploy.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/yunify/qingcloud-csi/release-0.2.0/deploy/block/example/deploy.yaml
 ```
 
 - 检查 Pod 状态
