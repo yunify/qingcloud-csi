@@ -6,7 +6,7 @@
 > English | [中文](README_zh.md)
 
 ## Description
-QingCloud CSI plugin implements an interface between Container Storage Interface ([CSI](https://github.com/container-storage-interface/)) enabled Container Orchestrator (CO) and the storage of QingCloud. Currently, QingCloud CSI plugin has been passed the [CSI test](https://github.com/kubernetes-csi/csi-test) in Kubernetes v1.10 environment.
+QingCloud CSI plugin implements an interface between Container Storage Interface ([CSI](https://github.com/container-storage-interface/)) enabled Container Orchestrator (CO) and the storage of QingCloud. Currently, QingCloud CSI plugin has been passed the [CSI test](https://github.com/kubernetes-csi/csi-test) in Kubernetes v1.10 and v1.12 environment.
 
 ## Block Storage Plugin
 
@@ -15,12 +15,11 @@ Block storage plugin's design and installation use Kubernetes community recommen
 After plugin installation completes, user can create volumes based on several types of disk, such as super high performance disk, high performance disk and high capacity disk, with ReadWriteOnce access mode and mount volumes on workloads.
 
 ### Installation
-This guide will install CSI plugin in *kube-system* namespace. You can also deploy the plugin in other namespace. To use this CSI plugin, please ensure `--allow-privileged` flag set to `true` and enable [Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) (Default enalbed) feature gate in Kubernetes control plane.
+This guide will install CSI plugin in *kube-system* namespace. You can also deploy the plugin in other namespace. To use this CSI plugin, please set `--allow-privileged=true` and enable [Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) (Default enalbed) feature gate in Kubernetes control plane. In Kubernetes v1.12 control plane, please set `--feature-gates=KubeletPluginsWatcher=false,CSINodeInfo=false,CSIDriverRegistry=false`.
 
 - Download and decompress installation package 
 ```
-$ wget $(curl --silent "https://api.github.com/repos/yunify/qingcloud-csi/releases/latest" | \
-  grep browser_download_url | grep install|cut -d '"' -f 4)
+$ wget https://github.com/yunify/qingcloud-csi/releases/download/v0.2.1/csi-qingcloud-install.tar.gz
 $ tar -xvf csi-qingcloud-install.tar.gz
 $ cd csi-qingcloud-install
 ```
@@ -88,17 +87,17 @@ csi-qingcloud-node-pgsbn        2/2       Running       0          2m
 - Create a StorageClass by Kubernetes cluster administrator
 > NOTE: This guide will create a StorageClass which sets `type` to `0`. User could set StorageClass parameters according to following instruction.
 ```
-$ kubectl apply -f https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/block/example/sc.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/yunify/qingcloud-csi/release-0.2.0/deploy/block/example/sc.yaml
 ```
 
 - Create a PVC
 ```
-$ kubectl apply -f https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/block/example/pvc.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/yunify/qingcloud-csi/release-0.2.0/deploy/block/example/pvc.yaml
 ```
 
 - Create a Deployment mounting the PVC
 ```
-$ kubectl apply -f https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/block/example/deploy.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/yunify/qingcloud-csi/release-0.2.0/deploy/block/example/deploy.yaml
 ```
 
 - Check Pod status

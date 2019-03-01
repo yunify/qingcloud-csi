@@ -7,7 +7,7 @@
 |硬盘|Volume|type 值|
 |:---:|:----:|:----:|
 |性能型| High Performance|0|
-|容量型| High Capacity|2|
+|容量型| High Capacity| 1 或 2|
 |超高性能型|Super High Performance|3|
 |NeonSAN| NeonSAN|5|
 |基础型| Basic|100|
