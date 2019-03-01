@@ -141,8 +141,7 @@ reclaimPolicy: Delete
 代表 SSD 企业型硬盘。 
 详情见 
 [QingCloud
- 文档]
-(https://docs.qingcloud.com/product/api/action/volume/create_volumes.html)。
+ 文档](https://docs.qingcloud.com/product/api/action/volume/create_volumes.html)。
 
 - `maxSize`, `minSize`: 限制存储卷类型的存储卷容量范围，单位为GiB。青云公有云用户可参考[文档](docs/block-volume-parameter-zh.md)设置。
 
