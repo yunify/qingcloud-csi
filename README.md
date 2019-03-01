@@ -139,9 +139,7 @@ performance volume. `3` respresents super high performance volume. `1` or `2` re
 depending on cluster‘s zone. `5` represents enterprise distributed SAN (NeonSAN) volume. `100` represents basic volume. 
 `200` 
 represents 
-SSD enterprise volume. See [QingCloud docs]
-(https://docs.qingcloud
-.com/product/api/action/volume/create_volumes.html) for details.
+SSD enterprise volume. See [QingCloud docs](https://docs.qingcloud.com/product/api/action/volume/create_volumes.html) for details.
 
 - `maxSize`, `minSize`: Limit the range of volume size in GiB.
 
