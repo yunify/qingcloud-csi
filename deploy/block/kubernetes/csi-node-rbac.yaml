@@ -21,7 +21,7 @@ metadata:
   name: csi-qingcloud-node
   namespace: kube-system
   labels:
-    csi: "v0.2.0"
+    csi: "v0.2.1"
     owner: "yunify"
 
 ---
@@ -30,7 +30,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: csi-qingcloud-node
   labels:
-    csi: "v0.2.0"
+    csi: "v0.2.1"
     owner: "yunify"
 rules:
   - apiGroups: [""]
@@ -52,7 +52,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: csi-qingcloud-node
   labels:
-    csi: "v0.2.0"
+    csi: "v0.2.1"
     owner: "yunify"
 subjects:
   - kind: ServiceAccount

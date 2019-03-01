@@ -34,6 +34,7 @@ import (
 // Builder is the request builder for QingCloud service.
 type Builder struct {
 	parsedURL        string
+	parsedForm       url.Values
 	parsedProperties *map[string]string
 	parsedParams     *map[string]string
 
@@ -56,14 +57,18 @@ func (b *Builder) BuildHTTPRequest(o *data.Operation, i *reflect.Value) (*http.R
 
 func (b *Builder) build() (*http.Request, error) {
 	httpRequest, err := http.NewRequest(b.operation.RequestMethod, b.parsedURL, nil)
+	httpRequest.Form = b.parsedForm
 	if err != nil {
 		return nil, err
 	}
+	if b.operation.RequestMethod == "POST" {
+		httpRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	}
 
 	logger.Info(fmt.Sprintf(
-		"Built QingCloud request: [%d] %s",
+		"Built QingCloud request: [%d] %s \n %s ",
 		utils.StringToUnixInt(httpRequest.Header.Get("Date"), "RFC 822"),
-		httpRequest.URL.String()))
+		httpRequest.URL.String(), b.parsedForm))
 
 	return httpRequest, nil
 }
@@ -79,6 +84,10 @@ func (b *Builder) parse() error {
 		return err
 	}
 	err = b.parseRequestURL()
+	if err != nil {
+		return err
+	}
+	err = b.parseRequestForm()
 	if err != nil {
 		return err
 	}
@@ -198,6 +207,17 @@ func (b *Builder) parseRequestParams() error {
 									if fieldValue != nil {
 										requestParams[tagKey] = *fieldValue
 									}
+								case []*string:
+									dst := make([]string, len(fieldValue))
+									for i := 0; i < len(fieldValue); i++ {
+										if fieldValue[i] != nil {
+											dst[i] = *(fieldValue[i])
+										}
+									}
+									if len(dst) != 0 {
+										requestParams[tagKey] = strings.Join(dst, ",")
+									}
+
 								}
 							}
 						}
@@ -218,7 +238,7 @@ func (b *Builder) parseRequestURL() error {
 
 	b.parsedURL = endpoint + requestURI
 
-	if b.parsedParams != nil {
+	if b.parsedParams != nil && b.operation.RequestMethod == "GET" {
 		zone := (*b.parsedProperties)["zone"]
 		if zone != "" {
 			(*b.parsedParams)["zone"] = zone
@@ -234,5 +254,20 @@ func (b *Builder) parseRequestURL() error {
 		}
 	}
 
+	return nil
+}
+
+func (b *Builder) parseRequestForm() error {
+	if b.parsedParams != nil && b.operation.RequestMethod == "POST" {
+		var values = make(url.Values)
+		zone := (*b.parsedProperties)["zone"]
+		if zone != "" {
+			(*b.parsedParams)["zone"] = zone
+		}
+		for key, value := range *b.parsedParams {
+			values.Set(key, value)
+		}
+		b.parsedForm = values
+	}
 	return nil
 }

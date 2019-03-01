@@ -17,15 +17,18 @@
 package config
 
 import (
+	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/yunify/qingcloud-sdk-go/logger"
 	"github.com/yunify/qingcloud-sdk-go/utils"
-	"net"
-	"time"
 )
 
 // A Config stores a configuration of this sdk.
@@ -59,6 +62,46 @@ func New(accessKeyID, secretAccessKey string) (*Config, error) {
 
 	config.Connection = &http.Client{}
 
+	return config, nil
+}
+
+// NewWithEndpoint create a Config with given AccessKeyID, SecretAccessKey and endpoint
+func NewWithEndpoint(accessKeyID, secretAccessKey, endpoint string) (*Config, error) {
+	qcURL, err := url.Parse(endpoint)
+	if err != nil {
+		return nil, err
+	}
+	if qcURL.Opaque != "" {
+		return nil, fmt.Errorf("wrong URL format")
+	}
+
+	if !strings.Contains(qcURL.Host, ":") {
+		if qcURL.Scheme == "https" {
+			qcURL.Host += ":443"
+		} else if qcURL.Scheme == "http" {
+			qcURL.Host += ":80"
+		} else {
+			return nil, fmt.Errorf("can not find default port ")
+		}
+	}
+
+	config, err := NewDefault()
+	if err != nil {
+		return nil, err
+	}
+
+	host, port, err := net.SplitHostPort(qcURL.Host)
+	if err != nil {
+		return nil, err
+	}
+
+	config.Port, _ = strconv.Atoi(port)
+	config.Host = host
+	config.AccessKeyID = accessKeyID
+	config.SecretAccessKey = secretAccessKey
+	config.Protocol = qcURL.Scheme
+	config.URI = qcURL.Path
+	config.Connection = &http.Client{}
 	return config, nil
 }
 

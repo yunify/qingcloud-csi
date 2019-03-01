@@ -22,21 +22,21 @@ metadata:
   labels:
     app: "csi-qingcloud"
     role: "node"
-    csi: "v0.2.0"
+    csi: "v0.2.1"
     owner: "yunify"
 spec:
   selector:
     matchLabels:
       app: "csi-qingcloud"
       role: "node"
-      csi: "v0.2.0"
+      csi: "v0.2.1"
       owner: "yunify"
   template:
     metadata:
       labels:
         app: "csi-qingcloud"
         role: "node"
-        csi: "v0.2.0"
+        csi: "v0.2.1"
         owner: "yunify"
     spec:
       serviceAccount: csi-qingcloud-node
@@ -75,7 +75,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dockerhub.qingcloud.com/csiplugin/csi-qingcloud:v0.2.0
+          image: dockerhub.qingcloud.com/csiplugin/csi-qingcloud:v0.2.1
           args :
             - "--nodeid=$(NODE_ID)"
             - "--endpoint=$(CSI_ENDPOINT)"
@@ -89,7 +89,7 @@ spec:
                   fieldPath: spec.nodeName
             - name: CSI_ENDPOINT
               value: unix://var/lib/kubelet/plugins/csi-qingcloud/csi.sock
-          imagePullPolicy: "Always"
+          imagePullPolicy: "IfNotPresent"
           volumeMounts:
             - name: plugin-dir
               mountPath: /var/lib/kubelet/plugins/csi-qingcloud
