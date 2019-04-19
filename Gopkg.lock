@@ -2,12 +2,12 @@
 
 
 [[projects]]
-  digest = "1:94ffc0947c337d618b6ff5ed9abaddc1217b090c1b3a1ae4739b35b7b25851d5"
+  digest = "1:7f21fa1f8ab9a529dba26a7e9cf20de217c307fa1d96cb599d3afd9e5c83e9d6"
   name = "github.com/container-storage-interface/spec"
   packages = ["lib/go/csi"]
   pruneopts = "UT"
-  revision = "ed0bb0e1557548aa028307f48728767cfe8f6345"
-  version = "v1.0.0"
+  revision = "f750e6765f5f6b4ac0e13e95214d58901290fb4b"
+  version = "v1.1.0"
 
 [[projects]]
   branch = "master"
@@ -18,9 +18,10 @@
   revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
 
 [[projects]]
-  digest = "1:35676c12b04030d448744065729d65e6f1d159447cf4d993e80cc7d4f28bfe20"
+  digest = "1:6c2ff34ca6094f69a970ad7e2d6ced470554bf327075f7a0417f25e35ff1554c"
   name = "github.com/golang/protobuf"
   packages = [
+    "descriptor",
     "proto",
     "protoc-gen-go/descriptor",
     "ptypes",
@@ -34,12 +35,20 @@
   version = "v1.1.0"
 
 [[projects]]
-  digest = "1:596505ce72821ef663980f7ce826984a30da406f9356a92c10ac8b44012d549c"
+  digest = "1:2b060bb1a39127e592baf9ab62ec1e94100dc22107f915183f3cd1f6d1cd579a"
+  name = "github.com/kubernetes-csi/csi-lib-utils"
+  packages = ["protosanitizer"]
+  pruneopts = "UT"
+  revision = "5853414e1d4771302e0df10d1870c444c2135799"
+  version = "v0.2.0"
+
+[[projects]]
+  digest = "1:0bde3fb932a1aa4e12bc43ef91157fcda27dd0fc5d9f309647544ceaec075f48"
   name = "github.com/kubernetes-csi/drivers"
   packages = ["pkg/csi-common"]
   pruneopts = "UT"
-  revision = "df8026fe9418ed9d7d59837b468f5be40e719ab1"
-  version = "v1.0.0"
+  revision = "8a4ae6feb47cf7ae29b3dab9e3dc3d1ff796fbf2"
+  version = "v1.0.2"
 
 [[projects]]
   digest = "1:9e9193aa51197513b3abcb108970d831fbcf40ef96aa845c4f03276e1fa316d2"
