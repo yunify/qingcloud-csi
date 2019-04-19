@@ -201,7 +201,7 @@ type CreateMongoInput struct {
 	MongoPassword  *string           `json:"mongo_password" name:"mongo_password" location:"params"`
 	MongoType      *int              `json:"mongo_type" name:"mongo_type" location:"params"` // Required
 	MongoUsername  *string           `json:"mongo_username" name:"mongo_username" location:"params"`
-	MongoVersion   *int              `json:"mongo_version" name:"mongo_version" location:"params"`
+	MongoVersion   *string           `json:"mongo_version" name:"mongo_version" location:"params"`
 	PrivateIPs     []*MongoPrivateIP `json:"private_ips" name:"private_ips" location:"params"`
 	ResourceClass  *int              `json:"resource_class" name:"resource_class" location:"params"`
 	StorageSize    *int              `json:"storage_size" name:"storage_size" location:"params"` // Required
