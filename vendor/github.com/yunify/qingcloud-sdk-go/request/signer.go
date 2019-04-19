@@ -36,7 +36,8 @@ type Signer struct {
 	AccessKeyID     string
 	SecretAccessKey string
 
-	BuiltURL string
+	BuiltURL  string
+	BuiltForm string
 }
 
 // WriteSignature calculates signature and write it to http request.
@@ -47,11 +48,12 @@ func (is *Signer) WriteSignature(request *http.Request) error {
 	}
 
 	newRequest, err := http.NewRequest(request.Method,
-		request.URL.Scheme+"://"+request.URL.Host+is.BuiltURL, nil)
+		request.URL.Scheme+"://"+request.URL.Host+is.BuiltURL, strings.NewReader(is.BuiltForm))
 	if err != nil {
 		return err
 	}
 	request.URL = newRequest.URL
+	request.Body = newRequest.Body
 
 	logger.Info(fmt.Sprintf(
 		"Signed QingCloud request: [%d] %s",
@@ -79,34 +81,45 @@ func (is *Signer) BuildSignature(request *http.Request) (string, error) {
 		"QingCloud signature: [%d] %s",
 		utils.StringToUnixInt(request.Header.Get("Date"), "RFC 822"),
 		signature))
-
-	is.BuiltURL += "&signature=" + signature
+	if request.Method == "GET" {
+		is.BuiltURL += "&signature=" + signature
+	} else if request.Method == "POST" {
+		is.BuiltForm += "&signature=" + signature
+	}
 
 	return signature, nil
 }
 
 // BuildStringToSign build the string to sign.
 func (is *Signer) BuildStringToSign(request *http.Request) (string, error) {
-	query := request.URL.Query()
+	if request.Method == "GET" {
+		return is.BuildStringToSignByValues(request.Header.Get("Date"), request.Method, request.URL.Path, request.URL.Query())
+	} else if request.Method == "POST" {
+		return is.BuildStringToSignByValues(request.Header.Get("Date"), request.Method, request.URL.Path, request.Form)
+	}
+	return "", fmt.Errorf("Requset Type Not Support For Sign ")
+}
 
-	query.Set("access_key_id", is.AccessKeyID)
-	query.Set("signature_method", "HmacSHA256")
-	query.Set("signature_version", "1")
+// BuildStringToSignByValues build the string to sign.
+func (is *Signer) BuildStringToSignByValues(requestDate string, requestMethod string, requestPath string, requestParams url.Values) (string, error) {
+	requestParams.Set("access_key_id", is.AccessKeyID)
+	requestParams.Set("signature_method", "HmacSHA256")
+	requestParams.Set("signature_version", "1")
 
 	var timeValue time.Time
-	if request.Header.Get("Date") != "" {
+	if requestDate != "" {
 		var err error
-		timeValue, err = utils.StringToTime(request.Header.Get("Date"), "RFC 822")
+		timeValue, err = utils.StringToTime(requestDate, "RFC 822")
 		if err != nil {
 			return "", err
 		}
 	} else {
 		timeValue = time.Now()
 	}
-	query.Set("time_stamp", utils.TimeToString(timeValue, "ISO 8601"))
+	requestParams.Set("time_stamp", utils.TimeToString(timeValue, "ISO 8601"))
 
 	keys := []string{}
-	for key := range query {
+	for key := range requestParams {
 		keys = append(keys, key)
 	}
 
@@ -114,7 +127,7 @@ func (is *Signer) BuildStringToSign(request *http.Request) (string, error) {
 
 	parts := []string{}
 	for _, key := range keys {
-		values := query[key]
+		values := requestParams[key]
 		if len(values) > 0 {
 			if values[0] != "" {
 				value := strings.TrimSpace(strings.Join(values, ""))
@@ -122,23 +135,28 @@ func (is *Signer) BuildStringToSign(request *http.Request) (string, error) {
 				value = strings.Replace(value, "+", "%20", -1)
 				parts = append(parts, key+"="+value)
 			} else {
-				parts = append(parts, key)
+				parts = append(parts, key+"=")
 			}
 		} else {
-			parts = append(parts, key)
+			parts = append(parts, key+"=")
 		}
 	}
 
 	urlParams := strings.Join(parts, "&")
 
-	stringToSign := request.Method + "\n" + request.URL.Path + "\n" + urlParams
+	stringToSign := requestMethod + "\n" + requestPath + "\n" + urlParams
 
 	logger.Debug(fmt.Sprintf(
-		"QingCloud string to sign: [%d] %s",
-		utils.StringToUnixInt(request.Header.Get("Date"), "RFC 822"),
+		"QingCloud string to sign: %s",
 		stringToSign))
 
-	is.BuiltURL = request.URL.Path + "?" + urlParams
+	if requestMethod == "GET" {
+		is.BuiltURL = requestPath + "?" + urlParams
+		is.BuiltForm = ""
+	} else if requestMethod == "POST" {
+		is.BuiltURL = requestPath
+		is.BuiltForm = urlParams
+	}
 
 	return stringToSign, nil
 }
