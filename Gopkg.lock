@@ -190,25 +190,34 @@
   revision = "e386b2658ed20923da8cc9250e552f082899a1ee"
 
 [[projects]]
-  digest = "1:54f05d2b09982c6ce153e2157eef013d98133cfea437a992a1a40d702a8770e4"
-  name = "k8s.io/kubernetes"
-  packages = [
-    "pkg/util/file",
-    "pkg/util/io",
-    "pkg/util/mount",
-    "pkg/util/nsenter",
-  ]
+  digest = "1:c696379ad201c1e86591785579e16bf6cf886c362e9a7534e8eb0d1028b20582"
+  name = "k8s.io/klog"
+  packages = ["."]
   pruneopts = "UT"
-  revision = "17c77c7898218073f14c8d573582e8d2313dc740"
-  version = "v1.12.2"
+  revision = "e531227889390a39d9533dde61f590fe9f4b0035"
+  version = "v0.3.0"
+
+[[projects]]
+  digest = "1:f121ac82b30b60c6adc9bc471c12b37589643db29c1f78ab0ab00089c74f97d7"
+  name = "k8s.io/kubernetes"
+  packages = ["pkg/util/mount"]
+  pruneopts = "UT"
+  revision = "b7394102d6ef778017f2ca4046abbaa23b88c290"
+  version = "v1.14.1"
 
 [[projects]]
   branch = "master"
-  digest = "1:867d98a27033c52150eb4c01ca0f9be938d3010e9a4909ea3a881a83c3ac1b3f"
+  digest = "1:e980edac48c9300c4026fd7b60af9e1b3c3d437a7a66dd63ffe752c6ab9d31cd"
   name = "k8s.io/utils"
-  packages = ["exec"]
+  packages = [
+    "exec",
+    "io",
+    "keymutex",
+    "nsenter",
+    "path",
+  ]
   pruneopts = "UT"
-  revision = "258e2a2fa64568210fbd6267cf1d8fd87c3cb86e"
+  revision = "21c4ce38f2a793ec01e925ddc31216500183b773"
 
 [solve-meta]
   analyzer-name = "dep"
