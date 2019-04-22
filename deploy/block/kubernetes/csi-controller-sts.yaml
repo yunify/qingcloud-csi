@@ -24,14 +24,14 @@ metadata:
     name: "csi-qingcloud-controller"
     app: "csi-qingcloud"
     role: "controller"
-    csi: "v1.0.0"
+    csi: "v1.1.0"
     owner: "yunify"
 spec:
   selector:
     name: "csi-qingcloud-controller"
     app: "csi-qingcloud"
     role: "controller"
-    csi: "v1.0.0"
+    csi: "v1.1.0"
     owner: "yunify"
   ports:
     - name: dummy
@@ -50,7 +50,7 @@ spec:
       name: "csi-qingcloud-controller"
       app: "csi-qingcloud"
       role: "controller"
-      csi: "v1.0.0"
+      csi: "v1.1.0"
       owner: "yunify"
   replicas: 1
   template:

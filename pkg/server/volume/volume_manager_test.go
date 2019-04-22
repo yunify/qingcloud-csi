@@ -18,6 +18,8 @@ package volume
 
 import (
 	"github.com/yunify/qingcloud-csi/pkg/server"
+	"os"
+	"path"
 	"runtime"
 	"testing"
 )
@@ -34,10 +36,12 @@ var getvm = func() VolumeManager {
 	// get storage class
 	var filePath string
 	if runtime.GOOS == "linux" {
-		filePath = "../../deploy/block/kubernetes/config.yaml"
+		filePath = path.Join(os.Getenv("GOPATH"),
+			"src/github.com/yunify/qingcloud-csi/deploy/block/kubernetes/config.yaml")
 	}
 	if runtime.GOOS == "darwin" {
-		filePath = "../../deploy/block/kubernetes/config.yaml"
+		filePath = path.Join(os.Getenv("GOPATH"),
+			"src/github.com/yunify/qingcloud-csi/deploy/block/kubernetes/config.yaml")
 	}
 	vm, err := NewVolumeManagerFromFile(filePath)
 	if err != nil {
@@ -136,36 +140,56 @@ func TestCreateVolume(t *testing.T) {
 	vm := getvm()
 
 	testcases := []struct {
-		name    string
-		volName string
-		reqSize int
-		result  bool
-		volId   string
+		name         string
+		volName      string
+		reqSize      int
+		storageClass server.QingStorageClass
+		result       bool
+		volId        string
 	}{
 		{
-			name:    "create volume name test-1",
-			volName: "test-1",
-			reqSize: 1,
-			result:  true,
-			volId:   "",
+			name:         "create volume name test-1",
+			volName:      "test-1",
+			reqSize:      1,
+			storageClass: *sc,
+			result:       true,
+			volId:        "",
 		},
 		{
-			name:    "create volume name test-1 repeatedly",
-			volName: "test-1",
-			reqSize: 3,
-			result:  false,
-			volId:   "",
+			name:         "create volume name test-1 repeatedly",
+			volName:      "test-1",
+			reqSize:      3,
+			storageClass: *sc,
+			result:       true,
+			volId:        "",
 		},
 		{
-			name:    "create volume name test-2",
-			volName: "test-2",
+			name:         "create volume name test-2",
+			volName:      "test-2",
+			reqSize:      20,
+			storageClass: *sc,
+			result:       true,
+			volId:        "",
+		},
+
+		{
+			name:    "create volume name test-3 for single replica",
+			volName: "test-3",
 			reqSize: 20,
-			result:  true,
-			volId:   "",
+			storageClass: server.QingStorageClass{
+				VolumeType:     100,
+				VolumeMaxSize:  500,
+				VolumeMinSize:  10,
+				VolumeStepSize: 10,
+				VolumeFsType:   server.FileSystemDefault,
+				VolumeReplica:  server.SingleReplica,
+			},
+			result: true,
+			volId:  "",
 		},
 	}
 	for i, v := range testcases {
-		volId, err := vm.CreateVolume(v.volName, v.reqSize, *sc)
+		volId, err := vm.CreateVolume(v.volName, v.reqSize, v.storageClass)
 		if err != nil {
 			t.Errorf("test %s: %s", v.name, err.Error())
 		} else {

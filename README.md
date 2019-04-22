@@ -130,16 +130,19 @@ parameters:
   minSize: "10"
   stepSize: "10"
   fsType: "ext4"
+  replica: "2"
 reclaimPolicy: Delete 
 ```
 
-- `type`: The type of volume in QingCloud IaaS platform. In QingCloud public cloud platform, `0` represents high performance volume. `3` respresents super high performance volume. `1` or `2` represents high capacity volume depending on cluster‘s zone. See [QingCloud docs](https://docs.qingcloud.com/product/api/action/volume/create_volumes.html) for details.
+- `type`: The type of volume in QingCloud IaaS platform. In QingCloud public cloud platform, `0` represents high performance volume. `3` respresents super high performance volume. `1` or `2` represents high capacity volume depending on cluster‘s zone. `5` represents enterprise distributed SAN (NeonSAN) volume. `100` represents basic volume. `200` represents SSD enterprise volume. See [QingCloud docs](https://docs.qingcloud.com/product/api/action/volume/create_volumes.html) for details.
 
 - `maxSize`, `minSize`: Limit the range of volume size in GiB.
 
 - `stepSize`: Set the increment of volumes size in GiB.
 
 - `fsType`: `ext3`, `ext4`, `xfs`. Default `ext4`.
+
+- `replica`: `1` means single replica, `2` means multiple replicas. Default `2`.
 
 ## Support
 If you have any qustions or suggestions, please submit an issue at [qingcloud-csi](https://github.com/yunify/qingcloud-csi/issues)

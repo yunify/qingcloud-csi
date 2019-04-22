@@ -24,7 +24,7 @@ metadata:
   labels:
     app: "csi-qingcloud"
     role: "controller"
-    csi: "v1.0.0"
+    csi: "v1.1.0"
     owner: "yunify"
 
 ---
@@ -36,7 +36,7 @@ metadata:
     app: "csi-qingcloud"
     role: "controller"
     tier: "provisioner"
-    csi: "v1.0.0"
+    csi: "v1.1.0"
     owner: "yunify"
 rules:
   - apiGroups: [""]
@@ -70,7 +70,7 @@ metadata:
     app: "csi-qingcloud"
     role: "controller"
     tier: "attacher"
-    csi: "v1.0.0"
+    csi: "v1.1.0"
     owner: "yunify"
 rules:
   - apiGroups: [""]
@@ -98,7 +98,7 @@ metadata:
     app: "csi-qingcloud"
     role: "controller"
     tier: "snapshotter"
-    csi: "v1.0.0"
+    csi: "v1.1.0"
     owner: "yunify"
 rules:
   - apiGroups: [""]
@@ -137,7 +137,7 @@ metadata:
   labels:
     app: "csi-qingcloud"
     role: "controller"
-    csi: "v1.0.0"
+    csi: "v1.1.0"
     owner: "yunify"
 aggregationRule:
   clusterRoleSelectors:
@@ -146,7 +146,7 @@ aggregationRule:
   - matchLabels:
       role: "controller"
   - matchLabels:
-      csi: "v1.0.0"
+      csi: "v1.1.0"
   - matchLabels:
       owner: "yunify"
 rules: []
@@ -159,7 +159,7 @@ metadata:
   labels:
     app: "csi-qingcloud"
     role: "controller"
-    csi: "v1.0.0"
+    csi: "v1.1.0"
     owner: "yunify"
 subjects:
   - kind: ServiceAccount

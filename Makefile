@@ -17,7 +17,7 @@
 .PHONY: all blockplugin
 
 BLOCK_IMAGE_NAME=dockerhub.qingcloud.com/csiplugin/csi-qingcloud
-BLOCK_IMAGE_VERSION=v0.2.0
+BLOCK_IMAGE_VERSION=v1.1.0
 BLOCK_PLUGIN_NAME=blockplugin
 ROOT_PATH=$(pwd)
 PACKAGE_LIST=./cmd/block ./pkg/block ./pkg/server ./pkg/server/instance ./pkg/server/volume
@@ -33,6 +33,9 @@ blockplugin-container: blockplugin
 fmt:
 	go fmt ${PACKAGE_LIST}
 	gofmt -s -w -l ${PACKAGE_LIST}
+
+fmt-deep: fmt
+	gofmt -s -w -l ./cmd/block/ ./pkg/block/
 
 clean:
 	go clean -r -x
