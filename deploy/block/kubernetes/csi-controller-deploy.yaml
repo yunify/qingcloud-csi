@@ -21,14 +21,12 @@ metadata:
   name: csi-qingcloud-controller
   namespace: kube-system
   labels:
-    name: "csi-qingcloud-controller"
     app: "csi-qingcloud"
     role: "controller"
     csi: "v1.1.0"
     owner: "yunify"
 spec:
   selector:
-    name: "csi-qingcloud-controller"
     app: "csi-qingcloud"
     role: "controller"
     csi: "v1.1.0"
@@ -38,26 +36,23 @@ spec:
       port: 12345
 ---
 
-kind: StatefulSet
+kind: Deployment
 apiVersion: apps/v1
 metadata:
   name: csi-qingcloud-controller
   namespace: kube-system
 spec:
-  serviceName: "csi-qingcloud-controller"
+  replicas: 3
   selector:
     matchLabels:
-      name: "csi-qingcloud-controller"
-      app: "csi-qingcloud"
+      app:  "csi-qingcloud"
       role: "controller"
       csi: "v1.1.0"
       owner: "yunify"
-  replicas: 1
   template:
     metadata:
       labels:
-        name: "csi-qingcloud-controller"
-        app: "csi-qingcloud"
+        app:  "csi-qingcloud"
         role: "controller"
         csi: "v1.0.0"
         owner: "yunify"
@@ -67,10 +62,15 @@ spec:
       - name: csi-qingcloud
       containers:
       - name: csi-provisioner
-        image: quay.io/k8scsi/csi-provisioner:v1.0.0
+        image: quay.io/k8scsi/csi-provisioner:v1.1.0
         args:
-        - "--provisioner=csi.qingcloud.com"
         - "--csi-address=$(ADDRESS)"
+        - "--enable-leader-election"
+        - "--leader-election-type=leases"
+        - "--timeout=60s"
+        - "--retry-interval-start=5s"
+        - "--retry-interval-max=5m"
+        - "--worker-threads=5"
         - "--v=5"
         env:
         - name: ADDRESS
@@ -80,30 +80,23 @@ spec:
         - name: socket-dir
           mountPath: /csi
       - name: csi-attacher
-        image: quay.io/k8scsi/csi-attacher:v1.0.0
+        image: quay.io/k8scsi/csi-attacher:v1.1.0
         args:
         - "--csi-address=$(ADDRESS)"
+        - "--leader-election"
+        - "--leader-election-type=leases"
         - "--v=5"
         env:
         - name: ADDRESS
           value: /csi/csi.sock
+        - name: MY_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
         imagePullPolicy: "IfNotPresent"
         volumeMounts:
         - name: socket-dir
           mountPath: /csi
-#      - name: csi-snapshotter
-#        image: quay.io/k8scsi/csi-snapshotter:v1.0.0
-#        args:
-#        - "--csi-address=$(ADDRESS)"
-#        - "--connection-timeout=15s"
-#        - "--v=5"
-#        env:
-#        - name: ADDRESS
-#          value: /csi/csi.sock
-#        imagePullPolicy: "IfNotPresent"
-#        volumeMounts:
-#        - name: socket-dir
-#          mountPath: /csi
       - name: csi-qingcloud
         image: dockerhub.qingcloud.com/csiplugin/csi-qingcloud:latest
         args :
