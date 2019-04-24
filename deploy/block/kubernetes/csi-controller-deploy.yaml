@@ -98,7 +98,7 @@ spec:
         - name: socket-dir
           mountPath: /csi
       - name: csi-cluster-registrar
-        image: quay.io/k8scsi/csi-cluster-driver-registrar:v1.0.2
+        image: quay.io/k8scsi/csi-cluster-driver-registrar:v1.0.1
         args:
         - "--csi-address=/csi/csi.sock"
         - "--pod-info-mount-version=v1"
@@ -109,7 +109,7 @@ spec:
         image: dockerhub.qingcloud.com/csiplugin/csi-qingcloud:v1.1.0
         args :
         - "--endpoint=$(CSI_ENDPOINT)"
-        - "--drivername=csi.qingcloud.com"
+        - "--drivername=disk.csi.qingcloud.com"
         - "--nodeid=$(NODE_ID)"
         - "--config=/etc/config/config.yaml"
         - "--maxvolume=10"
