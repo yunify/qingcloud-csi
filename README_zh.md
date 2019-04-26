@@ -5,16 +5,21 @@
 
 > [English](README.md) | 中文
 ## 描述
-QingCloud CSI 插件实现了 [CSI](https://github.com/container-storage-interface/) 接口，并使容器编排平台能够使用 QingCloud 云平台的存储资源。目前，QingCloud CSI 插件已经在 Kubernetes v1.10 环境中通过了 [CSI 测试](https://github.com/kubernetes-csi/csi-test)。
+QingCloud CSI 插件实现了 [CSI](https://github.com/container-storage-interface/) 接口，并使容器编排平台能够使用 QingCloud 云平台的存储资源。目前，QingCloud CSI 插件已经在 Kubernetes v1.14 环境中通过了 [CSI 测试](https://github.com/kubernetes-csi/csi-test)。
 
 ## 块存储插件
 
 插件的设计和安装使用 Kubernetes 社区推荐的 CSI 插件[架构](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/storage/container-storage-interface.md#recommended-mechanism-for-deploying-csi-drivers-on-kubernetes)，插件架构包含 Controller 和 Node 两部分，在 Controller 部分，由有状态副本集（StatefulSet）在 Kubernetes 集群内创建一个 Pod 副本。在 Node 部分，每个可调度的节点由守护进程集（DaemonSet）创建一个 Pod 副本。
 
-块存储插件部署后, 用户可创建访问模式（Access Mode）为单节点读写（ReadWriteOnce）的基于 QingCloud 的超高性能型，性能型或容量型硬盘的存储卷并挂载至工作负载。
+块存储插件部署后, 用户可创建访问模式（Access Mode）为单节点读写（ReadWriteOnce）的基于 QingCloud 的企业型，基础型，NeonSAN，超高性能型，性能型或容量型硬盘的存储卷并挂载至工作负载。
 
 ### 安装
-此安装指南将 CSI 插件安装在 *kube-system* namespace 内。用户也可以将插件部署在其他 namespace 内。为了CSI插件的正常使用，请确保在Kubernetes控制平面内将 `--allow-privileged` 项设置为 `true` 并且启用（默认开启）[Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) 特性。
+此安装指南将 CSI 插件安装在 *kube-system* namespace 内。用户也可以将插件部署在其他 namespace 内。为了 CSI 插件的正常使用，请确保在 Kubernetes 控制平面内将 `--allow-privileged` 项设置为 `true` 并且启用（默认开启）[Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) 特性。
+
+- 设置 Kubernetes 参数
+  - 设置 `--allow-privileged=true`。
+  - 启用（默认开启）[Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) 特性。
+  - 设置 `--feature-gates=CSINodeInfo=true,CSIDriverRegistry=true,KubeletPluginsWatcher=true`
 
 - 下载安装包并解压
 ```
@@ -42,7 +47,7 @@ $ cd csi-qingcloud-install
 
     - `zone`: `zone` 应与 Kubernetes 集群所在区相同。CSI 插件将会操作此区的存储卷资源。例如：`zone` 可以设置为 `sh1a` 和 `ap2a`。
     
-    - `host`, `port`. `protocol`, `uri`: 共同构成 QingCloud IaaS 平台服务的 url.
+    - `host`, `port`. `protocol`, `uri`: 共同构成 QingCloud IaaS 平台服务的 url。
 
     2. 创建 ConfigMap
     ```
@@ -67,11 +72,16 @@ $ kubectl apply -f ./csi-controller-rbac.yaml
 $ kubectl apply -f ./csi-node-rbac.yaml
 ```
 
+- 创建 CSIdriver 对象
+```
+$ kubectl apply -f ./csi-driver.yaml
+```
+
 - 部署 CSI 插件
 > 注:  如果 Kubernetes 集群的 [kubelet](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/) 设置了 `--root-dir` 选项（默认值为 *"/var/lib/kubelet"*），请将 [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML 文件 `spec.template.spec.containers[name=csi-qingcloud].volumeMounts[name=mount-dir].mountPath` 和 `spec.template.spec.volumes[name=mount-dir].hostPath.path` 的值 *"/var/lib/kubelet"* 替换为 `--root-dir` 选项的值。例如：在通过 QingCloud AppCenter 创建的 Kubernetes 集群内, 需要将 [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML 文件的 *"/var/lib/kubelet"* 字段替换为 *"/data/var/lib/kubelet"*。
 
 ```
-$ kubectl apply -f ./csi-controller-sts.yaml
+$ kubectl apply -f ./csi-controller-deploy.yaml
 $ kubectl apply -f ./csi-node-ds.yaml
 ```
 

@@ -20,21 +20,21 @@ metadata:
   labels:
     app: "csi-qingcloud"
     role: "node"
-    csi: "v1.0.0"
+    csi: "v1.1.0"
     owner: "yunify"
 spec:
   selector:
     matchLabels:
       app: "csi-qingcloud"
       role: "node"
-      csi: "v1.0.0"
+      csi: "v1.1.0"
       owner: "yunify"
   template:
     metadata:
       labels:
         app: "csi-qingcloud"
         role: "node"
-        csi: "v1.0.0"
+        csi: "v1.1.0"
         owner: "yunify"
     spec:
       serviceAccount: csi-qingcloud-node
