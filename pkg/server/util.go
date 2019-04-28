@@ -52,6 +52,22 @@ const (
 	FileSystemDefault string = FileSystemExt4
 )
 
+const (
+	SingleReplica  int = 1
+	MultiReplica   int = 2
+	DefaultReplica int = MultiReplica
+)
+
+const (
+	QingCloudSingleReplica string = "rpp-00000001"
+	QingCloudMultiReplica  string = "rpp-00000002"
+)
+
+var QingCloudReplName = map[int]string{
+	1: QingCloudSingleReplica,
+	2: QingCloudMultiReplica,
+}
+
 type ServerConfig struct {
 	instanceId       string
 	configFilePath   string
@@ -165,6 +181,19 @@ func ByteCeilToGib(num int64) int {
 		res += 1
 	}
 	return int(res)
+}
+
+// Check replica
+// Support: 2 MultiReplicas, 1 SingleReplica
+func IsValidReplica(replica int) bool {
+	switch replica {
+	case MultiReplica:
+		return true
+	case SingleReplica:
+		return true
+	default:
+		return false
+	}
 }
 
 // Check file system type

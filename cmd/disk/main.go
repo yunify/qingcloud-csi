@@ -18,7 +18,7 @@ package main
 
 import (
 	"flag"
-	"github.com/yunify/qingcloud-csi/pkg/block"
+	"github.com/yunify/qingcloud-csi/pkg/disk"
 	"github.com/yunify/qingcloud-csi/pkg/server"
 	"os"
 )
@@ -44,6 +44,6 @@ func main() {
 
 func handle() {
 	cloud := server.NewServerConfig(*nodeID, *config, *maxVolume)
-	driver := block.GetBlockDriver()
+	driver := disk.GetDiskDriver()
 	driver.Run(*driverName, *nodeID, *endpoint, cloud)
 }

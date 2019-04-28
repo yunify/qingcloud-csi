@@ -24,7 +24,7 @@ metadata:
   labels:
     app: "csi-qingcloud"
     role: "controller"
-    csi: "v1.0.0"
+    csi: "v1.1.0"
     owner: "yunify"
 
 ---
@@ -36,15 +36,12 @@ metadata:
     app: "csi-qingcloud"
     role: "controller"
     tier: "provisioner"
-    csi: "v1.0.0"
+    csi: "v1.1.0"
     owner: "yunify"
 rules:
   - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get", "list"]
-  - apiGroups: [""]
     resources: ["persistentvolumes"]
-    verbs: ["get", "list", "watch", "create", "delete", "update"]
+    verbs: ["get", "list", "watch", "create", "delete"]
   - apiGroups: [""]
     resources: ["persistentvolumeclaims"]
     verbs: ["get", "list", "watch", "update"]
@@ -60,7 +57,12 @@ rules:
   - apiGroups: ["snapshot.storage.k8s.io"]
     resources: ["volumesnapshotcontents"]
     verbs: ["get", "list"]
-
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csinodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
@@ -70,12 +72,9 @@ metadata:
     app: "csi-qingcloud"
     role: "controller"
     tier: "attacher"
-    csi: "v1.0.0"
+    csi: "v1.1.0"
     owner: "yunify"
 rules:
-  - apiGroups: [""]
-    resources: ["events"]
-    verbs: ["get", "list", "watch", "update"]
   - apiGroups: [""]
     resources: ["persistentvolumes"]
     verbs: ["get", "list", "watch", "update"]
@@ -88,46 +87,27 @@ rules:
   - apiGroups: ["storage.k8s.io"]
     resources: ["volumeattachments"]
     verbs: ["get", "list", "watch", "update"]
-
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: csi-qingcloud-snapshotter
+  name: csi-qingcloud-cluster-driver-registrar
   labels:
     app: "csi-qingcloud"
     role: "controller"
-    tier: "snapshotter"
-    csi: "v1.0.0"
+    tier: "cluster-registrar"
+    csi: "v1.1.0"
     owner: "yunify"
 rules:
   - apiGroups: [""]
-    resources: ["persistentvolumes"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: [""]
-    resources: ["persistentvolumeclaims"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: ["storage.k8s.io"]
-    resources: ["storageclasses"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: [""]
     resources: ["events"]
-    verbs: ["list", "watch", "create", "update", "patch"]
-  - apiGroups: [""]
-    resources: ["secrets"]
-    verbs: ["get", "list"]
-  - apiGroups: ["snapshot.storage.k8s.io"]
-    resources: ["volumesnapshotclasses"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: ["snapshot.storage.k8s.io"]
-    resources: ["volumesnapshotcontents"]
-    verbs: ["create", "get", "list", "watch", "update", "delete"]
-  - apiGroups: ["snapshot.storage.k8s.io"]
-    resources: ["volumesnapshots"]
-    verbs: ["get", "list", "watch", "update"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
   - apiGroups: ["apiextensions.k8s.io"]
     resources: ["customresourcedefinitions"]
-    verbs: ["create", "list", "watch", "delete"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+  - apiGroups: ["csi.storage.k8s.io"]
+    resources: ["csidrivers"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
 
 ---
 kind: ClusterRole
@@ -137,7 +117,7 @@ metadata:
   labels:
     app: "csi-qingcloud"
     role: "controller"
-    csi: "v1.0.0"
+    csi: "v1.1.0"
     owner: "yunify"
 aggregationRule:
   clusterRoleSelectors:
@@ -146,11 +126,10 @@ aggregationRule:
   - matchLabels:
       role: "controller"
   - matchLabels:
-      csi: "v1.0.0"
+      csi: "v1.1.0"
   - matchLabels:
       owner: "yunify"
 rules: []
-
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -159,7 +138,7 @@ metadata:
   labels:
     app: "csi-qingcloud"
     role: "controller"
-    csi: "v1.0.0"
+    csi: "v1.1.0"
     owner: "yunify"
 subjects:
   - kind: ServiceAccount
@@ -168,4 +147,87 @@ subjects:
 roleRef:
   kind: ClusterRole
   name: csi-qingcloud-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  namespace: kube-system
+  name: csi-qingcloud-provisioner
+  labels:
+    app: "csi-qingcloud"
+    role: "controller"
+    tier: "provisioner"
+    csi: "v1.1.0"
+    owner: "yunify"
+rules:
+  # Only one of the following rules for endpoints or leases is required based on
+  # what is set for `--leader-election-type`. Endpoints are deprecated in favor of Leases.
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
+---
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  # replace with non-default namespace name
+  namespace: kube-system
+  name: csi-qingcloud-attacher
+  labels:
+    app: "csi-qingcloud"
+    role: "controller"
+    tier: "attacher"
+    csi: "v1.1.0"
+    owner: "yunify"
+rules:
+  # access to configmaps is only supported for backwards compatibility reasons
+  # and can be removed once you are uses Leases (--leader-election-type=leases)
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-qingcloud-provsioner
+  namespace: kube-system
+  labels:
+    app: "csi-qingcloud"
+    role: "controller"
+    tier: "provisioner"
+    csi: "v1.1.0"
+    owner: "yunify"
+subjects:
+  - kind: ServiceAccount
+    name: csi-qingcloud-controller
+    namespace: kube-system
+roleRef:
+  kind: Role
+  name: csi-qingcloud-provisioner
+  apiGroup: rbac.authorization.k8s.io
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-qingcloud-attacher
+  namespace: kube-system
+  labels:
+    app: "csi-qingcloud"
+    role: "controller"
+    tier: "attacher"
+    csi: "v1.1.0"
+    owner: "yunify"
+subjects:
+  - kind: ServiceAccount
+    name: csi-qingcloud-controller
+    namespace: kube-system
+roleRef:
+  kind: Role
+  name: csi-qingcloud-attacher
   apiGroup: rbac.authorization.k8s.io

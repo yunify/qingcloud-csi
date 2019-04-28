@@ -20,7 +20,7 @@ metadata:
   labels:
     app: "csi-qingcloud"
     role: "node"
-    csi: "v1.0.0"
+    csi: "v1.1.0"
     owner: "yunify"
 
 ---
@@ -31,7 +31,7 @@ metadata:
   labels:
     app: "csi-qingcloud"
     role: "node"
-    csi: "v1.0.0"
+    csi: "v1.1.0"
     owner: "yunify"
 rules:
   - apiGroups: [""]
@@ -46,7 +46,7 @@ metadata:
   labels:
     app: "csi-qingcloud"
     role: "node"
-    csi: "v1.0.0"
+    csi: "v1.1.0"
     owner: "yunify"
 subjects:
   - kind: ServiceAccount

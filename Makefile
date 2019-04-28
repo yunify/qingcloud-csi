@@ -14,27 +14,29 @@
 # | limitations under the License.
 # +-------------------------------------------------------------------------
 
-.PHONY: all blockplugin
+.PHONY: all disk
 
-BLOCK_IMAGE_NAME=dockerhub.qingcloud.com/csiplugin/csi-qingcloud
-BLOCK_IMAGE_VERSION=latest
-BLOCK_PLUGIN_NAME=blockplugin
+DISK_IMAGE_NAME=dockerhub.qingcloud.com/csiplugin/csi-qingcloud
+DISK_IMAGE_VERSION=canary
+DISK_PLUGIN_NAME=qingcloud-disk-csi-driver
 ROOT_PATH=$(pwd)
-PACKAGE_LIST=./cmd/block ./pkg/block ./pkg/server ./pkg/server/instance ./pkg/server/volume
+PACKAGE_LIST=./cmd/disk ./pkg/disk ./pkg/server ./pkg/server/instance ./pkg/server/volume ./pkg/server/zone
 
-blockplugin:
+disk:
 	if [ ! -d ./vendor ]; then dep ensure; fi
-	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -o  _output/${BLOCK_PLUGIN_NAME} ./cmd/block
+	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -o  _output/${DISK_PLUGIN_NAME} ./cmd/disk
 
-blockplugin-container: blockplugin
-	cp _output/${BLOCK_PLUGIN_NAME} deploy/block/docker
-	docker build -t $(BLOCK_IMAGE_NAME):$(BLOCK_IMAGE_VERSION) deploy/block/docker
+disk-container: disk
+	cp _output/${DISK_PLUGIN_NAME} deploy/disk/docker
+	docker build -t $(DISK_IMAGE_NAME):$(DISK_IMAGE_VERSION) deploy/disk/docker
 
 fmt:
 	go fmt ${PACKAGE_LIST}
+
+fmt-deep: fmt
 	gofmt -s -w -l ${PACKAGE_LIST}
 
 clean:
 	go clean -r -x
 	rm -rf ./_output
-	rm -rf deploy/block/docker/${BLOCK_PLUGIN_NAME}
+	rm -rf deploy/disk/docker/${DISK_PLUGIN_NAME}

@@ -20,21 +20,21 @@ metadata:
   labels:
     app: "csi-qingcloud"
     role: "node"
-    csi: "v1.0.0"
+    csi: "v1.1.0"
     owner: "yunify"
 spec:
   selector:
     matchLabels:
       app: "csi-qingcloud"
       role: "node"
-      csi: "v1.0.0"
+      csi: "v1.1.0"
       owner: "yunify"
   template:
     metadata:
       labels:
         app: "csi-qingcloud"
         role: "node"
-        csi: "v1.0.0"
+        csi: "v1.1.0"
         owner: "yunify"
     spec:
       serviceAccount: csi-qingcloud-node
@@ -52,23 +52,19 @@ spec:
       - name: csi-qingcloud
       hostNetwork: true
       containers:
-        - name: driver-registrar
-          image: quay.io/k8scsi/driver-registrar:v1.0.0
+        - name: node-registrar
+          image: quay.io/k8scsi/csi-node-driver-registrar:v1.1.0
           args:
             - "--v=5"
             - "--csi-address=$(ADDRESS)"
-            - "--mode=node-register"
-            - "--driver-requires-attachment=true"
-            - "--pod-info-mount-version=v1"
-            - "--kubelet-registration-path=/var/lib/kubelet/plugins/csi.qingcloud.com/csi.sock"
+            - "--kubelet-registration-path=/var/lib/kubelet/plugins/disk.csi.qingcloud.com/csi.sock"
           env:
             - name: ADDRESS
               value: /csi/csi.sock
-            - name: KUBE_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: spec.nodeName
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "rm -rf /registration/disk.csi.qingcloud.com /registration/disk.csi.qingcloud.com-reg.sock"]
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
@@ -80,10 +76,10 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dockerhub.qingcloud.com/csiplugin/csi-qingcloud:latest
+          image: dockerhub.qingcloud.com/csiplugin/csi-qingcloud:canary
           args :
             - "--endpoint=$(CSI_ENDPOINT)"
-            - "--drivername=csi.qingcloud.com"
+            - "--drivername=disk.csi.qingcloud.com"
             - "--nodeid=$(NODE_ID)"
             - "--config=/etc/config/config.yaml"
             - "--maxvolume=10"
@@ -121,11 +117,11 @@ spec:
             path: /var/lib/kubelet
         - name: socket-dir
           hostPath:
-            path: /var/lib/kubelet/plugins/csi.qingcloud.com
+            path: /var/lib/kubelet/plugins/disk.csi.qingcloud.com/
             type: DirectoryOrCreate
         - name: registration-dir
           hostPath:
-            path: /var/lib/kubelet/plugins
+            path: /var/lib/kubelet/plugins_registry/
         - name: dev-dir
           hostPath:
             path: /dev

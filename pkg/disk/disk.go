@@ -14,7 +14,7 @@
 // | limitations under the License.
 // +-------------------------------------------------------------------------
 
-package block
+package disk
 
 import (
 	"github.com/container-storage-interface/spec/lib/go/csi"
@@ -25,7 +25,7 @@ import (
 
 const version = "v1.1.0"
 
-type block struct {
+type disk struct {
 	driver *csicommon.CSIDriver
 
 	ids *identityServer
@@ -38,10 +38,10 @@ type block struct {
 	cloud *server.ServerConfig
 }
 
-// GetBlockDriver
-// Create block driver
-func GetBlockDriver() *block {
-	return &block{}
+// GetDiskDriver
+// Create disk driver
+func GetDiskDriver() *disk {
+	return &disk{}
 }
 
 // NewIdentityServer
@@ -73,29 +73,29 @@ func NewNodeServer(d *csicommon.CSIDriver, svr *server.ServerConfig) *nodeServer
 
 // Run
 // Initial and start CSI driver
-func (blk *block) Run(driverName, nodeID, endpoint string, serverConfig *server.ServerConfig) {
+func (d *disk) Run(driverName, nodeID, endpoint string, serverConfig *server.ServerConfig) {
 	glog.Infof("Driver: %v version: %v", driverName, version)
 
 	// Initialize default library driver
-	blk.driver = csicommon.NewCSIDriver(driverName, version, nodeID)
-	if blk.driver == nil {
+	d.driver = csicommon.NewCSIDriver(driverName, version, nodeID)
+	if d.driver == nil {
 		glog.Fatalln("Failed to initialize CSI Driver.")
 	}
 
-	blk.driver.AddControllerServiceCapabilities([]csi.ControllerServiceCapability_RPC_Type{
+	d.driver.AddControllerServiceCapabilities([]csi.ControllerServiceCapability_RPC_Type{
 		csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME,
 		csi.ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME,
 	})
-	blk.driver.AddVolumeCapabilityAccessModes([]csi.VolumeCapability_AccessMode_Mode{
+	d.driver.AddVolumeCapabilityAccessModes([]csi.VolumeCapability_AccessMode_Mode{
 		csi.VolumeCapability_AccessMode_SINGLE_NODE_WRITER})
 
 	// Create GRPC servers
-	blk.ids = NewIdentityServer(blk.driver, serverConfig)
-	blk.ns = NewNodeServer(blk.driver, serverConfig)
-	blk.cs = NewControllerServer(blk.driver, serverConfig)
+	d.ids = NewIdentityServer(d.driver, serverConfig)
+	d.ns = NewNodeServer(d.driver, serverConfig)
+	d.cs = NewControllerServer(d.driver, serverConfig)
 
 	s := csicommon.NewNonBlockingGRPCServer()
-	s.Start(endpoint, blk.ids, blk.cs, blk.ns)
+	s.Start(endpoint, d.ids, d.cs, d.ns)
 	s.Wait()
 
 }

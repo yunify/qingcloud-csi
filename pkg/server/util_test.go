@@ -358,3 +358,39 @@ func TestIsValidFileSystemType(t *testing.T) {
 		}
 	}
 }
+
+func TestIsValidReplica(t *testing.T) {
+	testcases := []struct {
+		name    string
+		replica int
+		expect  bool
+	}{
+		{
+			name:    "single",
+			replica: SingleReplica,
+			expect:  true,
+		},
+		{
+			name:    "multi",
+			replica: MultiReplica,
+			expect:  true,
+		},
+		{
+			name:    "fake1",
+			replica: 0,
+			expect:  false,
+		},
+		{
+			name:    "fake2",
+			replica: 3,
+			expect:  false,
+		},
+	}
+
+	for _, v := range testcases {
+		res := IsValidReplica(v.replica)
+		if res != v.expect {
+			t.Errorf("test %s: expect %t, but actually %t", v.name, v.expect, res)
+		}
+	}
+}

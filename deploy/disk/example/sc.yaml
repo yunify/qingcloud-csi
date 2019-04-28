@@ -14,14 +14,16 @@
 # | limitations under the License.
 # +-------------------------------------------------------------------------
 
-
-FROM alpine
-LABEL maintainers="Yunify"
-LABEL description="QingCloud CSI plugin"
-
-RUN  apk add --no-cache xfsprogs e2fsprogs ca-certificates
-COPY blockplugin /blockplugin
-RUN chmod +x /blockplugin && \
-    mkdir -p /var/log/blockplugin
-
-ENTRYPOINT ["/blockplugin"]
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: csi-qingcloud
+provisioner: disk.csi.qingcloud.com
+parameters:
+  type: "200"
+  maxSize: "500"
+  minSize: "10"
+  stepSize: "10"
+  fsType: "ext4"
+  replicas: "2"
+reclaimPolicy: Delete 

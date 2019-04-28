@@ -14,15 +14,14 @@
 # | limitations under the License.
 # +-------------------------------------------------------------------------
 
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: csi-qingcloud
-provisioner: csi.qingcloud.com
-parameters:
-  type: "0"
-  maxSize: "500"
-  minSize: "10"
-  stepSize: "10"
-  fsType: "ext4"
-reclaimPolicy: Delete 
+
+FROM alpine
+LABEL maintainers="Yunify"
+LABEL description="QingCloud CSI plugin"
+
+RUN  apk add --no-cache xfsprogs e2fsprogs ca-certificates
+COPY qingcloud-disk-csi-driver /qingcloud-disk-csi-driver
+RUN chmod +x /qingcloud-disk-csi-driver && \
+    mkdir -p /var/log/qingcloud-disk-csi-driver
+
+ENTRYPOINT ["/qingcloud-disk-csi-driver"]

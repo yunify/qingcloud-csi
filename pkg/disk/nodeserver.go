@@ -14,7 +14,7 @@
 // | limitations under the License.
 // +-------------------------------------------------------------------------
 
-package block
+package disk
 
 import (
 	"fmt"
@@ -329,9 +329,9 @@ func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstag
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	glog.Infof("block image: volume %s has been unmounted.", volumeId)
+	glog.Infof("disk volume %s has been unmounted.", volumeId)
 	cnt--
-	glog.Infof("block image: mount count: %d", cnt)
+	glog.Infof("disk volume mount count: %d", cnt)
 	if cnt > 0 {
 		glog.Errorf("image %s still mounted in instance %s", volumeId, ns.cloudServer.GetInstanceId())
 		return nil, status.Error(codes.Internal, "unmount failed")

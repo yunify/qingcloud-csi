@@ -12,10 +12,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-apiVersion: csi.storage.k8s.io/v1alpha1
+# In production, this needs to be in separate files, e.g. service account and
+# role and role binding needs to be created once, while stateful set may
+# require some tuning.
+
+apiVersion: storage.k8s.io/v1beta1
 kind: CSIDriver
 metadata:
-  name: csi.qingcloud.com
+  name: disk.csi.qingcloud.com
 spec:
   attachRequired: true
-  podInfoOnMountVersion: "v1"
+  podInfoOnMount: false

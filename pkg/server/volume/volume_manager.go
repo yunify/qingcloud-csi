@@ -28,12 +28,12 @@ import (
 )
 
 const (
-	BlockVolumeStatusPending   string = "pending"
-	BlockVolumeStatusAvailable string = "available"
-	BlockVolumeStatusInuse     string = "in-use"
-	BlockVolumeStatusSuspended string = "suspended"
-	BlockVolumeStatusDeleted   string = "deleted"
-	BlockVolumeStatusCeased    string = "ceased"
+	DiskVolumeStatusPending   string = "pending"
+	DiskVolumeStatusAvailable string = "available"
+	DiskVolumeStatusInuse     string = "in-use"
+	DiskVolumeStatusSuspended string = "suspended"
+	DiskVolumeStatusDeleted   string = "deleted"
+	DiskVolumeStatusCeased    string = "ceased"
 )
 
 type VolumeManager interface {
@@ -112,7 +112,7 @@ func (vm *volumeManager) FindVolume(id string) (volume *qcservice.Volume, err er
 		return nil, nil
 	// Found one volume
 	case 1:
-		if *output.VolumeSet[0].Status == BlockVolumeStatusCeased || *output.VolumeSet[0].Status == BlockVolumeStatusDeleted {
+		if *output.VolumeSet[0].Status == DiskVolumeStatusCeased || *output.VolumeSet[0].Status == DiskVolumeStatusDeleted {
 			return nil, nil
 		}
 		return output.VolumeSet[0], nil
@@ -152,7 +152,7 @@ func (vm *volumeManager) FindVolumeByName(name string) (volume *qcservice.Volume
 		if *v.VolumeName != name {
 			continue
 		}
-		if *v.Status == BlockVolumeStatusCeased || *v.Status == BlockVolumeStatusDeleted {
+		if *v.Status == DiskVolumeStatusCeased || *v.Status == DiskVolumeStatusDeleted {
 			continue
 		}
 		return v, nil
@@ -178,10 +178,12 @@ func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc ser
 	input.VolumeName = &volumeName
 	// volume provisioner type
 	input.VolumeType = &sc.VolumeType
-
+	// volume replicas
+	replica := server.QingCloudReplName[sc.VolumeReplica]
+	input.Repl = &replica
 	// 1. Create volume
-	glog.Infof("Call IaaS CreateVolume request size: %d GB, zone: %s, type: %d, count: %d, name: %s",
-		*input.Size, *vm.volumeService.Properties.Zone, *input.VolumeType, *input.Count, *input.VolumeName)
+	glog.Infof("Call IaaS CreateVolume request size: %d GB, zone: %s, type: %d, count: %d, replica: %s, name: %s",
+		*input.Size, *vm.volumeService.Properties.Zone, *input.VolumeType, *input.Count, *input.Repl, *input.VolumeName)
 	output, err := vm.volumeService.CreateVolumes(input)
 	if err != nil {
 		return "", err
