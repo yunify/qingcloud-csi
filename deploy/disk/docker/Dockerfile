@@ -20,8 +20,8 @@ LABEL maintainers="Yunify"
 LABEL description="QingCloud CSI plugin"
 
 RUN  apk add --no-cache xfsprogs e2fsprogs ca-certificates
-COPY blockplugin /blockplugin
-RUN chmod +x /blockplugin && \
-    mkdir -p /var/log/blockplugin
+COPY qingcloud-disk-csi-driver /qingcloud-disk-csi-driver
+RUN chmod +x /qingcloud-disk-csi-driver && \
+    mkdir -p /var/log/qingcloud-disk-csi-driver
 
-ENTRYPOINT ["/blockplugin"]
+ENTRYPOINT ["/qingcloud-disk-csi-driver"]

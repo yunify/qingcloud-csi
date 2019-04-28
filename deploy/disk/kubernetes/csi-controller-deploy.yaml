@@ -97,7 +97,7 @@ spec:
         volumeMounts:
         - name: socket-dir
           mountPath: /csi
-      - name: csi-cluster-registrar
+      - name: cluster-registrar
         image: quay.io/k8scsi/csi-cluster-driver-registrar:v1.0.1
         args:
         - "--csi-address=/csi/csi.sock"

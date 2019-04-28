@@ -37,11 +37,11 @@ var getvm = func() VolumeManager {
 	var filePath string
 	if runtime.GOOS == "linux" {
 		filePath = path.Join(os.Getenv("GOPATH"),
-			"src/github.com/yunify/qingcloud-csi/deploy/block/kubernetes/config.yaml")
+			"src/github.com/yunify/qingcloud-csi/deploy/disk/kubernetes/config.yaml")
 	}
 	if runtime.GOOS == "darwin" {
 		filePath = path.Join(os.Getenv("GOPATH"),
-			"src/github.com/yunify/qingcloud-csi/deploy/block/kubernetes/config.yaml")
+			"src/github.com/yunify/qingcloud-csi/deploy/disk/kubernetes/config.yaml")
 	}
 	vm, err := NewVolumeManagerFromFile(filePath)
 	if err != nil {

@@ -14,7 +14,7 @@
 // | limitations under the License.
 // +-------------------------------------------------------------------------
 
-package block
+package disk
 
 import (
 	"fmt"
@@ -142,7 +142,7 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 	// For now the image get unconditionally deleted, but here retention policy can be checked
 	volumeId := req.GetVolumeId()
 
-	// Deleting block image
+	// Deleting disk
 	glog.Infof("deleting volume %s", volumeId)
 	// Create VolumeManager object
 	vm, err := volume.NewVolumeManagerFromFile(cs.cloudServer.GetConfigFilePath())
@@ -159,7 +159,7 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 		return &csi.DeleteVolumeResponse{}, nil
 	}
 	// Is volume in use
-	if *volInfo.Status == volume.BlockVolumeStatusInuse {
+	if *volInfo.Status == volume.DiskVolumeStatusInuse {
 		return nil, status.Errorf(codes.FailedPrecondition, "volume is in use by another resource")
 	}
 	// Do delete volume
@@ -170,7 +170,7 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 	for i := 1; i <= 10; i++ {
 		err = vm.DeleteVolume(volumeId)
 		if err != nil {
-			glog.Infof("Failed to delete block volume: %s in %s with error: %v", volumeId, vm.GetZone(), err)
+			glog.Infof("Failed to delete disk volume: %s in %s with error: %v", volumeId, vm.GetZone(), err)
 			if strings.Contains(err.Error(), server.RetryString) {
 				time.Sleep(time.Duration(i) * time.Second)
 			} else {
@@ -310,7 +310,7 @@ func (cs *controllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 	glog.Infof("Detaching volume %s to instance %s in zone %s...", volumeId, nodeId, vm.GetZone())
 	err = vm.DetachVolume(volumeId, nodeId)
 	if err != nil {
-		glog.Errorf("failed to detach block image: %s from instance %s with error: %v",
+		glog.Errorf("failed to detach disk image: %s from instance %s with error: %v",
 			volumeId, nodeId, err)
 		return nil, err
 	}

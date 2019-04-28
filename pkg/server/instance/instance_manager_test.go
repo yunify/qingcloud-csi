@@ -17,20 +17,22 @@
 package instance
 
 import (
+	"os"
+	"path"
 	"runtime"
 	"testing"
 )
 
 var getim = func() InstanceManager {
 	// get storage class
-	var filepath string
+	var filePath string
 	if runtime.GOOS == "linux" {
-		filepath = "../../deploy/block/kubernetes/config.yaml"
+		filePath = path.Join(os.Getenv("GOPATH"), "src/github.com/yunify/qingcloud-csi/deploy/disk/kubernetes/config.yaml")
 	}
 	if runtime.GOOS == "darwin" {
-		filepath = "../../deploy/block/kubernetes/config.yaml"
+		filePath = path.Join(os.Getenv("GOPATH"), "src/github.com/yunify/qingcloud-csi/deploy/disk/kubernetes/config.yaml")
 	}
-	im, err := NewInstanceManagerFromFile(filepath)
+	im, err := NewInstanceManagerFromFile(filePath)
 	if err != nil {
 		return nil
 	}

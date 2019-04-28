@@ -28,12 +28,12 @@ import (
 )
 
 const (
-	BlockVolumeStatusPending   string = "pending"
-	BlockVolumeStatusAvailable string = "available"
-	BlockVolumeStatusInuse     string = "in-use"
-	BlockVolumeStatusSuspended string = "suspended"
-	BlockVolumeStatusDeleted   string = "deleted"
-	BlockVolumeStatusCeased    string = "ceased"
+	DiskVolumeStatusPending   string = "pending"
+	DiskVolumeStatusAvailable string = "available"
+	DiskVolumeStatusInuse     string = "in-use"
+	DiskVolumeStatusSuspended string = "suspended"
+	DiskVolumeStatusDeleted   string = "deleted"
+	DiskVolumeStatusCeased    string = "ceased"
 )
 
 type VolumeManager interface {
@@ -112,7 +112,7 @@ func (vm *volumeManager) FindVolume(id string) (volume *qcservice.Volume, err er
 		return nil, nil
 	// Found one volume
 	case 1:
-		if *output.VolumeSet[0].Status == BlockVolumeStatusCeased || *output.VolumeSet[0].Status == BlockVolumeStatusDeleted {
+		if *output.VolumeSet[0].Status == DiskVolumeStatusCeased || *output.VolumeSet[0].Status == DiskVolumeStatusDeleted {
 			return nil, nil
 		}
 		return output.VolumeSet[0], nil
@@ -152,7 +152,7 @@ func (vm *volumeManager) FindVolumeByName(name string) (volume *qcservice.Volume
 		if *v.VolumeName != name {
 			continue
 		}
-		if *v.Status == BlockVolumeStatusCeased || *v.Status == BlockVolumeStatusDeleted {
+		if *v.Status == DiskVolumeStatusCeased || *v.Status == DiskVolumeStatusDeleted {
 			continue
 		}
 		return v, nil

@@ -68,7 +68,7 @@ $ kubectl apply -f ./csi-node-rbac.yaml
 ```
 
 - Deploy CSI plugin
-> IMPORTANT: If kubelet, a component of Kubernetes, set the `--root-dir` option (default: *"/var/lib/kubelet"*), please replace *"/var/lib/kubelet"* with the value of `--root-dir` at the CSI [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML file's `spec.template.spec.containers[name=csi-qingcloud].volumeMounts[name=mount-dir].mountPath` and `spec.template.spec.volumes[name=mount-dir].hostPath.path` fields. For instance, in Kubernetes cluster based on QingCloud AppCenter, you should replace *"/var/lib/kubelet"* with *"/data/var/lib/kubelet"* in the CSI [DaemonSet](deploy/block/kubernetes/csi-node-ds.yaml) YAML file.
+> IMPORTANT: If kubelet, a component of Kubernetes, set the `--root-dir` option (default: *"/var/lib/kubelet"*), please replace *"/var/lib/kubelet"* with the value of `--root-dir` at the CSI [DaemonSet](deploy/disk/kubernetes/csi-node-ds.yaml) YAML file's `spec.template.spec.containers[name=csi-qingcloud].volumeMounts[name=mount-dir].mountPath` and `spec.template.spec.volumes[name=mount-dir].hostPath.path` fields. For instance, in Kubernetes cluster based on QingCloud AppCenter, you should replace *"/var/lib/kubelet"* with *"/data/var/lib/kubelet"* in the CSI [DaemonSet](deploy/disk/kubernetes/csi-node-ds.yaml) YAML file.
 
 ```
 $ kubectl apply -f ./csi-controller-sts.yaml
@@ -117,7 +117,7 @@ lost+found
 
 ### StorageClass Parameters
 
-StorageClass definition [file](deploy/block/example/sc.yaml) shown below is used to create StorageClass object.
+StorageClass definition [file](deploy/disk/example/sc.yaml) shown below is used to create StorageClass object.
 ```
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
