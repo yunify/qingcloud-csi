@@ -106,7 +106,7 @@ spec:
         - name: socket-dir
           mountPath: /csi
       - name: csi-qingcloud
-        image: dockerhub.qingcloud.com/csiplugin/csi-qingcloud:v1.1.0
+        image: dockerhub.qingcloud.com/csiplugin/csi-qingcloud:canary
         args :
         - "--endpoint=$(CSI_ENDPOINT)"
         - "--drivername=disk.csi.qingcloud.com"

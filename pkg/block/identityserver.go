@@ -17,11 +17,30 @@
 package block
 
 import (
+	"github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/golang/glog"
 	"github.com/kubernetes-csi/drivers/pkg/csi-common"
 	"github.com/yunify/qingcloud-csi/pkg/server"
+	"github.com/yunify/qingcloud-csi/pkg/server/zone"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type identityServer struct {
 	*csicommon.DefaultIdentityServer
 	cloudServer *server.ServerConfig
+}
+
+func (is *identityServer) Probe(ctx context.Context, req *csi.ProbeRequest) (*csi.ProbeResponse, error) {
+	zm, err := zone.NewZoneManagerFromFile(is.cloudServer.GetConfigFilePath())
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	zones, err := zm.GetZoneList()
+	if err != nil {
+		return nil, status.Error(codes.FailedPrecondition, err.Error())
+	}
+	glog.V(5).Infof("get active zone lists [%v]", zones)
+	return &csi.ProbeResponse{}, nil
 }
