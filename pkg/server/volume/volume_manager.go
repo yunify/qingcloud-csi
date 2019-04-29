@@ -27,15 +27,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const (
-	DiskVolumeStatusPending   string = "pending"
-	DiskVolumeStatusAvailable string = "available"
-	DiskVolumeStatusInuse     string = "in-use"
-	DiskVolumeStatusSuspended string = "suspended"
-	DiskVolumeStatusDeleted   string = "deleted"
-	DiskVolumeStatusCeased    string = "ceased"
-)
-
 type VolumeManager interface {
 	FindVolume(id string) (volume *qcservice.Volume, err error)
 	FindVolumeByName(name string) (volume *qcservice.Volume, err error)
@@ -44,6 +35,7 @@ type VolumeManager interface {
 	IsAttachedToInstance(volumeId string, instanceId string) (flag bool, err error)
 	AttachVolume(volumeId string, instanceId string) error
 	DetachVolume(volumeId string, instanceId string) error
+	ResizeVolume(volumeId string, requestSize int) error
 	GetZone() string
 	waitJob(jobId string) error
 }
@@ -337,6 +329,48 @@ func (vm *volumeManager) DetachVolume(volumeId string, instanceId string) error 
 		}
 		return fmt.Errorf("Volume %s has been attached to another instance %s", volumeId, *vol.Instance.InstanceID)
 	}
+}
+
+// ResizeVolume can expand the size of a volume offline
+// requestSize: GB
+func (vm *volumeManager) ResizeVolume(volumeId string, requestSize int) error {
+	zone := *vm.volumeService.Properties.Zone
+	// check volume status
+	vol, err := vm.FindVolume(volumeId)
+	if err != nil {
+		return err
+	}
+	if vol == nil {
+		return fmt.Errorf("ResizeVolume: Cannot found volume %s", volumeId)
+	}
+
+	// resize
+	glog.Infof("Call Iaas ResizeVolume request volume [%s], size [%d Gib] in zone [%s]",
+		volumeId, requestSize, zone)
+	input := &qcservice.ResizeVolumesInput{}
+	input.Size = &requestSize
+	input.Volumes = []*string{&volumeId}
+	output, err := vm.volumeService.ResizeVolumes(input)
+	if err != nil {
+		return err
+	}
+	// check output
+	if *output.RetCode != 0 {
+		glog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
+		return fmt.Errorf("ResizeVolume: " + *output.Message)
+	}
+	// wait job
+	glog.Infof("Call IaaS WaitJob %s", *output.JobID)
+	if err := vm.waitJob(*output.JobID); err != nil {
+		return err
+	}
+	// check output
+	if *output.RetCode != 0 {
+		glog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
+		return fmt.Errorf("ResizeVolume: " + *output.Message)
+	}
+	glog.Infof("Call IaaS ResizeVolume id %s size %d succeed", volumeId, requestSize)
+	return nil
 }
 
 // GetZone

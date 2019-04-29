@@ -26,4 +26,5 @@ parameters:
   stepSize: "10"
   fsType: "ext4"
   replicas: "2"
-reclaimPolicy: Delete 
+reclaimPolicy: Delete
+allowVolumeExpansion: true

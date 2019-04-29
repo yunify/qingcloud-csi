@@ -26,10 +26,11 @@ import (
 
 var (
 	// Tester should set these variables before executing unit test.
-	volumeId1   string = "vol-8boq0cz6"
-	volumeName1 string = "qingcloud-csi-test"
-	instanceId1 string = "i-0nuxqgal"
-	instanceId2 string = "i-tta11nep"
+	volumeId1      string = "vol-8boq0cz6"
+	volumeName1    string = "qingcloud-csi-test"
+	instanceId1    string = "i-0nuxqgal"
+	instanceId2    string = "i-tta11nep"
+	resizeVolumeId string = "vol-tysu3tg2"
 )
 
 var getvm = func() VolumeManager {
@@ -373,6 +374,30 @@ func TestDeleteVolume(t *testing.T) {
 		err := vm.DeleteVolume(v.id)
 		if err != nil && !v.isError {
 			t.Errorf("error name %s: %s", v.name, err.Error())
+		}
+	}
+}
+
+func TestResizeVolume(t *testing.T) {
+	vm := getvm()
+	// testcase
+	testcases := []struct {
+		name    string
+		id      string
+		size    int
+		isError bool
+	}{
+		{
+			name:    "resize normally",
+			id:      resizeVolumeId,
+			size:    30,
+			isError: false,
+		},
+	}
+	for _, v := range testcases {
+		err := vm.ResizeVolume(v.id, v.size)
+		if err != nil && !v.isError {
+			t.Errorf("name %s: expect [%t] but actually [%s]", v.name, v.isError, err)
 		}
 	}
 }

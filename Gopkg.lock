@@ -198,9 +198,12 @@
   version = "v0.3.0"
 
 [[projects]]
-  digest = "1:f121ac82b30b60c6adc9bc471c12b37589643db29c1f78ab0ab00089c74f97d7"
+  digest = "1:37ec2e7a18251ec2a2377afff0203c1cf92d9657313beef1ae8ad018842879e9"
   name = "k8s.io/kubernetes"
-  packages = ["pkg/util/mount"]
+  packages = [
+    "pkg/util/mount",
+    "pkg/util/resizefs",
+  ]
   pruneopts = "UT"
   revision = "b7394102d6ef778017f2ca4046abbaa23b88c290"
   version = "v1.14.1"
@@ -233,6 +236,7 @@
     "google.golang.org/grpc/codes",
     "google.golang.org/grpc/status",
     "k8s.io/kubernetes/pkg/util/mount",
+    "k8s.io/kubernetes/pkg/util/resizefs",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

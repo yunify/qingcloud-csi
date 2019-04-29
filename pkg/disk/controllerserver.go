@@ -380,10 +380,74 @@ func (cs *controllerServer) ValidateVolumeCapabilities(ctx context.Context, req 
 	return &csi.ValidateVolumeCapabilitiesResponse{}, nil
 }
 
+// ControllerExpandVolume allows the CO to expand the size of a volume
+// volume id is REQUIRED in csi.ControllerExpandVolumeRequest
+// capacity range is REQUIRED in csi.ControllerExpandVolumeRequest
 func (cs *controllerServer) ControllerExpandVolume(ctx context.Context, req *csi.ControllerExpandVolumeRequest,
 ) (*csi.ControllerExpandVolumeResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "")
+	defer server.EntryFunction("ControllerExpandVolume")()
+	// 0. check input args
+	// require volume id parameter
+	if len(req.GetVolumeId()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "No volume id is provided")
+	}
+
+	vm, err := volume.NewVolumeManagerFromFile(cs.cloudServer.GetConfigFilePath())
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	// 1. Check volume status
+	// does volume exist
+	volumeId := req.GetVolumeId()
+	volInfo, err := vm.FindVolume(volumeId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if volInfo == nil {
+		return nil, status.Errorf(codes.NotFound, "Volume: %s does not exist", volumeId)
+	}
+	// volume in use
+	if *volInfo.Status == volume.DiskVolumeStatusInuse {
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"Volume [%s] currently published on a node but plugin only support OFFLINE expansion", volumeId)
+	}
+
+	// 2. Get capacity
+	volTypeInt := *volInfo.VolumeType
+	if volTypeStr, ok := volume.VolumeTypeToString[volTypeInt]; ok == true {
+		glog.Infof("Succeed to get volume [%s] type [%s]", volumeId, volTypeStr)
+	} else {
+		glog.Errorf("Unsupported volume [%s] type [%d]", volumeId, volTypeInt)
+		return nil, status.Errorf(codes.Internal, "Unsupported volume [%s] type [%d]", volumeId, volTypeInt)
+	}
+	volTypeMinSize := volume.VolumeTypeToMinSize[volTypeInt]
+	volTypeMaxSize := volume.VolumeTypeToMaxSize[volTypeInt]
+	requiredByte := req.GetCapacityRange().GetRequiredBytes()
+	requiredGib := volume.FormatVolumeSize(volTypeInt, server.ByteCeilToGib(requiredByte))
+	limitByte := req.GetCapacityRange().GetLimitBytes()
+	if limitByte == 0 {
+		limitByte = server.Int64Max
+	}
+	// check volume range
+	if server.GibToByte(requiredGib) < requiredByte || server.GibToByte(requiredGib) > limitByte ||
+		requiredGib < volTypeMinSize || requiredGib > volTypeMaxSize {
+		glog.Errorf("Request capacity range [%d, %d] bytes, storage class capacity range [%d, %d] GB, format required size: %d gb",
+			requiredByte, limitByte, volTypeMinSize, volTypeMaxSize, requiredGib)
+		return nil, status.Error(codes.OutOfRange, "Unsupport capacity range")
+	}
+
+	// 3. Expand volume
+	err = vm.ResizeVolume(volumeId, requiredGib)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &csi.ControllerExpandVolumeResponse{
+		CapacityBytes:         int64(requiredGib) * server.Gib,
+		NodeExpansionRequired: true,
+	}, nil
 }
+
 func (cs *controllerServer) ListVolumes(ctx context.Context, req *csi.ListVolumesRequest) (*csi.ListVolumesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "")
 }

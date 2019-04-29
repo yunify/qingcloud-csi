@@ -210,3 +210,13 @@ func IsValidFileSystemType(fs string) bool {
 		return false
 	}
 }
+
+// EntryFunction print timestamps
+func EntryFunction(functionName string) func() {
+	start := time.Now()
+	glog.Infof("*************** enter %s at %s ***************", functionName, start.String())
+	return func() {
+		glog.Infof("=============== exit %s (%s since %s) ===============", functionName, time.Since(start),
+			start.String())
+	}
+}
