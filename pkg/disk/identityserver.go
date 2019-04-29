@@ -32,6 +32,7 @@ type identityServer struct {
 	cloudServer *server.ServerConfig
 }
 
+// Plugin MUST implement this RPC call
 func (is *identityServer) Probe(ctx context.Context, req *csi.ProbeRequest) (*csi.ProbeResponse, error) {
 	zm, err := zone.NewZoneManagerFromFile(is.cloudServer.GetConfigFilePath())
 	if err != nil {
@@ -43,4 +44,20 @@ func (is *identityServer) Probe(ctx context.Context, req *csi.ProbeRequest) (*cs
 	}
 	glog.V(5).Infof("get active zone lists [%v]", zones)
 	return &csi.ProbeResponse{}, nil
+}
+
+// Get plugin capabilities: CONTROLLER, ACCESSIBILITY, EXPANSION
+func (ids *identityServer) GetPluginCapabilities(ctx context.Context, req *csi.GetPluginCapabilitiesRequest) (*csi.GetPluginCapabilitiesResponse, error) {
+	glog.V(5).Infof("Using default capabilities")
+	return &csi.GetPluginCapabilitiesResponse{
+		Capabilities: []*csi.PluginCapability{
+			{
+				Type: &csi.PluginCapability_Service_{
+					Service: &csi.PluginCapability_Service{
+						Type: csi.PluginCapability_Service_CONTROLLER_SERVICE,
+					},
+				},
+			},
+		},
+	}, nil
 }
