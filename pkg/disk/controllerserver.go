@@ -23,6 +23,7 @@ import (
 	"github.com/kubernetes-csi/drivers/pkg/csi-common"
 	"github.com/yunify/qingcloud-csi/pkg/server"
 	"github.com/yunify/qingcloud-csi/pkg/server/instance"
+	"github.com/yunify/qingcloud-csi/pkg/server/storageclass"
 	"github.com/yunify/qingcloud-csi/pkg/server/volume"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
@@ -65,7 +66,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	// create StorageClass object
-	sc, err := server.NewQingStorageClassFromMap(req.GetParameters())
+	sc, err := storageclass.NewQingStorageClassFromMap(req.GetParameters())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -159,7 +160,7 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 		return &csi.DeleteVolumeResponse{}, nil
 	}
 	// Is volume in use
-	if *volInfo.Status == volume.DiskVolumeStatusInuse {
+	if *volInfo.Status == volume.DiskStatusInuse {
 		return nil, status.Errorf(codes.FailedPrecondition, "volume is in use by another resource")
 	}
 	// Do delete volume
@@ -408,23 +409,23 @@ func (cs *controllerServer) ControllerExpandVolume(ctx context.Context, req *csi
 		return nil, status.Errorf(codes.NotFound, "Volume: %s does not exist", volumeId)
 	}
 	// volume in use
-	if *volInfo.Status == volume.DiskVolumeStatusInuse {
+	if *volInfo.Status == volume.DiskStatusInuse {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"Volume [%s] currently published on a node but plugin only support OFFLINE expansion", volumeId)
 	}
 
 	// 2. Get capacity
 	volTypeInt := *volInfo.VolumeType
-	if volTypeStr, ok := volume.VolumeTypeToString[volTypeInt]; ok == true {
+	if volTypeStr, ok := server.VolumeTypeToString[volTypeInt]; ok == true {
 		glog.Infof("Succeed to get volume [%s] type [%s]", volumeId, volTypeStr)
 	} else {
 		glog.Errorf("Unsupported volume [%s] type [%d]", volumeId, volTypeInt)
 		return nil, status.Errorf(codes.Internal, "Unsupported volume [%s] type [%d]", volumeId, volTypeInt)
 	}
-	volTypeMinSize := volume.VolumeTypeToMinSize[volTypeInt]
-	volTypeMaxSize := volume.VolumeTypeToMaxSize[volTypeInt]
+	volTypeMinSize := server.VolumeTypeToMinSize[volTypeInt]
+	volTypeMaxSize := server.VolumeTypeToMaxSize[volTypeInt]
 	requiredByte := req.GetCapacityRange().GetRequiredBytes()
-	requiredGib := volume.FormatVolumeSize(volTypeInt, server.ByteCeilToGib(requiredByte))
+	requiredGib := server.FormatVolumeSize(volTypeInt, server.ByteCeilToGib(requiredByte))
 	limitByte := req.GetCapacityRange().GetLimitBytes()
 	if limitByte == 0 {
 		limitByte = server.Int64Max

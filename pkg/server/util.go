@@ -26,54 +26,6 @@ import (
 	"time"
 )
 
-const (
-	// In Qingcloud bare host, the path of the file containing instance id.
-	InstanceFilePath = "/etc/qingcloud/instance-id"
-
-	RetryString          = "please try later"
-	Int64Max             = int64(^uint64(0) >> 1)
-	WaitInterval         = 10 * time.Second
-	OperationWaitTimeout = 180 * time.Second
-)
-
-const (
-	Kib    int64 = 1024
-	Mib    int64 = Kib * 1024
-	Gib    int64 = Mib * 1024
-	Gib100 int64 = Gib * 100
-	Tib    int64 = Gib * 1024
-	Tib100 int64 = Tib * 100
-)
-
-const (
-	FileSystemExt3    string = "ext3"
-	FileSystemExt4    string = "ext4"
-	FileSystemXfs     string = "xfs"
-	FileSystemDefault string = FileSystemExt4
-)
-
-const (
-	SingleReplica  int = 1
-	MultiReplica   int = 2
-	DefaultReplica int = MultiReplica
-)
-
-const (
-	QingCloudSingleReplica string = "rpp-00000001"
-	QingCloudMultiReplica  string = "rpp-00000002"
-)
-
-var QingCloudReplName = map[int]string{
-	1: QingCloudSingleReplica,
-	2: QingCloudMultiReplica,
-}
-
-type ServerConfig struct {
-	instanceId       string
-	configFilePath   string
-	maxVolumePerNode int64
-}
-
 // NewServerConfig create ServerConfig object to get server config
 func NewServerConfig(id string, filePath string, volumeNumber int64) *ServerConfig {
 	sc := &ServerConfig{
@@ -211,6 +163,14 @@ func IsValidFileSystemType(fs string) bool {
 	}
 }
 
+// Check volume type
+func IsValidVolumeType(volumeType int) bool {
+	if _, ok := VolumeTypeToString[volumeType]; ok {
+		return true
+	}
+	return false
+}
+
 // EntryFunction print timestamps
 func EntryFunction(functionName string) func() {
 	start := time.Now()
@@ -219,4 +179,27 @@ func EntryFunction(functionName string) func() {
 		glog.Infof("=============== exit %s (%s since %s) ===============", functionName, time.Since(start),
 			start.String())
 	}
+}
+
+// FormatVolumeSize transfer to proper volume size
+func FormatVolumeSize(volType int, volSize int) int {
+	_, ok := VolumeTypeToString[volType]
+	if ok == false {
+		return -1
+	}
+	volTypeMinSize := VolumeTypeToMinSize[volType]
+	volTypeMaxSize := VolumeTypeToMaxSize[volType]
+	volTypeStepSize := VolumeTypeToStepSize[volType]
+	if volSize <= volTypeMinSize {
+		return volTypeMinSize
+	} else if volSize >= volTypeMaxSize {
+		return volTypeMaxSize
+	}
+	if volSize%volTypeStepSize != 0 {
+		volSize = (volSize/volTypeStepSize + 1) * volTypeStepSize
+	}
+	if volSize >= volTypeMaxSize {
+		return volTypeMaxSize
+	}
+	return volSize
 }

@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/golang/glog"
 	"github.com/yunify/qingcloud-csi/pkg/server"
+	"github.com/yunify/qingcloud-csi/pkg/server/storageclass"
 	qcclient "github.com/yunify/qingcloud-sdk-go/client"
 	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
@@ -27,10 +28,19 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const (
+	DiskStatusPending   string = "pending"
+	DiskStatusAvailable string = "available"
+	DiskStatusInuse     string = "in-use"
+	DiskStatusSuspended string = "suspended"
+	DiskStatusDeleted   string = "deleted"
+	DiskStatusCeased    string = "ceased"
+)
+
 type VolumeManager interface {
 	FindVolume(id string) (volume *qcservice.Volume, err error)
 	FindVolumeByName(name string) (volume *qcservice.Volume, err error)
-	CreateVolume(volumeName string, requestSize int, sc server.QingStorageClass) (volumeId string, err error)
+	CreateVolume(volumeName string, requestSize int, sc storageclass.QingStorageClass) (volumeId string, err error)
 	DeleteVolume(id string) error
 	IsAttachedToInstance(volumeId string, instanceId string) (flag bool, err error)
 	AttachVolume(volumeId string, instanceId string) error
@@ -104,7 +114,8 @@ func (vm *volumeManager) FindVolume(id string) (volume *qcservice.Volume, err er
 		return nil, nil
 	// Found one volume
 	case 1:
-		if *output.VolumeSet[0].Status == DiskVolumeStatusCeased || *output.VolumeSet[0].Status == DiskVolumeStatusDeleted {
+		if *output.VolumeSet[0].Status == DiskStatusCeased || *output.VolumeSet[0].
+			Status == DiskStatusDeleted {
 			return nil, nil
 		}
 		return output.VolumeSet[0], nil
@@ -144,7 +155,7 @@ func (vm *volumeManager) FindVolumeByName(name string) (volume *qcservice.Volume
 		if *v.VolumeName != name {
 			continue
 		}
-		if *v.Status == DiskVolumeStatusCeased || *v.Status == DiskVolumeStatusDeleted {
+		if *v.Status == DiskStatusCeased || *v.Status == DiskStatusDeleted {
 			continue
 		}
 		return v, nil
@@ -156,7 +167,8 @@ func (vm *volumeManager) FindVolumeByName(name string) (volume *qcservice.Volume
 // 1. format volume size
 // 2. create volume
 // 3. wait job
-func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc server.QingStorageClass) (volumeId string, err error) {
+func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc storageclass.QingStorageClass) (volumeId string,
+	err error) {
 	// 0. Set CreateVolume args
 	// set input value
 	input := &qcservice.CreateVolumesInput{}

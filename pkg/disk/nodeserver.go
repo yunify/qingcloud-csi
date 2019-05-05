@@ -22,6 +22,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/kubernetes-csi/drivers/pkg/csi-common"
 	"github.com/yunify/qingcloud-csi/pkg/server"
+	"github.com/yunify/qingcloud-csi/pkg/server/storageclass"
 	"github.com/yunify/qingcloud-csi/pkg/server/volume"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
@@ -71,7 +72,7 @@ func (ns *nodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	volumeId := req.GetVolumeId()
 
 	// set fsType
-	qc, err := server.NewQingStorageClassFromMap(req.GetVolumeContext())
+	qc, err := storageclass.NewQingStorageClassFromMap(req.GetVolumeContext())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -213,7 +214,7 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	volumeId := req.GetVolumeId()
 	targetPath := req.GetStagingTargetPath()
 	// set fsType
-	qc, err := server.NewQingStorageClassFromMap(req.GetPublishContext())
+	qc, err := storageclass.NewQingStorageClassFromMap(req.GetPublishContext())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

@@ -42,7 +42,7 @@ metadata:
   name: csi-qingcloud-controller
   namespace: kube-system
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app:  "csi-qingcloud"

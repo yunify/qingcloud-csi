@@ -18,6 +18,7 @@ package volume
 
 import (
 	"github.com/yunify/qingcloud-csi/pkg/server"
+	"github.com/yunify/qingcloud-csi/pkg/server/storageclass"
 	"os"
 	"path"
 	"runtime"
@@ -137,14 +138,14 @@ func TestFindVolumeByName(t *testing.T) {
 }
 
 func TestCreateVolume(t *testing.T) {
-	sc := server.NewDefaultQingStorageClass()
+	sc := storageclass.NewDefaultQingStorageClass()
 	vm := getvm()
 
 	testcases := []struct {
 		name         string
 		volName      string
 		reqSize      int
-		storageClass server.QingStorageClass
+		storageClass storageclass.QingStorageClass
 		result       bool
 		volId        string
 	}{
@@ -177,7 +178,7 @@ func TestCreateVolume(t *testing.T) {
 			name:    "create volume name test-3 for single replica",
 			volName: "test-3",
 			reqSize: 20,
-			storageClass: server.QingStorageClass{
+			storageClass: storageclass.QingStorageClass{
 				VolumeType:     100,
 				VolumeMaxSize:  500,
 				VolumeMinSize:  10,
