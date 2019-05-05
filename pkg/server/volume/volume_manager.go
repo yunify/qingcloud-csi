@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/golang/glog"
 	"github.com/yunify/qingcloud-csi/pkg/server"
+	"github.com/yunify/qingcloud-csi/pkg/server/storageclass"
 	qcclient "github.com/yunify/qingcloud-sdk-go/client"
 	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
@@ -28,22 +29,23 @@ import (
 )
 
 const (
-	DiskVolumeStatusPending   string = "pending"
-	DiskVolumeStatusAvailable string = "available"
-	DiskVolumeStatusInuse     string = "in-use"
-	DiskVolumeStatusSuspended string = "suspended"
-	DiskVolumeStatusDeleted   string = "deleted"
-	DiskVolumeStatusCeased    string = "ceased"
+	DiskStatusPending   string = "pending"
+	DiskStatusAvailable string = "available"
+	DiskStatusInuse     string = "in-use"
+	DiskStatusSuspended string = "suspended"
+	DiskStatusDeleted   string = "deleted"
+	DiskStatusCeased    string = "ceased"
 )
 
 type VolumeManager interface {
 	FindVolume(id string) (volume *qcservice.Volume, err error)
 	FindVolumeByName(name string) (volume *qcservice.Volume, err error)
-	CreateVolume(volumeName string, requestSize int, sc server.QingStorageClass) (volumeId string, err error)
+	CreateVolume(volumeName string, requestSize int, sc storageclass.QingStorageClass) (volumeId string, err error)
 	DeleteVolume(id string) error
 	IsAttachedToInstance(volumeId string, instanceId string) (flag bool, err error)
 	AttachVolume(volumeId string, instanceId string) error
 	DetachVolume(volumeId string, instanceId string) error
+	ResizeVolume(volumeId string, requestSize int) error
 	GetZone() string
 	waitJob(jobId string) error
 }
@@ -112,7 +114,8 @@ func (vm *volumeManager) FindVolume(id string) (volume *qcservice.Volume, err er
 		return nil, nil
 	// Found one volume
 	case 1:
-		if *output.VolumeSet[0].Status == DiskVolumeStatusCeased || *output.VolumeSet[0].Status == DiskVolumeStatusDeleted {
+		if *output.VolumeSet[0].Status == DiskStatusCeased || *output.VolumeSet[0].
+			Status == DiskStatusDeleted {
 			return nil, nil
 		}
 		return output.VolumeSet[0], nil
@@ -152,7 +155,7 @@ func (vm *volumeManager) FindVolumeByName(name string) (volume *qcservice.Volume
 		if *v.VolumeName != name {
 			continue
 		}
-		if *v.Status == DiskVolumeStatusCeased || *v.Status == DiskVolumeStatusDeleted {
+		if *v.Status == DiskStatusCeased || *v.Status == DiskStatusDeleted {
 			continue
 		}
 		return v, nil
@@ -164,7 +167,8 @@ func (vm *volumeManager) FindVolumeByName(name string) (volume *qcservice.Volume
 // 1. format volume size
 // 2. create volume
 // 3. wait job
-func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc server.QingStorageClass) (volumeId string, err error) {
+func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc storageclass.QingStorageClass) (volumeId string,
+	err error) {
 	// 0. Set CreateVolume args
 	// set input value
 	input := &qcservice.CreateVolumesInput{}
@@ -337,6 +341,48 @@ func (vm *volumeManager) DetachVolume(volumeId string, instanceId string) error 
 		}
 		return fmt.Errorf("Volume %s has been attached to another instance %s", volumeId, *vol.Instance.InstanceID)
 	}
+}
+
+// ResizeVolume can expand the size of a volume offline
+// requestSize: GB
+func (vm *volumeManager) ResizeVolume(volumeId string, requestSize int) error {
+	zone := *vm.volumeService.Properties.Zone
+	// check volume status
+	vol, err := vm.FindVolume(volumeId)
+	if err != nil {
+		return err
+	}
+	if vol == nil {
+		return fmt.Errorf("ResizeVolume: Cannot found volume %s", volumeId)
+	}
+
+	// resize
+	glog.Infof("Call Iaas ResizeVolume request volume [%s], size [%d Gib] in zone [%s]",
+		volumeId, requestSize, zone)
+	input := &qcservice.ResizeVolumesInput{}
+	input.Size = &requestSize
+	input.Volumes = []*string{&volumeId}
+	output, err := vm.volumeService.ResizeVolumes(input)
+	if err != nil {
+		return err
+	}
+	// check output
+	if *output.RetCode != 0 {
+		glog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
+		return fmt.Errorf("ResizeVolume: " + *output.Message)
+	}
+	// wait job
+	glog.Infof("Call IaaS WaitJob %s", *output.JobID)
+	if err := vm.waitJob(*output.JobID); err != nil {
+		return err
+	}
+	// check output
+	if *output.RetCode != 0 {
+		glog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
+		return fmt.Errorf("ResizeVolume: " + *output.Message)
+	}
+	glog.Infof("Call IaaS ResizeVolume id %s size %d succeed", volumeId, requestSize)
+	return nil
 }
 
 // GetZone

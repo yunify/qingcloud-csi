@@ -30,11 +30,30 @@ disk-container: disk
 	cp _output/${DISK_PLUGIN_NAME} deploy/disk/docker
 	docker build -t $(DISK_IMAGE_NAME):$(DISK_IMAGE_VERSION) deploy/disk/docker
 
+deploy:
+	kubectl create configmap csi-qingcloud --from-file=config.yaml=./deploy/disk/kubernetes/config.yaml --namespace=kube-system
+	kubectl create -f ./deploy/disk/kubernetes/csi-secret.yaml
+	kubectl create -f ./deploy/disk/kubernetes/csi-controller-rbac.yaml
+	kubectl create -f ./deploy/disk/kubernetes/csi-node-rbac.yaml
+	kubectl create -f ./deploy/disk/kubernetes/csi-controller-sts.yaml
+	kubectl create -f ./deploy/disk/kubernetes/csi-node-ds.yaml
+
+undeploy:
+	kubectl delete -f ./deploy/disk/kubernetes/csi-node-ds.yaml
+	kubectl delete -f ./deploy/disk/kubernetes/csi-controller-sts.yaml
+	kubectl delete -f ./deploy/disk/kubernetes/csi-node-rbac.yaml
+	kubectl delete -f ./deploy/disk/kubernetes/csi-controller-rbac.yaml
+	kubectl delete -f ./deploy/disk/kubernetes/csi-secret.yaml
+	kubectl delete cm csi-qingcloud -n kube-system
+
 fmt:
 	go fmt ${PACKAGE_LIST}
 
 fmt-deep: fmt
 	gofmt -s -w -l ${PACKAGE_LIST}
+
+sanity-test:
+	${ROOT_PATH}/csi-sanity --csi.endpoint /var/lib/kubelet/plugins/disk.csi.qingcloud.com/csi.sock --csi.testvolumesize 107374182400
 
 clean:
 	go clean -r -x

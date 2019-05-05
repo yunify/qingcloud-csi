@@ -18,6 +18,7 @@ package volume
 
 import (
 	"github.com/yunify/qingcloud-csi/pkg/server"
+	"github.com/yunify/qingcloud-csi/pkg/server/storageclass"
 	"os"
 	"path"
 	"runtime"
@@ -26,10 +27,11 @@ import (
 
 var (
 	// Tester should set these variables before executing unit test.
-	volumeId1   string = "vol-8boq0cz6"
-	volumeName1 string = "qingcloud-csi-test"
-	instanceId1 string = "i-0nuxqgal"
-	instanceId2 string = "i-tta11nep"
+	volumeId1      string = "vol-8boq0cz6"
+	volumeName1    string = "qingcloud-csi-test"
+	instanceId1    string = "i-0nuxqgal"
+	instanceId2    string = "i-tta11nep"
+	resizeVolumeId string = "vol-tysu3tg2"
 )
 
 var getvm = func() VolumeManager {
@@ -136,14 +138,14 @@ func TestFindVolumeByName(t *testing.T) {
 }
 
 func TestCreateVolume(t *testing.T) {
-	sc := server.NewDefaultQingStorageClass()
+	sc := storageclass.NewDefaultQingStorageClass()
 	vm := getvm()
 
 	testcases := []struct {
 		name         string
 		volName      string
 		reqSize      int
-		storageClass server.QingStorageClass
+		storageClass storageclass.QingStorageClass
 		result       bool
 		volId        string
 	}{
@@ -176,7 +178,7 @@ func TestCreateVolume(t *testing.T) {
 			name:    "create volume name test-3 for single replica",
 			volName: "test-3",
 			reqSize: 20,
-			storageClass: server.QingStorageClass{
+			storageClass: storageclass.QingStorageClass{
 				VolumeType:     100,
 				VolumeMaxSize:  500,
 				VolumeMinSize:  10,
@@ -373,6 +375,30 @@ func TestDeleteVolume(t *testing.T) {
 		err := vm.DeleteVolume(v.id)
 		if err != nil && !v.isError {
 			t.Errorf("error name %s: %s", v.name, err.Error())
+		}
+	}
+}
+
+func TestResizeVolume(t *testing.T) {
+	vm := getvm()
+	// testcase
+	testcases := []struct {
+		name    string
+		id      string
+		size    int
+		isError bool
+	}{
+		{
+			name:    "resize normally",
+			id:      resizeVolumeId,
+			size:    30,
+			isError: false,
+		},
+	}
+	for _, v := range testcases {
+		err := vm.ResizeVolume(v.id, v.size)
+		if err != nil && !v.isError {
+			t.Errorf("name %s: expect [%t] but actually [%s]", v.name, v.isError, err)
 		}
 	}
 }

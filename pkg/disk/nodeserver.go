@@ -22,11 +22,13 @@ import (
 	"github.com/golang/glog"
 	"github.com/kubernetes-csi/drivers/pkg/csi-common"
 	"github.com/yunify/qingcloud-csi/pkg/server"
+	"github.com/yunify/qingcloud-csi/pkg/server/storageclass"
 	"github.com/yunify/qingcloud-csi/pkg/server/volume"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/kubernetes/pkg/util/mount"
+	"k8s.io/kubernetes/pkg/util/resizefs"
 	"os"
 )
 
@@ -70,7 +72,7 @@ func (ns *nodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	volumeId := req.GetVolumeId()
 
 	// set fsType
-	qc, err := server.NewQingStorageClassFromMap(req.GetVolumeContext())
+	qc, err := storageclass.NewQingStorageClassFromMap(req.GetVolumeContext())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -212,7 +214,7 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	volumeId := req.GetVolumeId()
 	targetPath := req.GetStagingTargetPath()
 	// set fsType
-	qc, err := server.NewQingStorageClassFromMap(req.GetPublishContext())
+	qc, err := storageclass.NewQingStorageClassFromMap(req.GetPublishContext())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -352,6 +354,13 @@ func (ns *nodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetC
 					},
 				},
 			},
+			{
+				Type: &csi.NodeServiceCapability_Rpc{
+					Rpc: &csi.NodeServiceCapability_RPC{
+						Type: csi.NodeServiceCapability_RPC_EXPAND_VOLUME,
+					},
+				},
+			},
 		},
 	}, nil
 }
@@ -368,5 +377,49 @@ func (ns *nodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoReque
 
 func (ns *nodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandVolumeRequest) (
 	*csi.NodeExpandVolumeResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "")
+	defer server.EntryFunction("NodeExpandVolume")()
+	// 0. Preflight
+	// check arguments
+	if len(req.GetVolumeId()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "Volume ID missing in request")
+	}
+	if len(req.GetVolumePath()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "Volume path missing in request")
+	}
+	// set parameter
+	volumeId := req.GetVolumeId()
+	volumePath := req.GetVolumePath()
+
+	// Create VolumeManager object
+	vm, err := volume.NewVolumeManagerFromFile(ns.cloudServer.GetConfigFilePath())
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	// Check volume exist
+	volInfo, err := vm.FindVolume(volumeId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if volInfo == nil {
+		return nil, status.Errorf(codes.NotFound, "Volume %s does not exist", volumeId)
+	}
+	// get device path
+	devicePath := ""
+	if volInfo.Instance != nil && volInfo.Instance.Device != nil && *volInfo.Instance.Device != "" {
+		devicePath = *volInfo.Instance.Device
+		glog.Infof("Find volume %s's device path is %s", volumeId, devicePath)
+	} else {
+		return nil, status.Error(codes.Internal, fmt.Sprintf("Cannot find device path of volume %s", volumeId))
+	}
+
+	resizer := resizefs.NewResizeFs(&mount.SafeFormatAndMount{})
+	ok, err := resizer.Resize(devicePath, volumePath)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if ok != true {
+		return nil, status.Error(codes.Internal, "Failed to expand volume filesystem")
+	}
+	return &csi.NodeExpandVolumeResponse{}, nil
 }

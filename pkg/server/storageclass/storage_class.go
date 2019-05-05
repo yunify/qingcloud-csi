@@ -14,10 +14,11 @@
 // | limitations under the License.
 // +-------------------------------------------------------------------------
 
-package server
+package storageclass
 
 import (
 	"fmt"
+	"github.com/yunify/qingcloud-csi/pkg/server"
 	"strconv"
 )
 
@@ -32,39 +33,43 @@ type QingStorageClass struct {
 
 // NewDefaultQingStorageClass create default qingStorageClass object
 func NewDefaultQingStorageClass() *QingStorageClass {
+	return NewDefaultQingStorageClassFromType(server.HighCapacityDiskType)
+}
+
+// NewDefaultQingStorageClassFromType create default qingStorageClass by specified volume type
+func NewDefaultQingStorageClassFromType(volumeType int) *QingStorageClass {
+	if server.IsValidVolumeType(volumeType) != true {
+		return nil
+	}
 	return &QingStorageClass{
-		VolumeType:     200,
-		VolumeMaxSize:  500,
-		VolumeMinSize:  10,
-		VolumeStepSize: 10,
-		VolumeFsType:   FileSystemDefault,
-		VolumeReplica:  DefaultReplica,
+		VolumeType:     volumeType,
+		VolumeMaxSize:  server.VolumeTypeToMaxSize[volumeType],
+		VolumeMinSize:  server.VolumeTypeToMinSize[volumeType],
+		VolumeStepSize: server.VolumeTypeToStepSize[volumeType],
+		VolumeFsType:   server.FileSystemDefault,
+		VolumeReplica:  server.DefaultReplica,
 	}
 }
 
 // NewQingStorageClassFromMap create qingStorageClass object from map
 func NewQingStorageClassFromMap(opt map[string]string) (*QingStorageClass, error) {
-	sc := NewDefaultQingStorageClass()
-	// volume type
-	if sVolType, ok := opt["type"]; ok {
-		iVolType, err := strconv.Atoi(sVolType)
-		if err != nil {
-			return nil, err
-		}
-		sc.VolumeType = iVolType
+	sVolType, volTypeOk := opt["type"]
+	sMaxSize, maxSizeOk := opt["maxSize"]
+	sMinSize, minSizeOk := opt["minSize"]
+	sStepSize, stepSizeOk := opt["stepSize"]
+	sFsType, fsTypeOk := opt["fsType"]
+	sReplica, replicaOk := opt["replica"]
+	if volTypeOk == false {
+		return NewDefaultQingStorageClass(), nil
 	}
-
-	// Get volume FsType
-	// Default is ext4
-	if sFsType, ok := opt["fsType"]; ok {
-		if !IsValidFileSystemType(sFsType) {
-			return nil, fmt.Errorf("Does not support fsType \"%s\"", sFsType)
-		}
-		sc.VolumeFsType = sFsType
+	// Convert volume type to integer
+	iVolType, err := strconv.Atoi(sVolType)
+	if err != nil {
+		return nil, err
 	}
-
-	// Get volume maxsize
-	if sMaxSize, ok := opt["maxSize"]; ok {
+	sc := NewDefaultQingStorageClassFromType(iVolType)
+	if maxSizeOk == true && minSizeOk == true && stepSizeOk == true {
+		// Get volume maxsize
 		iMaxSize, err := strconv.Atoi(sMaxSize)
 		if err != nil {
 			return nil, err
@@ -73,10 +78,7 @@ func NewQingStorageClassFromMap(opt map[string]string) (*QingStorageClass, error
 			return nil, fmt.Errorf("MaxSize must not less than zero")
 		}
 		sc.VolumeMaxSize = iMaxSize
-	}
-
-	// Get volume minsize
-	if sMinSize, ok := opt["minSize"]; ok {
+		// Get volume minsize
 		iMinSize, err := strconv.Atoi(sMinSize)
 		if err != nil {
 			return nil, err
@@ -85,10 +87,11 @@ func NewQingStorageClassFromMap(opt map[string]string) (*QingStorageClass, error
 			return nil, fmt.Errorf("MinSize must not less than zero")
 		}
 		sc.VolumeMinSize = iMinSize
-	}
-
-	// Get volume step
-	if sStepSize, ok := opt["stepSize"]; ok {
+		// Ensure volume minSize less than volume maxSize
+		if sc.VolumeMaxSize < sc.VolumeMinSize {
+			return nil, fmt.Errorf("volume maxSize must greater than or equal to volume minSize")
+		}
+		// Get volume step size
 		iStepSize, err := strconv.Atoi(sStepSize)
 		if err != nil {
 			return nil, err
@@ -99,21 +102,23 @@ func NewQingStorageClassFromMap(opt map[string]string) (*QingStorageClass, error
 		sc.VolumeStepSize = iStepSize
 	}
 
+	if fsTypeOk == true {
+		if !server.IsValidFileSystemType(sFsType) {
+			return nil, fmt.Errorf("unsupported fsType %s", sFsType)
+		}
+		sc.VolumeFsType = sFsType
+	}
+
 	// Get volume replicas
-	if sReplica, ok := opt["replica"]; ok {
+	if replicaOk == true {
 		iReplica, err := strconv.Atoi(sReplica)
 		if err != nil {
 			return nil, err
 		}
-		if !IsValidReplica(iReplica) {
-			return nil, fmt.Errorf("Does not support replicas \"%s\"", sReplica)
+		if !server.IsValidReplica(iReplica) {
+			return nil, fmt.Errorf("unsupported replicas \"%s\"", sReplica)
 		}
 		sc.VolumeReplica = iReplica
-	}
-
-	// Ensure volume minSize less than volume maxSize
-	if sc.VolumeMaxSize < sc.VolumeMinSize {
-		return nil, fmt.Errorf("Volume maxSize must greater than or equal to volume minSize")
 	}
 
 	return sc, nil

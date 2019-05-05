@@ -42,7 +42,7 @@ metadata:
   name: csi-qingcloud-controller
   namespace: kube-system
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app:  "csi-qingcloud"
@@ -97,6 +97,19 @@ spec:
         volumeMounts:
         - name: socket-dir
           mountPath: /csi
+      - name: csi-resizer
+        image: quay.io/k8scsi/csi-resizer:v0.1.0
+        args:
+          - "--v=5"
+          - "--csi-address=$(ADDRESS)"
+          - "--leader-election"
+        env:
+          - name: ADDRESS
+            value: /csi/csi.sock
+        imagePullPolicy: "IfNotPresent"
+        volumeMounts:
+          - name: socket-dir
+            mountPath: /csi
       - name: cluster-registrar
         image: quay.io/k8scsi/csi-cluster-driver-registrar:v1.0.1
         args:

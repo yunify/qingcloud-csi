@@ -14,10 +14,12 @@
 // | limitations under the License.
 // +-------------------------------------------------------------------------
 
-package server
+package storageclass
 
 import (
+	"github.com/yunify/qingcloud-csi/pkg/server"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -45,23 +47,16 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				VolumeMaxSize:  1000,
 				VolumeMinSize:  10,
 				VolumeStepSize: 10,
-				VolumeFsType:   FileSystemExt4,
-				VolumeReplica:  DefaultReplica,
+				VolumeFsType:   server.FileSystemExt4,
+				VolumeReplica:  server.DefaultReplica,
 			},
 			isError:  false,
 			strError: "",
 		},
 		{
-			name: "default storageclass",
-			mp:   map[string]string{},
-			sc: QingStorageClass{
-				VolumeType:     200,
-				VolumeMaxSize:  500,
-				VolumeMinSize:  10,
-				VolumeStepSize: 10,
-				VolumeFsType:   FileSystemExt4,
-				VolumeReplica:  DefaultReplica,
-			},
+			name:     "default storageclass",
+			mp:       map[string]string{},
+			sc:       *NewDefaultQingStorageClassFromType(server.SSDEnterpriseDiskType),
 			isError:  false,
 			strError: "",
 		},
@@ -102,7 +97,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 			},
 			sc:       QingStorageClass{},
 			isError:  true,
-			strError: "Volume maxSize must greater than or equal to volume minSize",
+			strError: "volume maxSize must greater than or equal to volume minSize",
 		},
 		{
 			name: "max size equal to min size",
@@ -119,8 +114,8 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				VolumeMaxSize:  1000,
 				VolumeMinSize:  1000,
 				VolumeStepSize: 10,
-				VolumeFsType:   FileSystemExt4,
-				VolumeReplica:  SingleReplica,
+				VolumeFsType:   server.FileSystemExt4,
+				VolumeReplica:  server.SingleReplica,
 			},
 			isError:  false,
 			strError: "",
@@ -165,10 +160,28 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				VolumeMaxSize:  1000,
 				VolumeMinSize:  1000,
 				VolumeStepSize: 2,
-				VolumeFsType:   "",
 			},
 			isError:  true,
-			strError: "Does not support fsType",
+			strError: "unsupported fsType ",
+		},
+		{
+			name: "set default fsType",
+			mp: map[string]string{
+				"type":     "0",
+				"maxSize":  "1000",
+				"minSize":  "1000",
+				"stepSize": "2",
+			},
+			sc: QingStorageClass{
+				VolumeType:     0,
+				VolumeMaxSize:  1000,
+				VolumeMinSize:  1000,
+				VolumeStepSize: 2,
+				VolumeFsType:   server.FileSystemDefault,
+				VolumeReplica:  server.DefaultReplica,
+			},
+			isError:  false,
+			strError: "",
 		},
 		{
 			name: "input wrong fsType",
@@ -180,7 +193,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 			},
 			sc:       QingStorageClass{},
 			isError:  true,
-			strError: "Does not support fsType",
+			strError: "unsupported fsType wrong",
 		},
 		{
 			name: "not input fsType",
@@ -191,11 +204,41 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 			},
 			sc: QingStorageClass{
 				VolumeType:     0,
-				VolumeMaxSize:  1000,
-				VolumeMinSize:  1000,
+				VolumeMaxSize:  2000,
+				VolumeMinSize:  10,
 				VolumeStepSize: 10,
-				VolumeFsType:   FileSystemExt4,
-				VolumeReplica:  MultiReplica,
+				VolumeFsType:   server.FileSystemDefault,
+				VolumeReplica:  server.MultiReplica,
+			},
+			isError:  false,
+			strError: "",
+		},
+		{
+			name: "only input volume type",
+			mp: map[string]string{
+				"type": strconv.Itoa(server.NeonSANDiskType),
+			},
+			sc:       *NewDefaultQingStorageClassFromType(server.NeonSANDiskType),
+			isError:  false,
+			strError: "",
+		},
+		{
+			name: "input custom parameter",
+			mp: map[string]string{
+				"type":     strconv.Itoa(server.NeonSANDiskType),
+				"maxSize":  "500",
+				"minSize":  "100",
+				"stepSize": "100",
+				"fsType":   "xfs",
+				"replica":  "1",
+			},
+			sc: QingStorageClass{
+				VolumeType:     server.NeonSANDiskType,
+				VolumeMaxSize:  500,
+				VolumeMinSize:  100,
+				VolumeStepSize: 100,
+				VolumeFsType:   server.FileSystemXfs,
+				VolumeReplica:  server.SingleReplica,
 			},
 			isError:  false,
 			strError: "",
@@ -210,7 +253,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				t.Errorf("name %s: expect [%s], actually [%s]", v.name, v.strError, err.Error())
 			}
 		} else if !reflect.DeepEqual(*res, v.sc) {
-			t.Errorf("name %s: sc does not equal", v.name)
+			t.Errorf("name %s: sc does not equal, expect [%v], actually [%v]", v.name, v.sc, res)
 		}
 	}
 }

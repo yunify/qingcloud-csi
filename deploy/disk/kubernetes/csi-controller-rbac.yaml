@@ -88,6 +88,39 @@ rules:
     resources: ["volumeattachments"]
     verbs: ["get", "list", "watch", "update"]
 ---
+# Resizer must be able to work with PVCs, PVs, SCs.
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-qingcloud-resizer
+  labels:
+    app: "csi-qingcloud"
+    role: "controller"
+    tier: "resizer"
+    csi: "v1.1.0"
+    owner: "yunify"
+rules:
+  # The following rule should be uncommented for plugins that require secrets
+  # for provisioning.
+  # - apiGroups: [""]
+  #   resources: ["secrets"]
+  #   verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims/status"]
+    verbs: ["update", "patch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["storageclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list", "watch", "create", "update", "patch"]
+---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -170,6 +203,26 @@ rules:
     resources: ["leases"]
     verbs: ["get", "watch", "list", "delete", "update", "create"]
 ---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-qingcloud-provsioner
+  namespace: kube-system
+  labels:
+    app: "csi-qingcloud"
+    role: "controller"
+    tier: "provisioner"
+    csi: "v1.1.0"
+    owner: "yunify"
+subjects:
+  - kind: ServiceAccount
+    name: csi-qingcloud-controller
+    namespace: kube-system
+roleRef:
+  kind: Role
+  name: csi-qingcloud-provisioner
+  apiGroup: rbac.authorization.k8s.io
+---
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -195,26 +248,6 @@ rules:
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: csi-qingcloud-provsioner
-  namespace: kube-system
-  labels:
-    app: "csi-qingcloud"
-    role: "controller"
-    tier: "provisioner"
-    csi: "v1.1.0"
-    owner: "yunify"
-subjects:
-  - kind: ServiceAccount
-    name: csi-qingcloud-controller
-    namespace: kube-system
-roleRef:
-  kind: Role
-  name: csi-qingcloud-provisioner
-  apiGroup: rbac.authorization.k8s.io
----
-kind: RoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
   name: csi-qingcloud-attacher
   namespace: kube-system
   labels:
@@ -230,4 +263,45 @@ subjects:
 roleRef:
   kind: Role
   name: csi-qingcloud-attacher
+  apiGroup: rbac.authorization.k8s.io
+---
+# Resizer must be able to work with end point in current namespace
+# if (and only if) leadership election is enabled
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  # replace with non-default namespace name
+  name: csi-qingcloud-resizer
+  namespace: kube-system
+  labels:
+    app: "csi-qingcloud"
+    role: "controller"
+    tier: "attacher"
+    csi: "v1.1.0"
+    owner: "yunify"
+rules:
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "watch", "list", "delete", "update", "create"]
+
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: csi-qingcloud-resizer
+  namespace: kube-system
+  labels:
+    app: "csi-qingcloud"
+    role: "controller"
+    tier: "attacher"
+    csi: "v1.1.0"
+    owner: "yunify"
+subjects:
+  - kind: ServiceAccount
+    name: csi-resizer
+    # replace with non-default namespace name
+    namespace: default
+roleRef:
+  kind: Role
+  name: csi-qingcloud-resizer
   apiGroup: rbac.authorization.k8s.io
