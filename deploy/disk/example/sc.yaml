@@ -25,6 +25,6 @@ parameters:
   minSize: "100"
   stepSize: "50"
   fsType: "ext4"
-  replicas: "2"
+  replica: "2"
 reclaimPolicy: Delete
 allowVolumeExpansion: true
