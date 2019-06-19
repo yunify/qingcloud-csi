@@ -10,7 +10,7 @@
 |容量型| High Capacity|2|
 |超高性能型|Super High Performance|3|
 |NeonSAN| NeonSAN|5|
-|基础型| Basic|100|
+|基础型| Standard|100|
 |SSD 企业型| SSD Enterprise|200|
 
  ## 硬盘类型与主机适配性

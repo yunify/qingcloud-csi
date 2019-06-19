@@ -53,7 +53,7 @@ const (
 	HighPerformanceDiskType      int = 0
 	HighCapacityDiskType         int = 2
 	SuperHighPerformanceDiskType int = 3
-	BasicDiskType                int = 100
+	StandardDiskType             int = 100
 	SSDEnterpriseDiskType        int = 200
 	NeonSANDiskType              int = 5
 )
@@ -64,7 +64,7 @@ var VolumeTypeToString = map[int]string{
 	0:   "HighPerformance",
 	2:   "HighCapacity",
 	3:   "SuperHighPerformance",
-	100: "Basic",
+	100: "Standard",
 	200: "SSDEnterprise",
 	5:   "NeonSAN",
 }
