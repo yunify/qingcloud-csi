@@ -31,7 +31,7 @@
 
 [[constraint]]
   name = "github.com/yunify/qingcloud-sdk-go"
-  revision = "12657a3e6defe87f951cabc03ecea89a02056936"
+  revision = "c8f8d40dd4793219c129b7516d6f8ae130bc83c9"
 
 [prune]
   go-tests = true
