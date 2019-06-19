@@ -23,6 +23,26 @@ import (
 	"github.com/yunify/qingcloud-sdk-go/request/errors"
 )
 
+type AccessKey struct {
+	AccessKeyID     *string `json:"access_key_id" name:"access_key_id"`
+	AccessKeyName   *string `json:"access_key_name" name:"access_key_name"`
+	ConsoleID       *string `json:"console_id" name:"console_id"`
+	Controller      *string `json:"controller" name:"controller"`
+	CreateTime      *string `json:"create_time" name:"create_time"`
+	Description     *string `json:"description" name:"description"`
+	IPWhiteList     *string `json:"ip_white_list" name:"ip_white_list"`
+	Owner           *string `json:"owner" name:"owner"`
+	RootUserID      *string `json:"root_user_id" name:"root_user_id"`
+	SecretAccessKey *string `json:"secret_access_key" name:"secret_access_key"`
+	Status          *string `json:"status" name:"status"`
+	StatusTime      *string `json:"status_time" name:"status_time"`
+}
+
+func (v *AccessKey) Validate() error {
+
+	return nil
+}
+
 type App struct {
 	Abstraction           *string   `json:"abstraction" name:"abstraction"`
 	AppContractStatus     *string   `json:"app_contract_status" name:"app_contract_status"`
@@ -488,14 +508,14 @@ type Cluster struct {
 	IncrementalBackupSupported *bool              `json:"incremental_backup_supported" name:"incremental_backup_supported"`
 	LatestSnapshotTime         *string            `json:"latest_snapshot_time" name:"latest_snapshot_time"`
 	Links                      map[string]*string `json:"links" name:"links"`
-	MetadataRootAccess         *int               `json:"metadata_root_access" name:"metadata_root_access"`
+	MetadataRootAccess         *bool              `json:"metadata_root_access" name:"metadata_root_access"`
 	Name                       *string            `json:"name" name:"name"`
 	NodeCount                  *int               `json:"node_count" name:"node_count"`
 	Nodes                      []*ClusterNode     `json:"nodes" name:"nodes"`
 	Owner                      *string            `json:"owner" name:"owner"`
 	PartnerAccess              *bool              `json:"partner_access" name:"partner_access"`
 	RestoreService             interface{}        `json:"restore_service" name:"restore_service"`
-	ReuseHyper                 *int               `json:"reuse_hyper" name:"reuse_hyper"`
+	ReuseHyper                 *bool              `json:"reuse_hyper" name:"reuse_hyper"`
 	RoleCount                  map[string]*int    `json:"role_count" name:"role_count"`
 	Roles                      []*string          `json:"roles" name:"roles"`
 	RootUserID                 *string            `json:"root_user_id" name:"root_user_id"`
@@ -2941,6 +2961,7 @@ type Volume struct {
 	LatestSnapshotTime *time.Time  `json:"latest_snapshot_time" name:"latest_snapshot_time" format:"ISO 8601"`
 	Owner              *string     `json:"owner" name:"owner"`
 	PlaceGroupID       *string     `json:"place_group_id" name:"place_group_id"`
+	Repl               *string     `json:"repl" name:"repl"`
 	Size               *int        `json:"size" name:"size"`
 	// Status's available values: pending, available, in-use, suspended, deleted, ceased
 	Status     *string    `json:"status" name:"status"`
