@@ -30,21 +30,23 @@ disk-container: disk
 	cp _output/${DISK_PLUGIN_NAME} deploy/disk/docker
 	docker build -t $(DISK_IMAGE_NAME):$(DISK_IMAGE_VERSION) deploy/disk/docker
 
-deploy:
-	kubectl create configmap csi-qingcloud --from-file=config.yaml=./deploy/disk/kubernetes/config.yaml --namespace=kube-system
-	kubectl create -f ./deploy/disk/kubernetes/csi-secret.yaml
-	kubectl create -f ./deploy/disk/kubernetes/csi-controller-rbac.yaml
-	kubectl create -f ./deploy/disk/kubernetes/csi-node-rbac.yaml
-	kubectl create -f ./deploy/disk/kubernetes/csi-controller-sts.yaml
-	kubectl create -f ./deploy/disk/kubernetes/csi-node-ds.yaml
+install-dev:
+	kustomize build  deploy/disk/kubernetes/overlays/dev|kubectl apply -f -
 
-undeploy:
-	kubectl delete -f ./deploy/disk/kubernetes/csi-node-ds.yaml
-	kubectl delete -f ./deploy/disk/kubernetes/csi-controller-sts.yaml
-	kubectl delete -f ./deploy/disk/kubernetes/csi-node-rbac.yaml
-	kubectl delete -f ./deploy/disk/kubernetes/csi-controller-rbac.yaml
-	kubectl delete -f ./deploy/disk/kubernetes/csi-secret.yaml
-	kubectl delete cm csi-qingcloud -n kube-system
+uninstall-dev:
+	kustomize build  deploy/disk/kubernetes/overlays/dev|kubectl delete -f -
+
+gen-dev:
+	kustomize build deploy/disk/kubernetes/overlays/dev
+
+install-prod:
+	kustomize build  deploy/disk/kubernetes/overlays/prod|kubectl apply -f -
+
+uninstall-prod:
+	kustomize build  deploy/disk/kubernetes/overlays/prod|kubectl delete -f -
+
+gen-prod:
+	kustomize build deploy/disk/kubernetes/overlays/dev
 
 fmt:
 	go fmt ${PACKAGE_LIST}

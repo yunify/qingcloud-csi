@@ -22,10 +22,7 @@ metadata:
   name: csi-qingcloud-controller
   namespace: kube-system
   labels:
-    app: "csi-qingcloud"
     role: "controller"
-    csi: "v1.1.0"
-    owner: "yunify"
 
 ---
 kind: ClusterRole
@@ -33,11 +30,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: csi-qingcloud-provisioner
   labels:
-    app: "csi-qingcloud"
     role: "controller"
-    tier: "provisioner"
-    csi: "v1.1.0"
-    owner: "yunify"
 rules:
   - apiGroups: [""]
     resources: ["persistentvolumes"]
@@ -69,11 +62,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: csi-qingcloud-attacher
   labels:
-    app: "csi-qingcloud"
     role: "controller"
-    tier: "attacher"
-    csi: "v1.1.0"
-    owner: "yunify"
 rules:
   - apiGroups: [""]
     resources: ["persistentvolumes"]
@@ -94,11 +83,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: csi-qingcloud-resizer
   labels:
-    app: "csi-qingcloud"
     role: "controller"
-    tier: "resizer"
-    csi: "v1.1.0"
-    owner: "yunify"
 rules:
   # The following rule should be uncommented for plugins that require secrets
   # for provisioning.
@@ -126,11 +111,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: csi-qingcloud-cluster-driver-registrar
   labels:
-    app: "csi-qingcloud"
     role: "controller"
-    tier: "cluster-registrar"
-    csi: "v1.1.0"
-    owner: "yunify"
 rules:
   - apiGroups: [""]
     resources: ["events"]
@@ -148,10 +129,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: csi-qingcloud-controller
   labels:
-    app: "csi-qingcloud"
     role: "controller"
-    csi: "v1.1.0"
-    owner: "yunify"
 aggregationRule:
   clusterRoleSelectors:
   - matchLabels:
@@ -169,10 +147,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: csi-qingcloud-controller
   labels:
-    app: "csi-qingcloud"
     role: "controller"
-    csi: "v1.1.0"
-    owner: "yunify"
 subjects:
   - kind: ServiceAccount
     name: csi-qingcloud-controller
@@ -188,11 +163,7 @@ metadata:
   namespace: kube-system
   name: csi-qingcloud-provisioner
   labels:
-    app: "csi-qingcloud"
     role: "controller"
-    tier: "provisioner"
-    csi: "v1.1.0"
-    owner: "yunify"
 rules:
   # Only one of the following rules for endpoints or leases is required based on
   # what is set for `--leader-election-type`. Endpoints are deprecated in favor of Leases.
@@ -209,11 +180,7 @@ metadata:
   name: csi-qingcloud-provsioner
   namespace: kube-system
   labels:
-    app: "csi-qingcloud"
     role: "controller"
-    tier: "provisioner"
-    csi: "v1.1.0"
-    owner: "yunify"
 subjects:
   - kind: ServiceAccount
     name: csi-qingcloud-controller
@@ -230,11 +197,7 @@ metadata:
   namespace: kube-system
   name: csi-qingcloud-attacher
   labels:
-    app: "csi-qingcloud"
     role: "controller"
-    tier: "attacher"
-    csi: "v1.1.0"
-    owner: "yunify"
 rules:
   # access to configmaps is only supported for backwards compatibility reasons
   # and can be removed once you are uses Leases (--leader-election-type=leases)
@@ -251,11 +214,7 @@ metadata:
   name: csi-qingcloud-attacher
   namespace: kube-system
   labels:
-    app: "csi-qingcloud"
     role: "controller"
-    tier: "attacher"
-    csi: "v1.1.0"
-    owner: "yunify"
 subjects:
   - kind: ServiceAccount
     name: csi-qingcloud-controller
@@ -274,11 +233,7 @@ metadata:
   name: csi-qingcloud-resizer
   namespace: kube-system
   labels:
-    app: "csi-qingcloud"
     role: "controller"
-    tier: "attacher"
-    csi: "v1.1.0"
-    owner: "yunify"
 rules:
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
@@ -291,16 +246,11 @@ metadata:
   name: csi-qingcloud-resizer
   namespace: kube-system
   labels:
-    app: "csi-qingcloud"
     role: "controller"
-    tier: "attacher"
-    csi: "v1.1.0"
-    owner: "yunify"
 subjects:
   - kind: ServiceAccount
     name: csi-resizer
-    # replace with non-default namespace name
-    namespace: default
+    namespace: kube-system
 roleRef:
   kind: Role
   name: csi-qingcloud-resizer

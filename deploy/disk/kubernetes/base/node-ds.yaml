@@ -18,24 +18,15 @@ metadata:
   name: csi-qingcloud-node
   namespace: kube-system
   labels:
-    app: "csi-qingcloud"
     role: "node"
-    csi: "v1.1.0"
-    owner: "yunify"
 spec:
   selector:
     matchLabels:
-      app: "csi-qingcloud"
       role: "node"
-      csi: "v1.1.0"
-      owner: "yunify"
   template:
     metadata:
       labels:
-        app: "csi-qingcloud"
         role: "node"
-        csi: "v1.1.0"
-        owner: "yunify"
     spec:
       serviceAccount: csi-qingcloud-node
       tolerations:
@@ -76,7 +67,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dockerhub.qingcloud.com/csiplugin/csi-qingcloud:canary
+          image: dockerhub.qingcloud.com/csiplugin/csi-qingcloud:latest
           args :
             - "--endpoint=$(CSI_ENDPOINT)"
             - "--drivername=disk.csi.qingcloud.com"
@@ -91,15 +82,10 @@ spec:
                   fieldPath: spec.nodeName
             - name: CSI_ENDPOINT
               value: unix://csi/csi.sock
-          imagePullPolicy: "Always"
+          imagePullPolicy: "IfNotPresent"
           volumeMounts:
             - name: socket-dir
               mountPath: /csi
-            - name: kubelet-dir
-              # In AppCenter, must set mountPath field as below.
-              # mountPath: /data/var/lib/kubelet
-              mountPath: /var/lib/kubelet
-              mountPropagation: "Bidirectional"
             - name: dev-dir
               mountPath: /dev
               mountPropagation: "HostToContainer"
