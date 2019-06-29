@@ -18,36 +18,25 @@ metadata:
   name: csi-qingcloud-node
   namespace: kube-system
   labels:
-    app: "csi-qingcloud"
     role: "node"
-    csi: "v1.1.0"
-    owner: "yunify"
-
 ---
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: csi-qingcloud-node
   labels:
-    app: "csi-qingcloud"
     role: "node"
-    csi: "v1.1.0"
-    owner: "yunify"
 rules:
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["get", "list", "watch", "create", "update", "patch"]
-
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: csi-qingcloud-node
   labels:
-    app: "csi-qingcloud"
     role: "node"
-    csi: "v1.1.0"
-    owner: "yunify"
 subjects:
   - kind: ServiceAccount
     name: csi-qingcloud-node

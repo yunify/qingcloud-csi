@@ -56,7 +56,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 		{
 			name:     "default storageclass",
 			mp:       map[string]string{},
-			sc:       *NewDefaultQingStorageClassFromType(server.StandardDiskType),
+			sc:       *NewDefaultQingStorageClassFromType(server.SSDEnterpriseDiskType),
 			isError:  false,
 			strError: "",
 		},

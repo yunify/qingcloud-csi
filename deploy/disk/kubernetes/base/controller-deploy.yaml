@@ -21,16 +21,10 @@ metadata:
   name: csi-qingcloud-controller
   namespace: kube-system
   labels:
-    app: "csi-qingcloud"
     role: "controller"
-    csi: "v1.1.0"
-    owner: "yunify"
 spec:
   selector:
-    app: "csi-qingcloud"
     role: "controller"
-    csi: "v1.1.0"
-    owner: "yunify"
   ports:
     - name: dummy
       port: 12345
@@ -45,17 +39,11 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app:  "csi-qingcloud"
       role: "controller"
-      csi: "v1.1.0"
-      owner: "yunify"
   template:
     metadata:
       labels:
-        app:  "csi-qingcloud"
         role: "controller"
-        csi: "v1.1.0"
-        owner: "yunify"
     spec:
       serviceAccount: csi-qingcloud-controller
       imagePullSecrets:
@@ -119,7 +107,7 @@ spec:
         - name: socket-dir
           mountPath: /csi
       - name: csi-qingcloud
-        image: dockerhub.qingcloud.com/csiplugin/csi-qingcloud:canary
+        image: dockerhub.qingcloud.com/csiplugin/csi-qingcloud:latest
         args :
         - "--endpoint=$(CSI_ENDPOINT)"
         - "--drivername=disk.csi.qingcloud.com"
@@ -134,7 +122,7 @@ spec:
               fieldPath: spec.nodeName
         - name: CSI_ENDPOINT
           value: unix://csi/csi.sock
-        imagePullPolicy: "Always"
+        imagePullPolicy: "IfNotPresent"
         volumeMounts:
         - name: socket-dir
           mountPath: /csi

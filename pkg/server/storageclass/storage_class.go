@@ -33,7 +33,7 @@ type QingStorageClass struct {
 
 // NewDefaultQingStorageClass create default qingStorageClass object
 func NewDefaultQingStorageClass() *QingStorageClass {
-	return NewDefaultQingStorageClassFromType(server.StandardDiskType)
+	return NewDefaultQingStorageClassFromType(server.SSDEnterpriseDiskType)
 }
 
 // NewDefaultQingStorageClassFromType create default qingStorageClass by specified volume type
