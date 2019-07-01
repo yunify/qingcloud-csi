@@ -14,15 +14,14 @@
 # | limitations under the License.
 # +-------------------------------------------------------------------------
 
+.PHONY: all image
 
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: pvc-test
-spec:
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 345Gi
-  storageClassName: csi-qingcloud
+IMAGE_REPO=dockerhub.qingcloud.com/csiplugin/
+IMAGE_NAME=fio-test
+IMAGE_TAG=latest
+
+image:
+	docker build -t $(IMAGE_REPO)$(IMAGE_NAME):$(IMAGE_TAG) ./
+
+clean:
+	docker rmi $(IMAGE_REPO)$(IMAGE_NAME):$(IMAGE_TAG)

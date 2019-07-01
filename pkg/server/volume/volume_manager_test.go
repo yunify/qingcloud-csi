@@ -19,9 +19,6 @@ package volume
 import (
 	"github.com/yunify/qingcloud-csi/pkg/server"
 	"github.com/yunify/qingcloud-csi/pkg/server/storageclass"
-	"os"
-	"path"
-	"runtime"
 	"testing"
 )
 
@@ -36,15 +33,7 @@ var (
 
 var getvm = func() VolumeManager {
 	// get storage class
-	var filePath string
-	if runtime.GOOS == "linux" {
-		filePath = path.Join(os.Getenv("GOPATH"),
-			"src/github.com/yunify/qingcloud-csi/deploy/disk/kubernetes/config.yaml")
-	}
-	if runtime.GOOS == "darwin" {
-		filePath = path.Join(os.Getenv("GOPATH"),
-			"src/github.com/yunify/qingcloud-csi/deploy/disk/kubernetes/config.yaml")
-	}
+	filePath := "/root/.qingcloud/config.yaml"
 	vm, err := NewVolumeManagerFromFile(filePath)
 	if err != nil {
 		return nil

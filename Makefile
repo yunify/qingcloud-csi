@@ -31,12 +31,14 @@ disk-container: disk
 	docker build -t $(DISK_IMAGE_NAME):$(DISK_IMAGE_VERSION) deploy/disk/docker
 
 install-dev:
+	cp /root/.qingcloud/config.yaml deploy/disk/kubernetes/base/config.yaml
 	kustomize build  deploy/disk/kubernetes/overlays/dev|kubectl apply -f -
 
 uninstall-dev:
 	kustomize build  deploy/disk/kubernetes/overlays/dev|kubectl delete -f -
 
 gen-dev:
+	cp /root/.qingcloud/config.yaml deploy/disk/kubernetes/base/config.yaml
 	kustomize build deploy/disk/kubernetes/overlays/dev
 
 install-prod:

@@ -20,9 +20,12 @@ import (
 	"fmt"
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/glog"
+	"github.com/golang/protobuf/ptypes"
+	timestamp2 "github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/kubernetes-csi/drivers/pkg/csi-common"
 	"github.com/yunify/qingcloud-csi/pkg/server"
 	"github.com/yunify/qingcloud-csi/pkg/server/instance"
+	"github.com/yunify/qingcloud-csi/pkg/server/snapshot"
 	"github.com/yunify/qingcloud-csi/pkg/server/storageclass"
 	"github.com/yunify/qingcloud-csi/pkg/server/volume"
 	"golang.org/x/net/context"
@@ -173,7 +176,7 @@ func (cs *controllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 		if err != nil {
 			glog.Infof("Failed to delete disk volume: %s in %s with error: %v", volumeId, vm.GetZone(), err)
 			if strings.Contains(err.Error(), server.RetryString) {
-				time.Sleep(time.Duration(i) * time.Second)
+				time.Sleep(time.Duration(i*2) * time.Second)
 			} else {
 				return nil, status.Error(codes.Internal, err.Error())
 			}
@@ -255,22 +258,37 @@ func (cs *controllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	volInfo, err := vm.FindVolume(volumeId)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	// check device path
-	if *volInfo.Instance.Device == "" {
-		glog.Infof("Cannot find device path and going to detach volume %s", volumeId)
-		err := vm.DetachVolume(volumeId, nodeId)
+
+	// When return with retry message at describe volume, retry after several seconds.
+	// Retry times is 3.
+	// Retry interval is changed from 1 second to 3 seconds.
+	for i := 1; i <= 3; i++ {
+		volInfo, err := vm.FindVolume(volumeId)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "try to detach volume %s failed", volumeId)
+			return nil, status.Error(codes.Internal, err.Error())
 		}
-		return nil, status.Errorf(codes.Internal,
-			"cannot find device path, please re-attach volume %s to instance %s", volumeId, nodeId)
+		// check device path
+		if *volInfo.Instance.Device != "" {
+			// found device path
+			glog.Infof("Attaching volume %s on instance %s succeed.", volumeId, nodeId)
+			return &csi.ControllerPublishVolumeResponse{}, nil
+		} else {
+			// cannot found device path
+			glog.Infof("Cannot find device path and retry to find volume device %s", volumeId)
+			time.Sleep(time.Duration(i) * time.Second)
+		}
 	}
-	glog.Infof("Attaching volume %s on instance %s succeed.", volumeId, nodeId)
-	return &csi.ControllerPublishVolumeResponse{}, nil
+	// Cannot find device path
+	// Try to detach volume
+	glog.Infof("Cannot find device path and going to detach volume %s", volumeId)
+	if err := vm.DetachVolume(volumeId, nodeId); err != nil {
+		return nil, status.Errorf(codes.Internal,
+			"cannot find device path, detach volume %s failed", volumeId)
+	} else {
+		return nil, status.Errorf(codes.Internal,
+			"cannot find device path, volume %s has been detached, please try attaching to instance %s again.",
+			volumeId, nodeId)
+	}
 }
 
 // This operation MUST be idempotent
@@ -457,12 +475,158 @@ func (cs *controllerServer) GetCapacity(ctx context.Context, req *csi.GetCapacit
 	return nil, status.Error(codes.Unimplemented, "")
 }
 
+// CreateSnapshot allows the CO to create a snapshot.
+// This operation MUST be idempotent.
+// 1. If snapshot successfully cut and ready to use, the plugin MUST reply 0 OK.
+// 2. If an error occurs before a snapshot is cut, the plugin SHOULD reply a corresponding error code.
+// 3. If snapshot successfully cut but still being precessed,
+// the plugin SHOULD return 0 OK and ready_to_use SHOULD be set to false.
+// Source volume id is REQUIRED
+// Snapshot name is REQUIRED
 func (cs *controllerServer) CreateSnapshot(ctx context.Context, req *csi.CreateSnapshotRequest) (*csi.CreateSnapshotResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "")
+	glog.Info("----- Start CreateSnapshot -----")
+	defer glog.Info("===== End CreateSnapshot =====")
+	if err := cs.Driver.ValidateControllerServiceRequest(csi.ControllerServiceCapability_RPC_CREATE_DELETE_SNAPSHOT); err != nil {
+		glog.Errorf("invalid create snapshot request: %v", req)
+		return nil, err
+	}
+	// 0. Preflight
+	// Check source volume id
+	if len(req.GetSourceVolumeId()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "volume ID missing in request")
+	}
+	// Check snapshot name
+	if len(req.GetName()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "snapshot name missing in request")
+	}
+
+	// Create snapshot manager object
+	sm, err := snapshot.NewSnapshotManagerFromFile(cs.cloudServer.GetConfigFilePath())
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	sourceVolumeId := req.GetSourceVolumeId()
+	snapshotName := req.GetName()
+	var timestamp *timestamp2.Timestamp
+	var isReadyToUse bool
+	// For idempotent
+	// If a snapshot corresponding to the specified snapshot name is successfully cut and ready to use (meaning it MAY
+	// be specified as a volume_content_source in a CreateVolumeRequest), the Plugin MUST reply 0 OK with the
+	// corresponding CreateSnapshotResponse.
+	exSnap, err := sm.FindSnapshotByName(snapshotName)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "find snapshot by name error: %s, %s", snapshotName, err.Error())
+	}
+	if exSnap != nil {
+		glog.Infof("Exist snapshot name: %s, snapshot id %s, source volume id %s",
+			*exSnap.SnapshotName, *exSnap.SnapshotID, *exSnap.Resource.ResourceID)
+		if exSnap.Resource != nil && *exSnap.Resource.ResourceType == "volume" &&
+			*exSnap.Resource.ResourceID == sourceVolumeId {
+			timestamp, err = ptypes.TimestampProto(*exSnap.CreateTime)
+			if err != nil {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+			if *exSnap.Status == snapshot.SnapshotStatusAvailable {
+				isReadyToUse = true
+			} else {
+				isReadyToUse = false
+			}
+			return &csi.CreateSnapshotResponse{
+				Snapshot: &csi.Snapshot{
+					SizeBytes:      int64(*exSnap.Size) * server.Mib,
+					SnapshotId:     *exSnap.SnapshotID,
+					SourceVolumeId: *exSnap.Resource.ResourceID,
+					CreationTime:   timestamp,
+					ReadyToUse:     isReadyToUse,
+				},
+			}, nil
+		}
+		return nil, status.Errorf(codes.AlreadyExists,
+			"snapshot name=[%s] id=[%s] already exists, but is incompatible with the volume id=[%s]",
+			snapshotName, *exSnap.SnapshotID, sourceVolumeId)
+	}
+	// Create a new full snapshot
+	glog.Infof("Creating snapshot %s from volume %s in zone %s...", snapshotName, sourceVolumeId, sm.GetZone())
+	snapId, err := sm.CreateSnapshot(snapshotName, sourceVolumeId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "create snapshot [%s] from source volume [%s] error: %s",
+			snapshotName, sourceVolumeId, err.Error())
+	}
+	snapInfo, err := sm.FindSnapshot(snapId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "find snapshot [%s] error: %s", snapId, err.Error())
+	}
+	timestamp, err = ptypes.TimestampProto(*snapInfo.CreateTime)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if *snapInfo.Status == snapshot.SnapshotStatusAvailable {
+		isReadyToUse = true
+	} else {
+		isReadyToUse = false
+	}
+	return &csi.CreateSnapshotResponse{
+		Snapshot: &csi.Snapshot{
+			SizeBytes:      int64(*snapInfo.Size) * server.Mib,
+			SnapshotId:     *snapInfo.SnapshotID,
+			SourceVolumeId: *snapInfo.Resource.ResourceID,
+			CreationTime:   timestamp,
+			ReadyToUse:     isReadyToUse,
+		},
+	}, nil
 }
 
+// CreateSnapshot allows the CO to delete a snapshot.
+// This operation MUST be idempotent.
+// Snapshot id is REQUIRED
 func (cs *controllerServer) DeleteSnapshot(ctx context.Context, req *csi.DeleteSnapshotRequest) (*csi.DeleteSnapshotResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "")
+	glog.Info("----- Start DeleteSnapshot -----")
+	defer glog.Info("===== End DeleteSnapshot =====")
+	if err := cs.Driver.ValidateControllerServiceRequest(csi.ControllerServiceCapability_RPC_CREATE_DELETE_SNAPSHOT); err != nil {
+		glog.Errorf("invalid create snapshot request: %v", req)
+		return nil, err
+	}
+	// 0. Preflight
+	// Check snapshot id
+	if len(req.GetSnapshotId()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "snapshot ID missing in request")
+	}
+	snapshotId := req.GetSnapshotId()
+
+	// Create snapshot manager object
+	sm, err := snapshot.NewSnapshotManagerFromFile(cs.cloudServer.GetConfigFilePath())
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	// 1. For idempotent:
+	// MUST reply OK when snapshot does not exist
+	exSnap, err := sm.FindSnapshot(snapshotId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if exSnap == nil {
+		return &csi.DeleteSnapshotResponse{}, nil
+	}
+	// 2. Delete snapshot
+	glog.Infof("Deleting snapshot %s in zone %s...", snapshotId, sm.GetZone())
+	// When return with retry message at deleting snapshot, retry after several seconds.
+	// Retry times is 10.
+	// Retry interval is changed from 1 second to 10 seconds.
+	for i := 1; i <= 10; i++ {
+		err = sm.DeleteSnapshot(snapshotId)
+		if err != nil {
+			glog.Infof("Failed to delete snapshot %s in %s with error: %v", snapshotId, sm.GetZone(), err)
+			if strings.Contains(err.Error(), server.RetryString) {
+				time.Sleep(time.Duration(i*2) * time.Second)
+			} else {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+		} else {
+			return &csi.DeleteSnapshotResponse{}, nil
+		}
+	}
+	return nil, status.Error(codes.Internal, "Exceed retry times: "+err.Error())
 }
 
 func (cs *controllerServer) ListSnapshots(ctx context.Context, req *csi.ListSnapshotsRequest) (*csi.ListSnapshotsResponse, error) {
