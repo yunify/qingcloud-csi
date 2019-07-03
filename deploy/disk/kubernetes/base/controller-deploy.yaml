@@ -55,7 +55,7 @@ spec:
         - "--csi-address=$(ADDRESS)"
         - "--enable-leader-election"
         - "--leader-election-type=leases"
-        - "--timeout=60s"
+        - "--timeout=90s"
         - "--retry-interval-start=5s"
         - "--retry-interval-max=5m"
         - "--worker-threads=5"
@@ -85,6 +85,19 @@ spec:
         volumeMounts:
         - name: socket-dir
           mountPath: /csi
+      - name: csi-snapshotter
+        image: quay.io/k8scsi/csi-snapshotter:v1.2.0
+        args:
+          - "--csi-address=$(ADDRESS)"
+          - "--connection-timeout=90s"
+          - "--leader-election=false"
+        env:
+          - name: ADDRESS
+            value: /csi/csi.sock
+        imagePullPolicy: "IfNotPresent"
+        volumeMounts:
+          - name: socket-dir
+            mountPath: /csi
       - name: csi-resizer
         image: quay.io/k8scsi/csi-resizer:v0.1.0
         args:

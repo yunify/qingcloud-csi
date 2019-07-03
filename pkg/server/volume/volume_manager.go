@@ -67,7 +67,7 @@ func NewVolumeManagerFromConfig(config *qcconfig.Config) (VolumeManager, error) 
 	vs, _ := qs.Volume(config.Zone)
 	// create job service
 	js, _ := qs.Job(config.Zone)
-	// initial volume provisioner
+	// initial volume manager
 	vm := volumeManager{
 		volumeService: vs,
 		jobService:    js,

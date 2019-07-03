@@ -1,21 +1,12 @@
 package zone
 
 import (
-	"os"
-	"path"
-	"runtime"
 	"testing"
 )
 
 var getzm = func() ZoneManager {
 	// get storage class
-	var filePath string
-	if runtime.GOOS == "linux" {
-		filePath = path.Join(os.Getenv("GOPATH"), "src/github.com/yunify/qingcloud-csi/deploy/disk/kubernetes/config.yaml")
-	}
-	if runtime.GOOS == "darwin" {
-		filePath = path.Join(os.Getenv("GOPATH"), "src/github.com/yunify/qingcloud-csi/deploy/disk/kubernetes/config.yaml")
-	}
+	filePath := "/root/.qingcloud/config.yaml"
 	vm, err := NewZoneManagerFromFile(filePath)
 	if err != nil {
 		return nil
