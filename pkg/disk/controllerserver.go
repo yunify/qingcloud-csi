@@ -21,7 +21,7 @@ import (
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/glog"
 	"github.com/golang/protobuf/ptypes"
-	timestamp2 "github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/kubernetes-csi/drivers/pkg/csi-common"
 	"github.com/yunify/qingcloud-csi/pkg/server"
 	"github.com/yunify/qingcloud-csi/pkg/server/instance"
@@ -41,6 +41,10 @@ type controllerServer struct {
 }
 
 // This operation MUST be idempotent
+// This operation MAY create 3 types of volumes:
+// 1. Empty volumes: CREATE_DELETE_VOLUME
+// 2. Restore volume from snapshot: CREATE_DELETE_VOLUME and CREATE_DELETE_SNAPSHOT
+// 3. Clone volume: CREATE_DELETE_VOLUME and CLONE_VOLUME
 // csi.CreateVolumeRequest: name 				+Required
 //							capability			+Required
 func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
@@ -81,15 +85,15 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		limitByte = server.Int64Max
 	}
 	// check volume range
-	if server.GibToByte(requiredGib) < requiredByte || server.GibToByte(requiredGib) > limitByte || requiredGib < sc.
-		VolumeMinSize || requiredGib > sc.VolumeMaxSize {
+	if server.GibToByte(requiredGib) < requiredByte || server.GibToByte(requiredGib) > limitByte ||
+		requiredGib < sc.VolumeMinSize || requiredGib > sc.VolumeMaxSize {
 		glog.Errorf("Request capacity range [%d, %d] bytes, storage class capacity range [%d, %d] GB, format required size: %d gb",
 			requiredByte, limitByte, sc.VolumeMinSize, sc.VolumeMaxSize, requiredGib)
 		return nil, status.Error(codes.OutOfRange, "Unsupport capacity range")
 	}
 
-	// should not fail when requesting to create a volume with already exisiting name and same capacity
-	// should fail when requesting to create a volume with already exisiting name and different capacity.
+	// should not fail when requesting to create a volume with already existing name and same capacity
+	// should fail when requesting to create a volume with already existing name and different capacity.
 	exVol, err := vm.FindVolumeByName(volumeName)
 	if err != nil {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("Find volume by name error: %s, %s", volumeName, err.Error()))
@@ -101,7 +105,7 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 			*exVol.VolumeName, *exVol.VolumeID, server.GibToByte(*exVol.Size), *exVol.VolumeType, vm.GetZone())
 		if *exVol.Size >= requiredGib && int64(*exVol.Size)*server.Gib <= limitByte && *exVol.VolumeType == sc.
 			VolumeType {
-			// exisiting volume is compatible with new request and should be reused.
+			// existing volume is compatible with new request and should be reused.
 			return &csi.CreateVolumeResponse{
 				Volume: &csi.Volume{
 					VolumeId:      *exVol.VolumeID,
@@ -115,19 +119,91 @@ func (cs *controllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	}
 
 	// do create volume
-	glog.Infof("Creating volume %s with %d GB in zone %s...", volumeName, requiredGib, vm.GetZone())
-	volumeId, err := vm.CreateVolume(volumeName, requiredGib, *sc)
-	if err != nil {
-		return nil, err
-	}
+	volContSrc := req.GetVolumeContentSource()
+	if volContSrc == nil {
+		// create a empty volume
+		glog.Infof("Creating empty volume %s with %d GB in zone %s...", volumeName, requiredGib, vm.GetZone())
+		volumeId, err := vm.CreateVolume(volumeName, requiredGib, *sc)
+		if err != nil {
+			return nil, err
+		}
+		glog.Infof("Succeed to create empty volume id=[%s] name=[%s].", volumeId, volumeName)
+		return &csi.CreateVolumeResponse{
+			Volume: &csi.Volume{
+				VolumeId:      volumeId,
+				CapacityBytes: int64(requiredGib) * server.Gib,
+				VolumeContext: req.GetParameters(),
+			},
+		}, nil
+	} else {
+		if volContSrc.GetSnapshot() != nil {
+			// Get capability
+			if err := cs.Driver.ValidateControllerServiceRequest(csi.ControllerServiceCapability_RPC_CREATE_DELETE_SNAPSHOT); err != nil {
+				glog.Errorf("Invalid create volume req: %v", req)
+				return nil, err
+			}
+			// Get snapshot id
+			if len(volContSrc.GetSnapshot().GetSnapshotId()) == 0 {
+				return nil, status.Error(codes.InvalidArgument, "Snapshot id missing in request")
+			}
+			snapId := volContSrc.GetSnapshot().GetSnapshotId()
 
-	return &csi.CreateVolumeResponse{
-		Volume: &csi.Volume{
-			VolumeId:      volumeId,
-			CapacityBytes: int64(requiredGib) * server.Gib,
-			VolumeContext: req.GetParameters(),
-		},
-	}, nil
+			// create SnapshotManager object
+			sm, err := snapshot.NewSnapshotManagerFromFile(cs.cloudServer.GetConfigFilePath())
+			if err != nil {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+			// Find snapshot before restore volume from snapshot
+			snapInfo, err := sm.FindSnapshot(snapId)
+			if err != nil {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+			if snapInfo == nil {
+				return nil, status.Errorf(codes.NotFound, "Cannot find content source snapshot id [%s]", snapId)
+			}
+
+			// Compare snapshot required volume size
+			requiredRestoreVolumeSizeInBytes := int64(*snapInfo.Size) * server.Mib
+			if !server.IsValidCapacityBytes(requiredRestoreVolumeSizeInBytes, []int64{requiredByte}, []int64{limitByte}) {
+				glog.Errorf("Restore volume request size [%d], out of the request range [%d, %d] bytes",
+					requiredRestoreVolumeSizeInBytes, requiredByte, limitByte)
+				return nil, status.Error(codes.OutOfRange, "Unsupport capacity range")
+			}
+			// restore volume from snapshot
+			glog.Infof("Restore volume name [%s] from snapshot id [%s] in zone [%s].",
+				volumeName, snapId, vm.GetZone())
+			volId, err := vm.CreateVolumeFromSnapshot(volumeName, snapId)
+			if err != nil {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+			// Find volume
+			exVol, err := vm.FindVolume(volId)
+			if err != nil {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+			actualRestoreVolumeSizeInBytes := int64(*exVol.Size) * server.Gib
+			if actualRestoreVolumeSizeInBytes != requiredRestoreVolumeSizeInBytes {
+				return nil, status.Error(codes.Internal,
+					fmt.Sprintf("expected volume size [%d], but actually [%d], volume id [%s], snapshot id [%s]",
+						requiredRestoreVolumeSizeInBytes, actualRestoreVolumeSizeInBytes, volId, snapId))
+			}
+			return &csi.CreateVolumeResponse{
+				Volume: &csi.Volume{
+					VolumeId:      volId,
+					CapacityBytes: actualRestoreVolumeSizeInBytes,
+					VolumeContext: req.GetParameters(),
+				},
+			}, nil
+		} else if volContSrc.GetVolume() != nil {
+			// clone volume
+			// Get capability
+			if err := cs.Driver.ValidateControllerServiceRequest(csi.ControllerServiceCapability_RPC_CLONE_VOLUME); err != nil {
+				glog.Errorf("Invalid create volume req: %v", req)
+				return nil, err
+			}
+		}
+	}
+	return nil, status.Error(codes.Internal, "MUST NOT run here, there is something wrong.")
 }
 
 // This operation MUST be idempotent
@@ -492,6 +568,7 @@ func (cs *controllerServer) CreateSnapshot(ctx context.Context, req *csi.CreateS
 	}
 	// 0. Preflight
 	// Check source volume id
+	glog.Info("Check required parameters")
 	if len(req.GetSourceVolumeId()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "volume ID missing in request")
 	}
@@ -501,28 +578,30 @@ func (cs *controllerServer) CreateSnapshot(ctx context.Context, req *csi.CreateS
 	}
 
 	// Create snapshot manager object
+	glog.Infof("Create snapshot manager object from file [%s]", cs.cloudServer.GetConfigFilePath())
 	sm, err := snapshot.NewSnapshotManagerFromFile(cs.cloudServer.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	sourceVolumeId := req.GetSourceVolumeId()
-	snapshotName := req.GetName()
-	var timestamp *timestamp2.Timestamp
+	srcVolId := req.GetSourceVolumeId()
+	snapName := req.GetName()
+	var ts *timestamp.Timestamp
 	var isReadyToUse bool
 	// For idempotent
 	// If a snapshot corresponding to the specified snapshot name is successfully cut and ready to use (meaning it MAY
 	// be specified as a volume_content_source in a CreateVolumeRequest), the Plugin MUST reply 0 OK with the
 	// corresponding CreateSnapshotResponse.
-	exSnap, err := sm.FindSnapshotByName(snapshotName)
+	glog.Infof("Find existing snapshot name [%s]", snapName)
+	exSnap, err := sm.FindSnapshotByName(snapName)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "find snapshot by name error: %s, %s", snapshotName, err.Error())
+		return nil, status.Errorf(codes.Internal, "find snapshot by name error: %s, %s", snapName, err.Error())
 	}
 	if exSnap != nil {
-		glog.Infof("Exist snapshot name: %s, snapshot id %s, source volume id %s",
+		glog.Infof("Found existing snapshot name [%s], snapshot id [%s], source volume id %s",
 			*exSnap.SnapshotName, *exSnap.SnapshotID, *exSnap.Resource.ResourceID)
 		if exSnap.Resource != nil && *exSnap.Resource.ResourceType == "volume" &&
-			*exSnap.Resource.ResourceID == sourceVolumeId {
-			timestamp, err = ptypes.TimestampProto(*exSnap.CreateTime)
+			*exSnap.Resource.ResourceID == srcVolId {
+			ts, err = ptypes.TimestampProto(*exSnap.CreateTime)
 			if err != nil {
 				return nil, status.Error(codes.Internal, err.Error())
 			}
@@ -536,27 +615,33 @@ func (cs *controllerServer) CreateSnapshot(ctx context.Context, req *csi.CreateS
 					SizeBytes:      int64(*exSnap.Size) * server.Mib,
 					SnapshotId:     *exSnap.SnapshotID,
 					SourceVolumeId: *exSnap.Resource.ResourceID,
-					CreationTime:   timestamp,
+					CreationTime:   ts,
 					ReadyToUse:     isReadyToUse,
 				},
 			}, nil
 		}
 		return nil, status.Errorf(codes.AlreadyExists,
-			"snapshot name=[%s] id=[%s] already exists, but is incompatible with the volume id=[%s]",
-			snapshotName, *exSnap.SnapshotID, sourceVolumeId)
+			"snapshot name [%s] id [%s] already exists, but is incompatible with the source volume id [%s]",
+			snapName, *exSnap.SnapshotID, srcVolId)
 	}
 	// Create a new full snapshot
-	glog.Infof("Creating snapshot %s from volume %s in zone %s...", snapshotName, sourceVolumeId, sm.GetZone())
-	snapId, err := sm.CreateSnapshot(snapshotName, sourceVolumeId)
+	glog.Infof("Creating snapshot [%s] from volume [%s] in zone [%s]...", snapName, srcVolId, sm.GetZone())
+	snapId, err := sm.CreateSnapshot(snapName, srcVolId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "create snapshot [%s] from source volume [%s] error: %s",
-			snapshotName, sourceVolumeId, err.Error())
+			snapName, srcVolId, err.Error())
 	}
+	glog.Infof("Create snapshot [%s] finished, get snapshot id [%s]", snapName, snapId)
+	glog.Infof("Get snapshot id [%s] info...", snapId)
 	snapInfo, err := sm.FindSnapshot(snapId)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "find snapshot [%s] error: %s", snapId, err.Error())
+		return nil, status.Errorf(codes.Internal, "Find snapshot [%s] error: %s", snapId, err.Error())
 	}
-	timestamp, err = ptypes.TimestampProto(*snapInfo.CreateTime)
+	if snapInfo == nil {
+		return nil, status.Errorf(codes.Internal, "cannot find just created snapshot id [%s]", snapId)
+	}
+	glog.Infof("Succeed to find snapshot id [%s]", snapId)
+	ts, err = ptypes.TimestampProto(*snapInfo.CreateTime)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -570,7 +655,7 @@ func (cs *controllerServer) CreateSnapshot(ctx context.Context, req *csi.CreateS
 			SizeBytes:      int64(*snapInfo.Size) * server.Mib,
 			SnapshotId:     *snapInfo.SnapshotID,
 			SourceVolumeId: *snapInfo.Resource.ResourceID,
-			CreationTime:   timestamp,
+			CreationTime:   ts,
 			ReadyToUse:     isReadyToUse,
 		},
 	}, nil
@@ -588,12 +673,14 @@ func (cs *controllerServer) DeleteSnapshot(ctx context.Context, req *csi.DeleteS
 	}
 	// 0. Preflight
 	// Check snapshot id
+	glog.Info("Check required parameters")
 	if len(req.GetSnapshotId()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "snapshot ID missing in request")
 	}
-	snapshotId := req.GetSnapshotId()
+	snapId := req.GetSnapshotId()
 
 	// Create snapshot manager object
+	glog.Infof("Create snapshot manager object from file [%s]", cs.cloudServer.GetConfigFilePath())
 	sm, err := snapshot.NewSnapshotManagerFromFile(cs.cloudServer.GetConfigFilePath())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -601,28 +688,34 @@ func (cs *controllerServer) DeleteSnapshot(ctx context.Context, req *csi.DeleteS
 
 	// 1. For idempotent:
 	// MUST reply OK when snapshot does not exist
-	exSnap, err := sm.FindSnapshot(snapshotId)
+	glog.Infof("Find existing snapshot id [%s].", snapId)
+	exSnap, err := sm.FindSnapshot(snapId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if exSnap == nil {
+		glog.Infof("Cannot find snapshot id [%s].", snapId)
 		return &csi.DeleteSnapshotResponse{}, nil
 	}
 	// 2. Delete snapshot
-	glog.Infof("Deleting snapshot %s in zone %s...", snapshotId, sm.GetZone())
+	glog.Infof("Deleting snapshot id [%s] in zone [%s]...", snapId, sm.GetZone())
 	// When return with retry message at deleting snapshot, retry after several seconds.
 	// Retry times is 10.
 	// Retry interval is changed from 1 second to 10 seconds.
 	for i := 1; i <= 10; i++ {
-		err = sm.DeleteSnapshot(snapshotId)
+		glog.Infof("Try to delete snapshot id [%s] in [%d] time(s)", snapId, i)
+		err = sm.DeleteSnapshot(snapId)
 		if err != nil {
-			glog.Infof("Failed to delete snapshot %s in %s with error: %v", snapshotId, sm.GetZone(), err)
+			glog.Infof("Failed to delete snapshot id [%s] in zone [%s] with error: %v", snapId, sm.GetZone(), err)
 			if strings.Contains(err.Error(), server.RetryString) {
-				time.Sleep(time.Duration(i*2) * time.Second)
+				sleepTime := time.Duration(i*2) * time.Second
+				glog.Infof("Retry to delete snapshot id [%s] after [%f] second(s).", snapId, sleepTime.Seconds())
+				time.Sleep(sleepTime)
 			} else {
 				return nil, status.Error(codes.Internal, err.Error())
 			}
 		} else {
+			glog.Infof("Succeed to delete snapshot id [%s] after [%d] time(s).", snapId, i)
 			return &csi.DeleteSnapshotResponse{}, nil
 		}
 	}

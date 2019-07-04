@@ -39,6 +39,6 @@ spec:
       volumes:
       - name: mypvc
         persistentVolumeClaim:
-          claimName: restore-from-snap
+          claimName: pvc-snap-2
           readOnly: false
 
