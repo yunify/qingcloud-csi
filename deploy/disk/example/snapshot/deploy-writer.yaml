@@ -41,6 +41,6 @@ spec:
       volumes:
       - name: mypvc
         persistentVolumeClaim:
-          claimName: pvc-for-snap
+          claimName: pvc-snap-1
           readOnly: false
 

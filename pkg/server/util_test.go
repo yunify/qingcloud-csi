@@ -453,3 +453,96 @@ func TestFormatVolumeSize(t *testing.T) {
 
 	}
 }
+
+func TestGetMinRequiredBytes(t *testing.T) {
+	testcase := []struct {
+		name          string
+		requiredBytes []int64
+		limitBytes    []int64
+		result        int64
+	}{
+		{
+			name:          "normal range",
+			requiredBytes: []int64{123, 345},
+			limitBytes:    []int64{345, 534},
+			result:        345,
+		},
+		{
+			name:          "bad result",
+			requiredBytes: []int64{-1, 345},
+			limitBytes:    []int64{234},
+			result:        -1,
+		},
+		{
+			name:          "zero value",
+			requiredBytes: []int64{},
+			limitBytes:    []int64{213},
+			result:        0,
+		},
+	}
+	for _, v := range testcase {
+		res := GetMinRequiredBytes(v.requiredBytes, v.limitBytes)
+		if v.result != res {
+			t.Errorf("name %s: expect %d but actually %d", v.name, v.result, res)
+		}
+	}
+}
+
+func TestIsValidCapacityBytes(t *testing.T) {
+	testcases := []struct {
+		name          string
+		curBytes      int64
+		requiredBytes []int64
+		limitBytes    []int64
+		result        bool
+	}{
+		{
+			name:          "normal range",
+			curBytes:      347,
+			requiredBytes: []int64{123, 345},
+			limitBytes:    []int64{360, 534},
+			result:        true,
+		},
+		{
+			name:          "edge result",
+			curBytes:      345,
+			requiredBytes: []int64{-1, 345},
+			limitBytes:    []int64{345},
+			result:        true,
+		},
+		{
+			name:          "bad result",
+			curBytes:      345,
+			requiredBytes: []int64{-1, 390},
+			limitBytes:    []int64{345},
+			result:        false,
+		},
+		{
+			name:          "zero value",
+			curBytes:      100,
+			requiredBytes: []int64{},
+			limitBytes:    []int64{213},
+			result:        true,
+		},
+		{
+			name:          "big value",
+			curBytes:      107374182400,
+			requiredBytes: []int64{107374182400},
+			limitBytes:    []int64{9223372036854775807},
+			result:        true,
+		},
+		{
+			name:          "big same value",
+			curBytes:      10737418240,
+			requiredBytes: []int64{10737418240},
+			limitBytes:    []int64{10737418240},
+			result:        true,
+		},
+	}
+	for _, v := range testcases {
+		res := IsValidCapacityBytes(v.curBytes, v.requiredBytes, v.limitBytes)
+		if v.result != res {
+			t.Errorf("name %s: expect %t but actually %t", v.name, v.result, res)
+		}
+	}
+}

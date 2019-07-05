@@ -19,21 +19,30 @@ package volume
 import (
 	"github.com/yunify/qingcloud-csi/pkg/server"
 	"github.com/yunify/qingcloud-csi/pkg/server/storageclass"
+	"runtime"
 	"testing"
 )
 
 var (
 	// Tester should set these variables before executing unit test.
-	volumeId1      string = "vol-8boq0cz6"
-	volumeName1    string = "qingcloud-csi-test"
-	instanceId1    string = "i-0nuxqgal"
-	instanceId2    string = "i-tta11nep"
-	resizeVolumeId string = "vol-tysu3tg2"
+	volumeId1       string = "vol-8boq0cz6"
+	volumeName1     string = "qingcloud-csi-test"
+	instanceId1     string = "i-0nuxqgal"
+	instanceId2     string = "i-tta11nep"
+	resizeVolumeId  string = "vol-tysu3tg2"
+	volFromSnapNorm string = "volFromSnapNorm"
+	snapshotId1     string = "ss-dmrxy2mn"
 )
 
 var getvm = func() VolumeManager {
 	// get storage class
-	filePath := "/root/.qingcloud/config.yaml"
+	var filePath string
+	if runtime.GOOS == "linux" {
+		filePath = "/root/.qingcloud/config.yaml"
+	}
+	if runtime.GOOS == "darwin" {
+		filePath = "/etc/qingcloud/client.yaml"
+	}
 	vm, err := NewVolumeManagerFromFile(filePath)
 	if err != nil {
 		return nil
@@ -388,6 +397,35 @@ func TestResizeVolume(t *testing.T) {
 		err := vm.ResizeVolume(v.id, v.size)
 		if err != nil && !v.isError {
 			t.Errorf("name %s: expect [%t] but actually [%s]", v.name, v.isError, err)
+		}
+	}
+}
+
+func TestCreateVolumeFromSnapshot(t *testing.T) {
+	vm := getvm()
+	testcases := []struct {
+		name       string
+		volumeName string
+		snapshotId string
+		isError    bool
+	}{
+		{
+			name:       "create normally",
+			volumeName: volFromSnapNorm,
+			snapshotId: snapshotId1,
+			isError:    false,
+		},
+		{
+			name:       "zero value input",
+			volumeName: volFromSnapNorm,
+			snapshotId: "",
+			isError:    true,
+		},
+	}
+	for _, v := range testcases {
+		_, err := vm.CreateVolumeFromSnapshot(v.volumeName, v.snapshotId)
+		if (err != nil) != v.isError {
+			t.Errorf("name %s: expect %t, but actually %s", v.name, v.isError, err)
 		}
 	}
 }

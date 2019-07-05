@@ -41,6 +41,7 @@ type VolumeManager interface {
 	FindVolume(id string) (volume *qcservice.Volume, err error)
 	FindVolumeByName(name string) (volume *qcservice.Volume, err error)
 	CreateVolume(volumeName string, requestSize int, sc storageclass.QingStorageClass) (volumeId string, err error)
+	CreateVolumeFromSnapshot(volumeName string, snapshotId string) (volumeId string, err error)
 	DeleteVolume(id string) error
 	IsAttachedToInstance(volumeId string, instanceId string) (flag bool, err error)
 	AttachVolume(volumeId string, instanceId string) error
@@ -51,8 +52,9 @@ type VolumeManager interface {
 }
 
 type volumeManager struct {
-	volumeService *qcservice.VolumeService
-	jobService    *qcservice.JobService
+	volumeService   *qcservice.VolumeService
+	snapshotService *qcservice.SnapshotService
+	jobService      *qcservice.JobService
 }
 
 // NewVolumeManagerFromConfig
@@ -65,12 +67,15 @@ func NewVolumeManagerFromConfig(config *qcconfig.Config) (VolumeManager, error) 
 	}
 	// create volume service
 	vs, _ := qs.Volume(config.Zone)
+	// create snapshot service
+	ss, _ := qs.Snapshot(config.Zone)
 	// create job service
 	js, _ := qs.Job(config.Zone)
 	// initial volume manager
 	vm := volumeManager{
-		volumeService: vs,
-		jobService:    js,
+		volumeService:   vs,
+		snapshotService: ss,
+		jobService:      js,
 	}
 	glog.Infof("Finished initial volume manager")
 	return &vm, nil
@@ -170,21 +175,20 @@ func (vm *volumeManager) FindVolumeByName(name string) (volume *qcservice.Volume
 func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc storageclass.QingStorageClass) (volumeId string,
 	err error) {
 	// 0. Set CreateVolume args
-	// set input value
-	input := &qcservice.CreateVolumesInput{}
 	// create volume count
 	count := 1
-	input.Count = &count
-	// volume provisioner size
-	size := sc.FormatVolumeSize(requestSize, sc.VolumeStepSize)
-	input.Size = &size
-	// create volume name
-	input.VolumeName = &volumeName
-	// volume provisioner type
-	input.VolumeType = &sc.VolumeType
 	// volume replicas
 	replica := server.QingCloudReplName[sc.VolumeReplica]
-	input.Repl = &replica
+	// volume provisioner size
+	size := sc.FormatVolumeSize(requestSize, sc.VolumeStepSize)
+	// set input value
+	input := &qcservice.CreateVolumesInput{
+		Count:      &count,
+		Repl:       &replica,
+		Size:       &size,
+		VolumeName: &volumeName,
+		VolumeType: &sc.VolumeType,
+	}
 	// 1. Create volume
 	glog.Infof("Call IaaS CreateVolume request size: %d GB, zone: %s, type: %d, count: %d, replica: %s, name: %s",
 		*input.Size, *vm.volumeService.Properties.Zone, *input.VolumeType, *input.Count, *input.Repl, *input.VolumeName)
@@ -205,6 +209,33 @@ func (vm *volumeManager) CreateVolume(volumeName string, requestSize int, sc sto
 	volumeId = *output.Volumes[0]
 	glog.Infof("Call IaaS CreateVolume name %s id %s succeed", volumeName, volumeId)
 	return *output.Volumes[0], nil
+}
+
+// CreateVolumeFromSnapshot
+// In QingCloud, the volume size created from snapshot is equal to original volume.
+func (vm *volumeManager) CreateVolumeFromSnapshot(volumeName string, snapshotId string) (volumeId string, err error) {
+	input := &qcservice.CreateVolumeFromSnapshotInput{
+		VolumeName: &volumeName,
+		Snapshot:   &snapshotId,
+	}
+	glog.Infof("Call IaaS CreateVolumeFromSnapshot request volume name: %s, snapshot id: %s\n",
+		*input.VolumeName, *input.Snapshot)
+	output, err := vm.snapshotService.CreateVolumeFromSnapshot(input)
+	if err != nil {
+		return "", err
+	}
+	// wait job
+	glog.Infof("Call IaaS WaitJob %s", *output.JobID)
+	if err := vm.waitJob(*output.JobID); err != nil {
+		return "", err
+	}
+	// check output
+	if *output.RetCode != 0 {
+		glog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
+		return "", fmt.Errorf(*output.Message)
+	}
+	glog.Infof("Call IaaS CreateVolumeFromSnapshot succeed, volume id %s", *output.VolumeID)
+	return *output.VolumeID, nil
 }
 
 // DeleteVolume

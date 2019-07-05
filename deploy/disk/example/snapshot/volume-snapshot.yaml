@@ -17,9 +17,9 @@
 apiVersion: snapshot.storage.k8s.io/v1alpha1
 kind: VolumeSnapshot
 metadata:
-  name: snap-test
+  name: snap-1
 spec:
   snapshotClassName: csi-qingcloud
   source:
-    name: pvc-for-snap
+    name: pvc-snap-1
     kind: PersistentVolumeClaim

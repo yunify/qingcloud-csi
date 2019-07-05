@@ -17,11 +17,11 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: restore-from-snap
+  name: pvc-snap-2
 spec:
   storageClassName: csi-qingcloud
   dataSource:
-    name: pvc-for-snap
+    name: snap-1
     kind: VolumeSnapshot
     apiGroup: snapshot.storage.k8s.io
   accessModes:

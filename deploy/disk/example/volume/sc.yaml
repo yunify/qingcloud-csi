@@ -20,10 +20,10 @@ metadata:
   name: csi-qingcloud
 provisioner: disk.csi.qingcloud.com
 parameters:
-  type: "2"
+  type: "200"
   maxSize: "5000"
-  minSize: "100"
-  stepSize: "50"
+  minSize: "10"
+  stepSize: "10"
   fsType: "ext4"
   replica: "2"
 reclaimPolicy: Delete

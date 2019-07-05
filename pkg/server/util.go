@@ -203,3 +203,37 @@ func FormatVolumeSize(volType int, volSize int) int {
 	}
 	return volSize
 }
+
+// Get minimal required bytes in capacity range
+// Return Values:
+//  -1 represent cannot get min required bytes
+func GetMinRequiredBytes(requiredBytes, limitBytes []int64) int64 {
+	res := int64(0)
+	for _, v := range requiredBytes {
+		if res < v {
+			res = v
+		}
+	}
+	for _, v := range limitBytes {
+		if res > v {
+			return -1
+		}
+	}
+	return res
+}
+
+// Valid capacity bytes in capacity range
+func IsValidCapacityBytes(cur int64, requiredBytes, limitBytes []int64) bool {
+	res := cur
+	for _, v := range requiredBytes {
+		if res < v {
+			return false
+		}
+	}
+	for _, v := range limitBytes {
+		if res > v {
+			return false
+		}
+	}
+	return true
+}
