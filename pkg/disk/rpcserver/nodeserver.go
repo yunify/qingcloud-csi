@@ -14,16 +14,15 @@
 // | limitations under the License.
 // +-------------------------------------------------------------------------
 
-package disk
+package rpcserver
 
 import (
 	"fmt"
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/glog"
-	"github.com/kubernetes-csi/drivers/pkg/csi-common"
-	"github.com/yunify/qingcloud-csi/pkg/server"
-	"github.com/yunify/qingcloud-csi/pkg/server/storageclass"
-	"github.com/yunify/qingcloud-csi/pkg/server/volume"
+	"github.com/yunify/qingcloud-csi/pkg/cloudprovider"
+	"github.com/yunify/qingcloud-csi/pkg/common"
+	"github.com/yunify/qingcloud-csi/pkg/disk/driver"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -32,9 +31,18 @@ import (
 	"os"
 )
 
-type nodeServer struct {
-	*csicommon.DefaultNodeServer
-	cloudServer *server.ServerConfig
+type DiskNodeServer struct {
+	driver *driver.DiskDriver
+	cloud  cloudprovider.CloudManager
+}
+
+// NewNodeServer
+// Create node server
+func NewNodeServer(d *driver.DiskDriver, c cloudprovider.CloudManager) *DiskNodeServer {
+	return &DiskNodeServer{
+		driver: d,
+		cloud:  c,
+	}
 }
 
 // This operation MUST be idempotent
@@ -44,7 +52,8 @@ type nodeServer struct {
 //									target path			+ Required
 //									volume capability	+ Required
 //									read only			+ Required (This field is NOT provided when requesting in Kubernetes)
-func (ns *nodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
+func (ns *DiskNodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.
+	NodePublishVolumeResponse, error) {
 	glog.Info("----- Start NodePublishVolume -----")
 	defer glog.Info("===== End NodePublishVolume =====")
 	// 0. Preflight
@@ -59,7 +68,7 @@ func (ns *nodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	// Check volume capability
 	if req.GetVolumeCapability() == nil {
 		return nil, status.Error(codes.InvalidArgument, "Volume capabilities missing in request")
-	} else if !server.ContainsVolumeCapability(ns.Driver.GetVolumeCapabilityAccessModes(), req.GetVolumeCapability()) {
+	} else if !ns.driver.ValidateVolumeCapability(req.GetVolumeCapability()) {
 		return nil, status.Error(codes.FailedPrecondition, "Exceed capabilities")
 	}
 	// check stage path
@@ -72,19 +81,14 @@ func (ns *nodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	volumeId := req.GetVolumeId()
 
 	// set fsType
-	qc, err := storageclass.NewQingStorageClassFromMap(req.GetVolumeContext())
+	qc, err := driver.NewQingStorageClassFromMap(req.GetVolumeContext())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	fsType := qc.VolumeFsType
+	fsType := qc.FsType
 
-	// Create VolumeManager object
-	vm, err := volume.NewVolumeManagerFromFile(ns.cloudServer.GetConfigFilePath())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
 	// Check volume exist
-	volInfo, err := vm.FindVolume(volumeId)
+	volInfo, err := ns.cloud.FindVolume(volumeId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -136,7 +140,8 @@ func (ns *nodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 
 // csi.NodeUnpublishVolumeRequest:	volume id	+ Required
 //									target path	+ Required
-func (ns *nodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
+func (ns *DiskNodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.
+	NodeUnpublishVolumeResponse, error) {
 	glog.Info("----- Start NodeUnpublishVolume -----")
 	defer glog.Info("===== End NodeUnpublishVolume =====")
 	// 0. Preflight
@@ -151,13 +156,8 @@ func (ns *nodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 	volumeId := req.GetVolumeId()
 	targetPath := req.GetTargetPath()
 
-	// Create VolumeManager object
-	vm, err := volume.NewVolumeManagerFromFile(ns.cloudServer.GetConfigFilePath())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
 	// Check volume exist
-	volInfo, err := vm.FindVolume(volumeId)
+	volInfo, err := ns.cloud.FindVolume(volumeId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -190,13 +190,11 @@ func (ns *nodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 // csi.NodeStageVolumeRequest: 	volume id			+ Required
 //								stage target path	+ Required
 //								volume capability	+ Required
-func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRequest) (*csi.NodeStageVolumeResponse, error) {
+func (ns *DiskNodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRequest) (*csi.NodeStageVolumeResponse,
+	error) {
 	glog.Info("----- Start NodeStageVolume -----")
 	defer glog.Info("===== End NodeStageVolume =====")
-	capRsp, _ := ns.NodeGetCapabilities(context.Background(), nil)
-	if flag := server.ContainsNodeServiceCapability(capRsp.GetCapabilities(),
-		csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME); flag == false {
-		glog.Errorf("driver capability %v", capRsp.GetCapabilities())
+	if flag := ns.driver.ValidateNodeServiceRequest(csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME); flag == false {
 		return nil, status.Error(codes.Unimplemented, "Node has not stage capability")
 	}
 	// 0. Preflight
@@ -214,19 +212,14 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	volumeId := req.GetVolumeId()
 	targetPath := req.GetStagingTargetPath()
 	// set fsType
-	qc, err := storageclass.NewQingStorageClassFromMap(req.GetPublishContext())
+	qc, err := driver.NewQingStorageClassFromMap(req.GetPublishContext())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	fsType := qc.VolumeFsType
+	fsType := qc.FsType
 
-	// Create VolumeManager object
-	vm, err := volume.NewVolumeManagerFromFile(ns.cloudServer.GetConfigFilePath())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
 	// Check volume exist
-	volInfo, err := vm.FindVolume(volumeId)
+	volInfo, err := ns.cloud.FindVolume(volumeId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -272,13 +265,11 @@ func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 // This operation MUST be idempotent
 // csi.NodeUnstageVolumeRequest:	volume id	+ Required
 //									target path	+ Required
-func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.NodeUnstageVolumeResponse, error) {
+func (ns *DiskNodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.
+	NodeUnstageVolumeResponse, error) {
 	glog.Info("----- Start NodeUnstageVolume -----")
 	defer glog.Info("===== End NodeUnstageVolume =====")
-	capRsp, _ := ns.NodeGetCapabilities(context.Background(), nil)
-	if flag := server.ContainsNodeServiceCapability(capRsp.GetCapabilities(),
-		csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME); flag == false {
-		glog.Errorf("driver capability %v", capRsp.GetCapabilities())
+	if flag := ns.driver.ValidateNodeServiceRequest(csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME); flag == false {
 		return nil, status.Error(codes.Unimplemented, "Node has not unstage capability")
 	}
 	// 0. Preflight
@@ -293,14 +284,8 @@ func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstag
 	volumeId := req.GetVolumeId()
 	targetPath := req.GetStagingTargetPath()
 
-	// Create VolumeManager object
-	vm, err := volume.NewVolumeManagerFromFile(ns.cloudServer.GetConfigFilePath())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
 	// Check volume exist
-	volInfo, err := vm.FindVolume(volumeId)
+	volInfo, err := ns.cloud.FindVolume(volumeId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -335,49 +320,35 @@ func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstag
 	cnt--
 	glog.Infof("disk volume mount count: %d", cnt)
 	if cnt > 0 {
-		glog.Errorf("image %s still mounted in instance %s", volumeId, ns.cloudServer.GetInstanceId())
+		glog.Errorf("image %s still mounted in instance %s", volumeId, ns.driver.GetInstanceId())
 		return nil, status.Error(codes.Internal, "unmount failed")
 	}
 
 	return &csi.NodeUnstageVolumeResponse{}, nil
 }
 
-func (ns *nodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetCapabilitiesRequest) (*csi.NodeGetCapabilitiesResponse, error) {
+func (ns *DiskNodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetCapabilitiesRequest) (*csi.
+	NodeGetCapabilitiesResponse, error) {
 	glog.Info("----- Start NodeGetCapabilities -----")
 	defer glog.Info("===== End NodeGetCapabilities =====")
 	return &csi.NodeGetCapabilitiesResponse{
-		Capabilities: []*csi.NodeServiceCapability{
-			{
-				Type: &csi.NodeServiceCapability_Rpc{
-					Rpc: &csi.NodeServiceCapability_RPC{
-						Type: csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME,
-					},
-				},
-			},
-			{
-				Type: &csi.NodeServiceCapability_Rpc{
-					Rpc: &csi.NodeServiceCapability_RPC{
-						Type: csi.NodeServiceCapability_RPC_EXPAND_VOLUME,
-					},
-				},
-			},
-		},
+		Capabilities: ns.driver.GetNodeCapability(),
 	}, nil
 }
 
-func (ns *nodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
+func (ns *DiskNodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
 	glog.V(2).Info("----- Start NodeGetInfo -----")
 	defer glog.Info("===== End NodeGetInfo =====")
 
 	return &csi.NodeGetInfoResponse{
-		NodeId:            ns.cloudServer.GetInstanceId(),
-		MaxVolumesPerNode: ns.cloudServer.GetMaxVolumePerNode(),
+		NodeId:            ns.driver.GetInstanceId(),
+		MaxVolumesPerNode: ns.driver.GetMaxVolumePerNode(),
 	}, nil
 }
 
-func (ns *nodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandVolumeRequest) (
+func (ns *DiskNodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandVolumeRequest) (
 	*csi.NodeExpandVolumeResponse, error) {
-	defer server.EntryFunction("NodeExpandVolume")()
+	defer common.EntryFunction("NodeExpandVolume")()
 	// 0. Preflight
 	// check arguments
 	if len(req.GetVolumeId()) == 0 {
@@ -390,14 +361,8 @@ func (ns *nodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandV
 	volumeId := req.GetVolumeId()
 	volumePath := req.GetVolumePath()
 
-	// Create VolumeManager object
-	vm, err := volume.NewVolumeManagerFromFile(ns.cloudServer.GetConfigFilePath())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
 	// Check volume exist
-	volInfo, err := vm.FindVolume(volumeId)
+	volInfo, err := ns.cloud.FindVolume(volumeId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -422,4 +387,9 @@ func (ns *nodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandV
 		return nil, status.Error(codes.Internal, "Failed to expand volume filesystem")
 	}
 	return &csi.NodeExpandVolumeResponse{}, nil
+}
+
+func (ns *DiskNodeServer) NodeGetVolumeStats(ctx context.Context,
+	req *csi.NodeGetVolumeStatsRequest) (*csi.NodeGetVolumeStatsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "")
 }

@@ -95,12 +95,6 @@ spec:
             - name: server-config
               mountPath: /etc/config
       volumes:
-        # make sure mount propagate feature gate is enabled
-        - name: kubelet-dir
-          hostPath:
-            # In AppCenter, must set path field as below.
-            # path: /data/var/lib/kubelet
-            path: /var/lib/kubelet
         - name: socket-dir
           hostPath:
             path: /var/lib/kubelet/plugins/disk.csi.qingcloud.com/

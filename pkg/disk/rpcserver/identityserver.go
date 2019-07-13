@@ -14,31 +14,35 @@
 // | limitations under the License.
 // +-------------------------------------------------------------------------
 
-package disk
+package rpcserver
 
 import (
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/glog"
-	"github.com/kubernetes-csi/drivers/pkg/csi-common"
-	"github.com/yunify/qingcloud-csi/pkg/server"
-	"github.com/yunify/qingcloud-csi/pkg/server/zone"
+	"github.com/yunify/qingcloud-csi/pkg/cloudprovider"
+	"github.com/yunify/qingcloud-csi/pkg/disk/driver"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-type identityServer struct {
-	*csicommon.DefaultIdentityServer
-	cloudServer *server.ServerConfig
+type DiskIdentityServer struct {
+	driver *driver.DiskDriver
+	cloud  cloudprovider.CloudManager
+}
+
+// NewIdentityServer
+// Create identity server
+func NewIdentityServer(d *driver.DiskDriver, c cloudprovider.CloudManager) *DiskIdentityServer {
+	return &DiskIdentityServer{
+		driver: d,
+		cloud:  c,
+	}
 }
 
 // Plugin MUST implement this RPC call
-func (is *identityServer) Probe(ctx context.Context, req *csi.ProbeRequest) (*csi.ProbeResponse, error) {
-	zm, err := zone.NewZoneManagerFromFile(is.cloudServer.GetConfigFilePath())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	zones, err := zm.GetZoneList()
+func (is *DiskIdentityServer) Probe(ctx context.Context, req *csi.ProbeRequest) (*csi.ProbeResponse, error) {
+	zones, err := is.cloud.GetZoneList()
 	if err != nil {
 		return nil, status.Error(codes.FailedPrecondition, err.Error())
 	}
@@ -47,24 +51,28 @@ func (is *identityServer) Probe(ctx context.Context, req *csi.ProbeRequest) (*cs
 }
 
 // Get plugin capabilities: CONTROLLER, ACCESSIBILITY, EXPANSION
-func (ids *identityServer) GetPluginCapabilities(ctx context.Context, req *csi.GetPluginCapabilitiesRequest) (*csi.GetPluginCapabilitiesResponse, error) {
+func (d *DiskIdentityServer) GetPluginCapabilities(ctx context.Context, req *csi.GetPluginCapabilitiesRequest) (*csi.
+	GetPluginCapabilitiesResponse, error) {
 	glog.V(5).Infof("Using default capabilities")
 	return &csi.GetPluginCapabilitiesResponse{
-		Capabilities: []*csi.PluginCapability{
-			{
-				Type: &csi.PluginCapability_Service_{
-					Service: &csi.PluginCapability_Service{
-						Type: csi.PluginCapability_Service_CONTROLLER_SERVICE,
-					},
-				},
-			},
-			{
-				Type: &csi.PluginCapability_VolumeExpansion_{
-					VolumeExpansion: &csi.PluginCapability_VolumeExpansion{
-						Type: csi.PluginCapability_VolumeExpansion_OFFLINE,
-					},
-				},
-			},
-		},
+		Capabilities: d.driver.GetPluginCapability(),
+	}, nil
+}
+
+func (d *DiskIdentityServer) GetPluginInfo(ctx context.Context,
+	req *csi.GetPluginInfoRequest) (*csi.GetPluginInfoResponse, error) {
+	glog.V(5).Infof("Using GetPluginInfo")
+
+	if d.driver.GetName() == "" {
+		return nil, status.Error(codes.Unavailable, "Driver name not configured")
+	}
+
+	if d.driver.GetVersion() == "" {
+		return nil, status.Error(codes.Unavailable, "Driver is missing version")
+	}
+
+	return &csi.GetPluginInfoResponse{
+		Name:          d.driver.GetName(),
+		VendorVersion: d.driver.GetVersion(),
 	}, nil
 }
