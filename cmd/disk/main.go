@@ -18,9 +18,18 @@ package main
 
 import (
 	"flag"
-	"github.com/yunify/qingcloud-csi/pkg/disk"
-	"github.com/yunify/qingcloud-csi/pkg/server"
+	"github.com/golang/glog"
+	"github.com/yunify/qingcloud-csi/pkg/cloudprovider"
+	"github.com/yunify/qingcloud-csi/pkg/disk/driver"
+	"github.com/yunify/qingcloud-csi/pkg/disk/rpcserver"
 	"os"
+	"time"
+)
+
+const (
+	version              = "v1.1.0"
+	defaultProvisionName = "disk.csi.qingcloud.com"
+	defaultConfigPath    = "/etc/config/config.yaml"
 )
 
 func init() {
@@ -29,11 +38,13 @@ func init() {
 
 var (
 	endpoint   = flag.String("endpoint", "unix://tmp/csi.sock", "CSI endpoint")
-	driverName = flag.String("drivername", "csi-qingcloud", "name of the driver")
-	nodeID     = flag.String("nodeid", "", "node id")
-	config     = flag.String("config", "/etc/config/config.yaml", "server config file path")
+	driverName = flag.String("drivername", defaultProvisionName, "name of the driver")
+	nodeId     = flag.String("nodeid", "",
+		"If driver cannot get instance ID from /etc/qingcloud/instance-id, we would use this flag.")
+	configPath = flag.String("config", defaultConfigPath, "server config file path")
 	maxVolume  = flag.Int64("maxvolume", 10,
 		"Maximum number of volumes that controller can publish to the node.")
+	timeout = flag.Duration("timeout", time.Second*60, "timeout duration for retrying, default 60s")
 )
 
 func main() {
@@ -43,7 +54,35 @@ func main() {
 }
 
 func handle() {
-	cloud := server.NewServerConfig(*nodeID, *config, *maxVolume)
-	driver := disk.GetDiskDriver()
-	driver.Run(*driverName, *nodeID, *endpoint, cloud)
+	// Get Instance Id
+	instanceId, err := driver.GetInstanceIdFromFile(driver.DefaultInstanceIdFilePath)
+	if err != nil {
+		glog.Warningf("Failed to get instance id from file, use --nodeId flag. error: %s", err)
+		instanceId = *nodeId
+	}
+	// Get qingcloud config object
+	cfg, err := cloudprovider.ReadConfigFromFile(*configPath)
+	if err != nil {
+		glog.Fatal(err)
+	}
+	cloud, err := cloudprovider.NewCloudManager(cfg)
+	if err != nil {
+		glog.Fatal(err)
+	}
+
+	// Set DiskDriverInput
+	diskDriverInput := &driver.InitDiskDriverInput{
+		Name:          *driverName,
+		Version:       version,
+		NodeId:        instanceId,
+		MaxVolume:     *maxVolume,
+		VolumeCap:     driver.DefaultVolumeAccessModeType,
+		ControllerCap: driver.DefaultControllerServiceCapability,
+		NodeCap:       driver.DefaultNodeServiceCapability,
+		PluginCap:     driver.DefaultPluginCapability,
+	}
+
+	driver := driver.GetDiskDriver()
+	driver.InitDiskDriver(diskDriverInput)
+	rpcserver.Run(driver, cloud, *endpoint)
 }

@@ -20,7 +20,7 @@ DISK_IMAGE_NAME=dockerhub.qingcloud.com/csiplugin/csi-qingcloud
 DISK_IMAGE_VERSION=canary
 DISK_PLUGIN_NAME=qingcloud-disk-csi-driver
 ROOT_PATH=$(pwd)
-PACKAGE_LIST=./cmd/disk ./pkg/disk ./pkg/server ./pkg/server/instance ./pkg/server/volume ./pkg/server/zone
+PACKAGE_LIST=./cmd/... ./pkg/...
 
 disk:
 	if [ ! -d ./vendor ]; then dep ensure; fi
@@ -54,7 +54,7 @@ fmt:
 	go fmt ${PACKAGE_LIST}
 
 fmt-deep: fmt
-	gofmt -s -w -l ${PACKAGE_LIST}
+	gofmt -s -w -l ./pkg/cloudprovider/ ./pkg/common/ ./pkg/disk/driver ./pkg/disk/rpcserver
 
 sanity-test:
 	${ROOT_PATH}/csi-sanity --csi.endpoint /var/lib/kubelet/plugins/disk.csi.qingcloud.com/csi.sock --csi.testvolumesize 107374182400

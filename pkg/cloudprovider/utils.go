@@ -14,53 +14,21 @@
 // | limitations under the License.
 // +-------------------------------------------------------------------------
 
-package instance
+package cloudprovider
 
 import (
-	"testing"
+	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
 )
 
-var getim = func() InstanceManager {
-	// get storage class
-	filePath := "/root/.qingcloud/config.yaml"
-	im, err := NewInstanceManagerFromFile(filePath)
+// ReadConfigFromFile
+// Read config file from a path and return config
+func ReadConfigFromFile(filePath string) (*qcconfig.Config, error) {
+	config, err := qcconfig.NewDefault()
 	if err != nil {
-		return nil
+		return nil, err
 	}
-
-	return im
-}
-
-func TestFindInstance(t *testing.T) {
-	im := getim()
-	testcases := []struct {
-		name  string
-		id    string
-		found bool
-	}{
-		{
-			name:  "Available",
-			id:    "fake",
-			found: true,
-		},
-		{
-			name:  "Not found",
-			id:    "instance-1234",
-			found: false,
-		},
-		{
-			name:  "By name",
-			id:    "neonsan-test",
-			found: false,
-		},
+	if err = config.LoadConfigFromFilepath(filePath); err != nil {
+		return nil, err
 	}
-	for _, v := range testcases {
-		ins, err := im.FindInstance(v.id)
-		if err != nil {
-			t.Errorf("name %s error: %s", v.name, err.Error())
-		}
-		if v.found && (ins == nil || *ins.InstanceID != v.id) {
-			t.Errorf("name %s: find id error", v.name)
-		}
-	}
+	return config, nil
 }
