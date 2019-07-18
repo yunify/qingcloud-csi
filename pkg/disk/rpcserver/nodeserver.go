@@ -19,29 +19,33 @@ package rpcserver
 import (
 	"fmt"
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/golang/glog"
 	"github.com/yunify/qingcloud-csi/pkg/cloudprovider"
 	"github.com/yunify/qingcloud-csi/pkg/common"
 	"github.com/yunify/qingcloud-csi/pkg/disk/driver"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/klog"
 	"k8s.io/kubernetes/pkg/util/mount"
 	"k8s.io/kubernetes/pkg/util/resizefs"
 	"os"
+	"strconv"
+	"strings"
 )
 
 type DiskNodeServer struct {
-	driver *driver.DiskDriver
-	cloud  cloudprovider.CloudManager
+	driver  *driver.DiskDriver
+	cloud   cloudprovider.CloudManager
+	mounter *mount.SafeFormatAndMount
 }
 
 // NewNodeServer
 // Create node server
-func NewNodeServer(d *driver.DiskDriver, c cloudprovider.CloudManager) *DiskNodeServer {
+func NewNodeServer(d *driver.DiskDriver, c cloudprovider.CloudManager, mnt *mount.SafeFormatAndMount) *DiskNodeServer {
 	return &DiskNodeServer{
-		driver: d,
-		cloud:  c,
+		driver:  d,
+		cloud:   c,
+		mounter: mnt,
 	}
 }
 
@@ -54,8 +58,8 @@ func NewNodeServer(d *driver.DiskDriver, c cloudprovider.CloudManager) *DiskNode
 //									read only			+ Required (This field is NOT provided when requesting in Kubernetes)
 func (ns *DiskNodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.
 	NodePublishVolumeResponse, error) {
-	glog.Info("----- Start NodePublishVolume -----")
-	defer glog.Info("===== End NodePublishVolume =====")
+	klog.Info("----- Start NodePublishVolume -----")
+	defer klog.Info("===== End NodePublishVolume =====")
 	// 0. Preflight
 	// check volume id
 	if len(req.GetVolumeId()) == 0 {
@@ -130,11 +134,11 @@ func (ns *DiskNodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePu
 	if req.GetReadonly() == true {
 		options = append(options, "ro")
 	}
-	glog.Infof("Bind mount %s at %s, fsType %s, options %v ...", stagePath, targetPath, fsType, options)
+	klog.Infof("Bind mount %s at %s, fsType %s, options %v ...", stagePath, targetPath, fsType, options)
 	if err := mounter.Mount(stagePath, targetPath, fsType, options); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	glog.Infof("Mount bind %s at %s succeed", stagePath, targetPath)
+	klog.Infof("Mount bind %s at %s succeed", stagePath, targetPath)
 	return &csi.NodePublishVolumeResponse{}, nil
 }
 
@@ -142,8 +146,8 @@ func (ns *DiskNodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePu
 //									target path	+ Required
 func (ns *DiskNodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.
 	NodeUnpublishVolumeResponse, error) {
-	glog.Info("----- Start NodeUnpublishVolume -----")
-	defer glog.Info("===== End NodeUnpublishVolume =====")
+	klog.Info("----- Start NodeUnpublishVolume -----")
+	defer klog.Info("===== End NodeUnpublishVolume =====")
 	// 0. Preflight
 	// check arguments
 	if len(req.GetTargetPath()) == 0 {
@@ -173,15 +177,15 @@ func (ns *DiskNodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.Node
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if notMnt {
-		glog.Warningf("Volume %s has not mount point", volumeId)
+		klog.Warningf("Volume %s has not mount point", volumeId)
 		return &csi.NodeUnpublishVolumeResponse{}, nil
 	}
 	// do unmount
-	glog.Infof("Unbind mountvolume %s/%s", targetPath, volumeId)
+	klog.Infof("Unbind mountvolume %s/%s", targetPath, volumeId)
 	if err = mounter.Unmount(targetPath); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	glog.Infof("Unbound mount volume succeed")
+	klog.Infof("Unbound mount volume succeed")
 
 	return &csi.NodeUnpublishVolumeResponse{}, nil
 }
@@ -192,8 +196,8 @@ func (ns *DiskNodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.Node
 //								volume capability	+ Required
 func (ns *DiskNodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRequest) (*csi.NodeStageVolumeResponse,
 	error) {
-	glog.Info("----- Start NodeStageVolume -----")
-	defer glog.Info("===== End NodeStageVolume =====")
+	klog.Info("----- Start NodeStageVolume -----")
+	defer klog.Info("===== End NodeStageVolume =====")
 	if flag := ns.driver.ValidateNodeServiceRequest(csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME); flag == false {
 		return nil, status.Error(codes.Unimplemented, "Node has not stage capability")
 	}
@@ -248,17 +252,17 @@ func (ns *DiskNodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStag
 	devicePath := ""
 	if volInfo.Instance != nil && volInfo.Instance.Device != nil && *volInfo.Instance.Device != "" {
 		devicePath = *volInfo.Instance.Device
-		glog.Infof("Find volume %s's device path is %s", volumeId, devicePath)
+		klog.Infof("Find volume %s's device path is %s", volumeId, devicePath)
 	} else {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("Cannot find device path of volume %s", volumeId))
+		return nil, status.Errorf(codes.Internal, "Cannot find device path of volume %s", volumeId)
 	}
 	// do mount
-	glog.Infof("Mounting %s to %s format %s...", volumeId, targetPath, fsType)
+	klog.Infof("Mounting %s to %s format %s...", volumeId, targetPath, fsType)
 	diskMounter := &mount.SafeFormatAndMount{Interface: mount.New(""), Exec: mount.NewOsExec()}
 	if err := diskMounter.FormatAndMount(devicePath, targetPath, fsType, []string{}); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	glog.Infof("Mount %s to %s succeed", volumeId, targetPath)
+	klog.Infof("Mount %s to %s succeed", volumeId, targetPath)
 	return &csi.NodeStageVolumeResponse{}, nil
 }
 
@@ -267,8 +271,8 @@ func (ns *DiskNodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStag
 //									target path	+ Required
 func (ns *DiskNodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.
 	NodeUnstageVolumeResponse, error) {
-	glog.Info("----- Start NodeUnstageVolume -----")
-	defer glog.Info("===== End NodeUnstageVolume =====")
+	klog.Info("----- Start NodeUnstageVolume -----")
+	defer klog.Info("===== End NodeUnstageVolume =====")
 	if flag := ns.driver.ValidateNodeServiceRequest(csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME); flag == false {
 		return nil, status.Error(codes.Unimplemented, "Node has not unstage capability")
 	}
@@ -316,11 +320,11 @@ func (ns *DiskNodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUn
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	glog.Infof("disk volume %s has been unmounted.", volumeId)
+	klog.Infof("disk volume %s has been unmounted.", volumeId)
 	cnt--
-	glog.Infof("disk volume mount count: %d", cnt)
+	klog.Infof("disk volume mount count: %d", cnt)
 	if cnt > 0 {
-		glog.Errorf("image %s still mounted in instance %s", volumeId, ns.driver.GetInstanceId())
+		klog.Errorf("image %s still mounted in instance %s", volumeId, ns.driver.GetInstanceId())
 		return nil, status.Error(codes.Internal, "unmount failed")
 	}
 
@@ -329,16 +333,16 @@ func (ns *DiskNodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUn
 
 func (ns *DiskNodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetCapabilitiesRequest) (*csi.
 	NodeGetCapabilitiesResponse, error) {
-	glog.Info("----- Start NodeGetCapabilities -----")
-	defer glog.Info("===== End NodeGetCapabilities =====")
+	klog.Info("----- Start NodeGetCapabilities -----")
+	defer klog.Info("===== End NodeGetCapabilities =====")
 	return &csi.NodeGetCapabilitiesResponse{
 		Capabilities: ns.driver.GetNodeCapability(),
 	}, nil
 }
 
 func (ns *DiskNodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
-	glog.V(2).Info("----- Start NodeGetInfo -----")
-	defer glog.Info("===== End NodeGetInfo =====")
+	klog.V(2).Info("----- Start NodeGetInfo -----")
+	defer klog.Info("===== End NodeGetInfo =====")
 
 	return &csi.NodeGetInfoResponse{
 		NodeId:            ns.driver.GetInstanceId(),
@@ -346,22 +350,32 @@ func (ns *DiskNodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoR
 	}, nil
 }
 
+// NodeExpandVolume will expand filesystem of volume.
+// Input Parameters:
+//  volume id: REQUIRED
+//  volume path: REQUIRED
 func (ns *DiskNodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandVolumeRequest) (
 	*csi.NodeExpandVolumeResponse, error) {
 	defer common.EntryFunction("NodeExpandVolume")()
 	// 0. Preflight
 	// check arguments
+	klog.Info("Check input arguments")
 	if len(req.GetVolumeId()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Volume ID missing in request")
 	}
 	if len(req.GetVolumePath()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Volume path missing in request")
 	}
-	// set parameter
+	requestSizeBytes, err := common.GetRequestSizeBytes(req.GetCapacityRange())
+	if err != nil {
+		return nil, status.Error(codes.OutOfRange, err.Error())
+	}
+	// Set parameter
 	volumeId := req.GetVolumeId()
 	volumePath := req.GetVolumePath()
 
 	// Check volume exist
+	klog.Infof("Get volume %s info", volumeId)
 	volInfo, err := ns.cloud.FindVolume(volumeId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -373,23 +387,54 @@ func (ns *DiskNodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExp
 	devicePath := ""
 	if volInfo.Instance != nil && volInfo.Instance.Device != nil && *volInfo.Instance.Device != "" {
 		devicePath = *volInfo.Instance.Device
-		glog.Infof("Find volume %s's device path is %s", volumeId, devicePath)
+		klog.Infof("Find volume %s's device path is %s", volumeId, devicePath)
 	} else {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("Cannot find device path of volume %s", volumeId))
+		return nil, status.Errorf(codes.Internal, "Cannot find device path of volume %s", volumeId)
 	}
 
-	resizer := resizefs.NewResizeFs(&mount.SafeFormatAndMount{})
+	resizer := resizefs.NewResizeFs(ns.mounter)
+	klog.Infof("Resize file system device %s, mount path %s ...", devicePath, volumePath)
 	ok, err := resizer.Resize(devicePath, volumePath)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if ok != true {
-		return nil, status.Error(codes.Internal, "Failed to expand volume filesystem")
+		return nil, status.Error(codes.Internal, "failed to expand volume filesystem")
 	}
-	return &csi.NodeExpandVolumeResponse{}, nil
+	klog.Info("Succeed to resize file system")
+
+	//  Check the block size
+	blkSizeBytes, err := ns.getBlockSizeBytes(devicePath)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal,
+			"expand volume error when getting size of block volume at path %s: %v", devicePath, err)
+	}
+	klog.Infof("Block size %d Byte, request size %d Byte", blkSizeBytes, requestSizeBytes)
+
+	if blkSizeBytes < requestSizeBytes {
+		// It's possible that the somewhere the volume size was rounded up, getting more size than requested is a success
+		return nil, status.Errorf(codes.Internal, "resize requested for %v but after resize volume was size %v",
+			requestSizeBytes, blkSizeBytes)
+	}
+	return &csi.NodeExpandVolumeResponse{
+		CapacityBytes: blkSizeBytes,
+	}, nil
 }
 
 func (ns *DiskNodeServer) NodeGetVolumeStats(ctx context.Context,
 	req *csi.NodeGetVolumeStatsRequest) (*csi.NodeGetVolumeStatsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "")
+}
+
+func (ns *DiskNodeServer) getBlockSizeBytes(devicePath string) (int64, error) {
+	output, err := ns.mounter.Exec.Run("blockdev", "--getsize64", devicePath)
+	if err != nil {
+		return -1, fmt.Errorf("error when getting size of block volume at path %s: output: %s, err: %v", devicePath, string(output), err)
+	}
+	strOut := strings.TrimSpace(string(output))
+	gotSizeBytes, err := strconv.ParseInt(strOut, 10, 64)
+	if err != nil {
+		return -1, fmt.Errorf("failed to parse size %s into int a size", strOut)
+	}
+	return gotSizeBytes, nil
 }

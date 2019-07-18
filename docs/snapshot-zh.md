@@ -1,12 +1,14 @@
 # 快照
 快照功能包括创建和删除快照，从快照恢复存储卷功能。示例 YAML 文件在 https://github.com/yunify/qingcloud-csi/tree/master/deploy/disk/example/snapshot 内。
 
-### 准备工作
+## 准备工作
 - Kubernetes 1.14+ 集群
-- 在 apiserver, controller-manager 的 `feature-gate` 增加 `VolumeSnapshotDataSource=true` 。
-- 按照 QingCloud CSI 存储插件
+- 在 apiserver, controller-manager 的 `feature-gate` 增加 `VolumeSnapshotDataSource=true`
+- 安装 QingCloud CSI 存储插件
 - 配置了 QingCloud CSI storageclass
-#### 创建带数据的存储卷 `pvc-snap-1`
+- 创建一个带数据的存储卷
+
+### 创建带数据的存储卷 `pvc-snap-1`
 - 创建存储卷 
 ```
 $ kubectl create -f pvc.yaml 

@@ -18,10 +18,11 @@ package main
 
 import (
 	"flag"
-	"github.com/golang/glog"
 	"github.com/yunify/qingcloud-csi/pkg/cloudprovider"
+	"github.com/yunify/qingcloud-csi/pkg/common"
 	"github.com/yunify/qingcloud-csi/pkg/disk/driver"
 	"github.com/yunify/qingcloud-csi/pkg/disk/rpcserver"
+	"k8s.io/klog"
 	"os"
 	"time"
 )
@@ -34,6 +35,7 @@ const (
 
 func init() {
 	flag.Set("logtostderr", "true")
+	klog.InitFlags(flag.CommandLine)
 }
 
 var (
@@ -57,17 +59,17 @@ func handle() {
 	// Get Instance Id
 	instanceId, err := driver.GetInstanceIdFromFile(driver.DefaultInstanceIdFilePath)
 	if err != nil {
-		glog.Warningf("Failed to get instance id from file, use --nodeId flag. error: %s", err)
+		klog.Warningf("Failed to get instance id from file, use --nodeId flag. error: %s", err)
 		instanceId = *nodeId
 	}
 	// Get qingcloud config object
 	cfg, err := cloudprovider.ReadConfigFromFile(*configPath)
 	if err != nil {
-		glog.Fatal(err)
+		klog.Fatal(err)
 	}
 	cloud, err := cloudprovider.NewCloudManager(cfg)
 	if err != nil {
-		glog.Fatal(err)
+		klog.Fatal(err)
 	}
 
 	// Set DiskDriverInput
@@ -82,7 +84,9 @@ func handle() {
 		PluginCap:     driver.DefaultPluginCapability,
 	}
 
+	// For resize
+	mounter := common.NewSafeMounter()
 	driver := driver.GetDiskDriver()
 	driver.InitDiskDriver(diskDriverInput)
-	rpcserver.Run(driver, cloud, *endpoint)
+	rpcserver.Run(driver, cloud, mounter, *endpoint)
 }

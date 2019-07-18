@@ -3,10 +3,10 @@ package driver
 import (
 	"fmt"
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/golang/glog"
 	"github.com/yunify/qingcloud-csi/pkg/cloudprovider"
 	"github.com/yunify/qingcloud-csi/pkg/common"
 	"io/ioutil"
+	"k8s.io/klog"
 	"strings"
 )
 
@@ -76,7 +76,7 @@ func GetInstanceIdFromFile(filepath string) (instanceId string, err error) {
 	}
 	instanceId = string(bytes[:])
 	instanceId = strings.Replace(instanceId, "\n", "", -1)
-	glog.Infof("Getting instance-id: \"%s\"", instanceId)
+	klog.Infof("Getting instance-id: \"%s\"", instanceId)
 	return instanceId, nil
 }
 

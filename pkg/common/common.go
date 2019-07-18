@@ -1,7 +1,7 @@
 package common
 
 import (
-	"github.com/golang/glog"
+	"k8s.io/klog"
 	"time"
 )
 
@@ -9,9 +9,9 @@ import (
 // TODO: set log prefix, k8s.io/klog/klogr
 func EntryFunction(functionName string) func() {
 	start := time.Now()
-	glog.Infof("*************** enter %s at %s ***************", functionName, start.String())
+	klog.Infof("*************** enter %s at %s ***************", functionName, start.String())
 	return func() {
-		glog.Infof("=============== exit %s (%s since %s) ===============", functionName, time.Since(start),
+		klog.Infof("=============== exit %s (%s since %s) ===============", functionName, time.Since(start),
 			start.String())
 	}
 }
