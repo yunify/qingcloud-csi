@@ -153,9 +153,8 @@ func (cs *DiskControllerServer) CreateVolume(ctx context.Context, req *csi.Creat
 			if snapInfo == nil {
 				return nil, status.Errorf(codes.NotFound, "Cannot find content source snapshot id [%s]", snapId)
 			}
-
 			// Compare snapshot required volume size
-			requiredRestoreVolumeSizeInBytes := int64(*snapInfo.Size) * common.Mib
+			requiredRestoreVolumeSizeInBytes := int64(*snapInfo.SnapshotResource.Size) * common.Gib
 			if !common.IsValidCapacityBytes(requiredRestoreVolumeSizeInBytes, req.GetCapacityRange()) {
 				klog.Errorf("Restore volume request size [%d], out of the capacity range",
 					requiredRestoreVolumeSizeInBytes)
@@ -301,8 +300,15 @@ func (cs *DiskControllerServer) ControllerPublishVolume(ctx context.Context, req
 	}
 
 	// Volume published to another node
-	if len(*exVol.Instance.InstanceID) != 0 && *exVol.Instance.InstanceID != nodeId {
-		return nil, status.Error(codes.FailedPrecondition, "Volume published to another node")
+	if len(*exVol.Instance.InstanceID) != 0 {
+		if *exVol.Instance.InstanceID == nodeId {
+			klog.Warningf("volume %s has been already attached on instance %s", volumeId, nodeId)
+			return &csi.ControllerPublishVolumeResponse{}, nil
+		} else {
+			klog.Warningf("volume %s expected attached on instance %s, but actually %s", volumeId, nodeId,
+				*exVol.Instance.InstanceID)
+			return nil, status.Error(codes.FailedPrecondition, "Volume published to another node")
+		}
 	}
 
 	if req.GetVolumeCapability() == nil {
@@ -368,7 +374,6 @@ func (cs *DiskControllerServer) ControllerUnpublishVolume(ctx context.Context, r
 	nodeId := req.GetNodeId()
 
 	// 1. Detach
-
 	// check volume exist
 	exVol, err := cs.cloud.FindVolume(volumeId)
 	if err != nil {
