@@ -24,11 +24,6 @@
 #   go-tests = true
 #   unused-packages = true
 
-
-[[constraint]]
-  branch = "master"
-  name = "github.com/golang/glog"
-
 [[constraint]]
   name = "github.com/yunify/qingcloud-sdk-go"
   revision = "c8f8d40dd4793219c129b7516d6f8ae130bc83c9"

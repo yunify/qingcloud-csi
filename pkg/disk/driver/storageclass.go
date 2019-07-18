@@ -138,7 +138,10 @@ func (sc QingStorageClass) FormatVolumeSizeByte(sizeByte int64) int64 {
 }
 
 // Required Volume Size
-func (sc QingStorageClass) GetRequiredVolumeSize(capRange csi.CapacityRange) (int64, error) {
+func (sc QingStorageClass) GetRequiredVolumeSizeByte(capRange *csi.CapacityRange) (int64, error) {
+	if capRange == nil {
+		return int64(sc.MinSize) * common.Gib, nil
+	}
 	res := int64(0)
 	if capRange.GetRequiredBytes() > 0 {
 		res = capRange.GetRequiredBytes()

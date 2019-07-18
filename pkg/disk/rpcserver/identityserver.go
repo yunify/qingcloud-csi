@@ -18,12 +18,12 @@ package rpcserver
 
 import (
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/golang/glog"
 	"github.com/yunify/qingcloud-csi/pkg/cloudprovider"
 	"github.com/yunify/qingcloud-csi/pkg/disk/driver"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/klog"
 )
 
 type DiskIdentityServer struct {
@@ -46,14 +46,14 @@ func (is *DiskIdentityServer) Probe(ctx context.Context, req *csi.ProbeRequest) 
 	if err != nil {
 		return nil, status.Error(codes.FailedPrecondition, err.Error())
 	}
-	glog.V(5).Infof("get active zone lists [%v]", zones)
+	klog.V(5).Infof("get active zone lists [%v]", zones)
 	return &csi.ProbeResponse{}, nil
 }
 
 // Get plugin capabilities: CONTROLLER, ACCESSIBILITY, EXPANSION
 func (d *DiskIdentityServer) GetPluginCapabilities(ctx context.Context, req *csi.GetPluginCapabilitiesRequest) (*csi.
 	GetPluginCapabilitiesResponse, error) {
-	glog.V(5).Infof("Using default capabilities")
+	klog.V(5).Infof("Using default capabilities")
 	return &csi.GetPluginCapabilitiesResponse{
 		Capabilities: d.driver.GetPluginCapability(),
 	}, nil
@@ -61,7 +61,7 @@ func (d *DiskIdentityServer) GetPluginCapabilities(ctx context.Context, req *csi
 
 func (d *DiskIdentityServer) GetPluginInfo(ctx context.Context,
 	req *csi.GetPluginInfoRequest) (*csi.GetPluginInfoResponse, error) {
-	glog.V(5).Infof("Using GetPluginInfo")
+	klog.V(5).Infof("Using GetPluginInfo")
 
 	if d.driver.GetName() == "" {
 		return nil, status.Error(codes.Unavailable, "Driver name not configured")

@@ -18,7 +18,7 @@ package driver
 
 import (
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/golang/glog"
+	"k8s.io/klog"
 )
 
 type DiskDriver struct {
@@ -66,7 +66,7 @@ func (d *DiskDriver) InitDiskDriver(input *InitDiskDriverInput) {
 func (d *DiskDriver) addVolumeCapabilityAccessModes(vc []csi.VolumeCapability_AccessMode_Mode) {
 	var vca []*csi.VolumeCapability_AccessMode
 	for _, c := range vc {
-		glog.V(4).Infof("Enabling volume access mode: %v", c.String())
+		klog.V(4).Infof("Enabling volume access mode: %v", c.String())
 		vca = append(vca, NewVolumeCapabilityAccessMode(c))
 	}
 	d.volumeCap = vca
@@ -75,7 +75,7 @@ func (d *DiskDriver) addVolumeCapabilityAccessModes(vc []csi.VolumeCapability_Ac
 func (d *DiskDriver) addControllerServiceCapabilities(cl []csi.ControllerServiceCapability_RPC_Type) {
 	var csc []*csi.ControllerServiceCapability
 	for _, c := range cl {
-		glog.V(4).Infof("Enabling controller service capability: %v", c.String())
+		klog.V(4).Infof("Enabling controller service capability: %v", c.String())
 		csc = append(csc, NewControllerServiceCapability(c))
 	}
 	d.controllerCap = csc
@@ -84,7 +84,7 @@ func (d *DiskDriver) addControllerServiceCapabilities(cl []csi.ControllerService
 func (d *DiskDriver) addNodeServiceCapabilities(nl []csi.NodeServiceCapability_RPC_Type) {
 	var nsc []*csi.NodeServiceCapability
 	for _, n := range nl {
-		glog.V(4).Infof("Enabling node service capability: %v", n.String())
+		klog.V(4).Infof("Enabling node service capability: %v", n.String())
 		nsc = append(nsc, NewNodeServiceCapability(n))
 	}
 	d.nodeCap = nsc

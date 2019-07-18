@@ -15,11 +15,11 @@
 # +-------------------------------------------------------------------------
 
 
-FROM alpine
+FROM k8s.gcr.io/debian-base:v1.0.0
 LABEL maintainers="Yunify"
 LABEL description="QingCloud CSI plugin"
 
-RUN  apk add --no-cache xfsprogs e2fsprogs ca-certificates
+RUN clean-install util-linux e2fsprogs xfsprogs  mount ca-certificates udev
 COPY qingcloud-disk-csi-driver /qingcloud-disk-csi-driver
 RUN chmod +x /qingcloud-disk-csi-driver && \
     mkdir -p /var/log/qingcloud-disk-csi-driver
