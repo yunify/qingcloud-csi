@@ -43,7 +43,7 @@
   version = "v1.0.5"
 
 [[projects]]
-  digest = "1:305b14b461136c354da32d8a63cf12c0ddb4755033c304c18285e1bce824d97f"
+  digest = "1:a13909567aed6deba46c7d1b16eecbf57d3bb2db6c889b401843b30263d30dc8"
   name = "github.com/yunify/qingcloud-sdk-go"
   packages = [
     "client",
@@ -56,7 +56,7 @@
     "utils",
   ]
   pruneopts = "UT"
-  revision = "c8f8d40dd4793219c129b7516d6f8ae130bc83c9"
+  revision = "9b4f4db808636561ef271c385052539046dd3111"
 
 [[projects]]
   branch = "master"

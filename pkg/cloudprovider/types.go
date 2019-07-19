@@ -72,3 +72,13 @@ const (
 	ZoneStatusFaulty  = "faulty"
 	ZoneStatusDefunct = "defunct"
 )
+
+const (
+	EnableDescribeSnapshotVerboseMode  = 1
+	DisableDescribeSnapshotVerboseMode = 0
+)
+
+const (
+	EnableDescribeInstanceAppCluster  = 1
+	DisableDescribeInstanceAppCluster = 0
+)

@@ -2899,8 +2899,13 @@ func (v *Snapshot) Validate() error {
 }
 
 type SnapshotResource struct {
-	OSFamily *string `json:"os_family" name:"os_family"`
-	Platform *string `json:"platform" name:"platform"`
+	Architecture *string `json:"architecture" name:"architecture"`
+	Filesystem   *string `json:"filesystem" name:"filesystem"`
+	MountOptions *string `json:"mount_options" name:"mount_options"`
+	MountPoint   *string `json:"mount_point" name:"mount_point"`
+	Size         *int    `json:"size" name:"size"`
+	VolumeID     *string `json:"volume_id" name:"volume_id"`
+	VolumeType   *int    `json:"volume_type" name:"volume_type"`
 }
 
 func (v *SnapshotResource) Validate() error {

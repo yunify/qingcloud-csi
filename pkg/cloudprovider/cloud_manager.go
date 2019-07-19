@@ -1,12 +1,11 @@
 package cloudprovider
 
 import (
+	"errors"
 	"fmt"
 	qcclient "github.com/yunify/qingcloud-sdk-go/client"
 	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"k8s.io/klog"
 )
 
@@ -22,7 +21,6 @@ type CloudManager interface {
 	CreateVolume(volName string, requestSize int, repl int, volType int) (volId string, err error)
 	CreateVolumeFromSnapshot(volName string, snapId string) (volId string, err error)
 	DeleteVolume(volId string) (err error)
-	IsAttachedToInstance(volId string, instanceId string) (isAttached bool, err error)
 	AttachVolume(volId string, instanceId string) (err error)
 	DetachVolume(volId string, instanceId string) (err error)
 	ResizeVolume(volId string, requestSize int) (err error)
@@ -81,11 +79,14 @@ func NewCloudManagerFromFile(filePath string) (CloudManager, error) {
 //			snapshot, nil: 	found snapshot
 //			nil, 	error:	internal error
 func (cm *cloudManager) FindSnapshot(id string) (snapshot *qcservice.Snapshot, err error) {
+	verboseMode := EnableDescribeSnapshotVerboseMode
 	// Set DescribeSnapshot input
-	input := qcservice.DescribeSnapshotsInput{}
-	input.Snapshots = append(input.Snapshots, &id)
+	input := &qcservice.DescribeSnapshotsInput{
+		Snapshots: []*string{&id},
+		Verbose:   &verboseMode,
+	}
 	// Call describe snapshot
-	output, err := cm.snapshotService.DescribeSnapshots(&input)
+	output, err := cm.snapshotService.DescribeSnapshots(input)
 	// 1. Error is not equal to nil.
 	if err != nil {
 		return nil, err
@@ -93,7 +94,7 @@ func (cm *cloudManager) FindSnapshot(id string) (snapshot *qcservice.Snapshot, e
 	// 2. Return code is not equal to 0.
 	if *output.RetCode != 0 {
 		klog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
-		return nil, fmt.Errorf("Call IaaS DescribeSnapshot err: snapshot id %s in %s",
+		return nil, fmt.Errorf("call IaaS DescribeSnapshot err: snapshot id %s in %s",
 			id, cm.snapshotService.Config.Zone)
 	}
 	switch *output.TotalCount {
@@ -110,7 +111,7 @@ func (cm *cloudManager) FindSnapshot(id string) (snapshot *qcservice.Snapshot, e
 	// Found duplicate snapshots
 	default:
 		return nil,
-			fmt.Errorf("Call IaaS DescribeSnapshot err: find duplicate snapshot, snapshot id %s in %s",
+			fmt.Errorf("call IaaS DescribeSnapshot err: find duplicate snapshot, snapshot id %s in %s",
 				id, cm.snapshotService.Config.Zone)
 	}
 }
@@ -126,29 +127,28 @@ func (cm *cloudManager) FindSnapshotByName(name string) (snapshot *qcservice.Sna
 	if len(name) == 0 {
 		return nil, nil
 	}
+	verboseMode := EnableDescribeSnapshotVerboseMode
 	// Set input arguments
-	input := qcservice.DescribeSnapshotsInput{}
-	input.SearchWord = &name
+	input := &qcservice.DescribeSnapshotsInput{
+		SearchWord: &name,
+		Verbose:    &verboseMode,
+	}
 	// Call DescribeSnapshot
-	output, err := cm.snapshotService.DescribeSnapshots(&input)
+	output, err := cm.snapshotService.DescribeSnapshots(input)
 	// Handle error
 	if err != nil {
 		return nil, err
 	}
 	if *output.RetCode != 0 {
 		klog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
-		return nil, fmt.Errorf("Call IaaS DescribeSnapshots err: snapshot name %s in %s",
+		return nil, fmt.Errorf("call IaaS DescribeSnapshots err: snapshot name %s in %s",
 			name, cm.snapshotService.Config.Zone)
 	}
 	// Not found snapshots
 	for _, v := range output.SnapshotSet {
-		if *v.SnapshotName != name {
-			continue
+		if *v.SnapshotName == name && *v.Status != SnapshotStatusCeased && *v.Status != SnapshotStatusDeleted {
+			return v, nil
 		}
-		if *v.Status == SnapshotStatusCeased || *v.Status == SnapshotStatusDeleted {
-			continue
-		}
-		return v, nil
 	}
 	return nil, nil
 }
@@ -159,15 +159,13 @@ func (cm *cloudManager) FindSnapshotByName(name string) (snapshot *qcservice.Sna
 // 3. wait job
 func (cm *cloudManager) CreateSnapshot(snapshotName string, resourceId string) (snapshotId string, err error) {
 	// 0. Set CreateSnapshot args
+	isFull := int(SnapshotFull)
 	// set input value
-	input := &qcservice.CreateSnapshotsInput{}
-	// snapshot name
-	input.SnapshotName = &snapshotName
-	// full snapshot
-	snapshotType := int(SnapshotFull)
-	input.IsFull = &snapshotType
-	// resource disk id
-	input.Resources = []*string{&resourceId}
+	input := &qcservice.CreateSnapshotsInput{
+		SnapshotName: &snapshotName,
+		IsFull:       &isFull,
+		Resources:    []*string{&resourceId},
+	}
 
 	// 1. Create snapshot
 	klog.Infof("Call IaaS CreateSnapshot request snapshot name: %s, zone: %s, resource id %s, is full snapshot %T",
@@ -179,7 +177,7 @@ func (cm *cloudManager) CreateSnapshot(snapshotName string, resourceId string) (
 	// check output
 	if *output.RetCode != 0 {
 		klog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
-		return "", fmt.Errorf(*output.Message)
+		return "", fmt.Errorf("call IaaS CreateSnapshot error: %s", *output.Message)
 	}
 	snapshotId = *output.Snapshots[0]
 	klog.Infof("Call IaaS CreateSnapshots snapshot name %s snapshot id %s succeed", snapshotName, snapshotId)
@@ -191,8 +189,9 @@ func (cm *cloudManager) CreateSnapshot(snapshotName string, resourceId string) (
 // 2. wait job
 func (sm *cloudManager) DeleteSnapshot(snapshotId string) error {
 	// set input value
-	input := &qcservice.DeleteSnapshotsInput{}
-	input.Snapshots = append(input.Snapshots, &snapshotId)
+	input := &qcservice.DeleteSnapshotsInput{
+		Snapshots: []*string{&snapshotId},
+	}
 	// delete snapshot
 	klog.Infof("Call IaaS DeleteSnapshot request id: %s, zone: %s",
 		snapshotId, *sm.snapshotService.Properties.Zone)
@@ -220,10 +219,11 @@ func (sm *cloudManager) DeleteSnapshot(snapshotId string) error {
 //			nil, 	error:	internal error
 func (cm *cloudManager) FindVolume(id string) (volInfo *qcservice.Volume, err error) {
 	// Set DescribeVolumes input
-	input := qcservice.DescribeVolumesInput{}
-	input.Volumes = append(input.Volumes, &id)
+	input := &qcservice.DescribeVolumesInput{
+		Volumes: []*string{&id},
+	}
 	// Call describe volume
-	output, err := cm.volumeService.DescribeVolumes(&input)
+	output, err := cm.volumeService.DescribeVolumes(input)
 	// Error:
 	// 1. Error is not equal to nil.
 	if err != nil {
@@ -233,7 +233,7 @@ func (cm *cloudManager) FindVolume(id string) (volInfo *qcservice.Volume, err er
 	if *output.RetCode != 0 {
 		klog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
 		return nil,
-			fmt.Errorf("Call IaaS DescribeVolumes err: volume id %s in %s", id, cm.volumeService.Config.Zone)
+			fmt.Errorf("call IaaS DescribeVolumes err: volume id %s in %s", id, cm.volumeService.Config.Zone)
 	}
 	switch *output.TotalCount {
 	// Not found volumes
@@ -249,7 +249,7 @@ func (cm *cloudManager) FindVolume(id string) (volInfo *qcservice.Volume, err er
 	// Found duplicate volumes
 	default:
 		return nil,
-			fmt.Errorf("Call IaaS DescribeVolumes err: find duplicate volumes, volume id %s in %s",
+			fmt.Errorf("call IaaS DescribeVolumes err: find duplicate volumes, volume id %s in %s",
 				id, cm.volumeService.Config.Zone)
 	}
 }
@@ -266,17 +266,18 @@ func (cm *cloudManager) FindVolumeByName(name string) (volume *qcservice.Volume,
 		return nil, nil
 	}
 	// Set input arguments
-	input := qcservice.DescribeVolumesInput{}
-	input.SearchWord = &name
+	input := &qcservice.DescribeVolumesInput{
+		SearchWord: &name,
+	}
 	// Call DescribeVolumes
-	output, err := cm.volumeService.DescribeVolumes(&input)
+	output, err := cm.volumeService.DescribeVolumes(input)
 	// Handle error
 	if err != nil {
 		return nil, err
 	}
 	if *output.RetCode != 0 {
 		klog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
-		return nil, fmt.Errorf("Call IaaS DescribeVolumes err: volume name %s in %s",
+		return nil, fmt.Errorf("call IaaS DescribeVolumes err: volume name %s in %s",
 			name, cm.volumeService.Config.Zone)
 	}
 	// Not found volumes
@@ -303,13 +304,11 @@ func (cm *cloudManager) CreateVolume(volumeName string, requestSize int, replica
 	count := 1
 	// volume replicas
 	replStr := DiskReplicaTypeName[replica]
-	// volume provisioner size
-	size := requestSize
 	// set input value
 	input := &qcservice.CreateVolumesInput{
 		Count:      &count,
 		Repl:       &replStr,
-		Size:       &size,
+		Size:       &requestSize,
 		VolumeName: &volumeName,
 		VolumeType: &volType,
 	}
@@ -367,8 +366,9 @@ func (cm *cloudManager) CreateVolumeFromSnapshot(volumeName string, snapshotId s
 // 2. wait job
 func (cm *cloudManager) DeleteVolume(id string) error {
 	// set input value
-	input := &qcservice.DeleteVolumesInput{}
-	input.Volumes = append(input.Volumes, &id)
+	input := &qcservice.DeleteVolumesInput{
+		Volumes: []*string{&id},
+	}
 	// delete volume
 	klog.Infof("Call IaaS DeleteVolume request id: %s, zone: %s",
 		id, *cm.volumeService.Properties.Zone)
@@ -390,141 +390,26 @@ func (cm *cloudManager) DeleteVolume(id string) error {
 	return nil
 }
 
-// IsAttachedToInstance
-// 1. get volume information
-// 2. compare input instance id with instance field in volume information
-func (cm *cloudManager) IsAttachedToInstance(volumeId string, instanceId string) (flag bool, err error) {
-	// zone
-	zone := cm.volumeService.Config.Zone
-
-	// get volume item
-	volumeItem, err := cm.FindVolume(volumeId)
-	if err != nil {
-		return false, status.Errorf(codes.Internal, err.Error())
-	}
-	// check volume exist
-	if volumeItem == nil {
-		return false, status.Errorf(
-			codes.NotFound, "Volume %s not found in %s", volumeId, zone)
-	}
-
-	if volumeItem.Instance != nil && *volumeItem.Instance.InstanceID == instanceId {
-		return true, nil
-	}
-	return false, nil
-}
-
 // AttachVolume
-// 1. get volume information
-// 2. attach volume on instance
-// 3. wait job
+// 1. attach volume on instance
+// 2. wait job
 func (cm *cloudManager) AttachVolume(volumeId string, instanceId string) error {
-	zone := cm.GetZone()
-	// check volume status
-	vol, err := cm.FindVolume(volumeId)
-	if err != nil {
-		return err
+	// set input parameter
+	input := &qcservice.AttachVolumesInput{
+		Volumes:  []*string{&volumeId},
+		Instance: &instanceId,
 	}
-	if vol == nil {
-		return fmt.Errorf("Cannot found volume %s", volumeId)
-	}
-	if *vol.Instance.InstanceID == "" {
-		// set input parameter
-		input := &qcservice.AttachVolumesInput{}
-		input.Volumes = append(input.Volumes, &volumeId)
-		input.Instance = &instanceId
-		// attach volume
-		klog.Infof("Call IaaS AttachVolume request volume id: %s, instance id: %s, zone: %s", volumeId, instanceId, zone)
-		output, err := cm.volumeService.AttachVolumes(input)
-		if err != nil {
-			return err
-		}
-		// check output
-		if *output.RetCode != 0 {
-			klog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
-			return fmt.Errorf(*output.Message)
-		}
-		// wait job
-		klog.Infof("Call IaaS WaitJob %s", *output.JobID)
-		return cm.waitJob(*output.JobID)
-	} else {
-		if *vol.Instance.InstanceID == instanceId {
-			return nil
-		}
-		return fmt.Errorf("volume %s has been attached to another instance %s", volumeId, *vol.Instance.InstanceID)
-	}
-}
-
-// detach volume
-// 1. get volume information
-// 2. If volume not attached, return nil.
-//   If volume attached, check instance id.
-// 3. attach volume
-// 4. wait job
-func (cm *cloudManager) DetachVolume(volumeId string, instanceId string) error {
-	zone := *cm.volumeService.Properties.Zone
-	// check volume status
-	vol, err := cm.FindVolume(volumeId)
-	if err != nil {
-		return err
-	}
-	if vol == nil {
-		return fmt.Errorf("Cannot found volume %s", volumeId)
-	}
-	if *vol.Instance.InstanceID == "" {
-		return nil
-	} else {
-		if *vol.Instance.InstanceID == instanceId || instanceId == "" {
-			// set input parameter
-			input := &qcservice.DetachVolumesInput{}
-			input.Volumes = append(input.Volumes, &volumeId)
-			input.Instance = vol.Instance.InstanceID
-			// attach volume
-			klog.Infof("Call IaaS DetachVolume request volume id: %s, instance id: %s, zone: %s", volumeId, instanceId, zone)
-			output, err := cm.volumeService.DetachVolumes(input)
-			if err != nil {
-				return err
-			}
-			// check output
-			if *output.RetCode != 0 {
-				klog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
-				return fmt.Errorf(*output.Message)
-			}
-			// wait job
-			klog.Infof("Call IaaS WaitJob %s", *output.JobID)
-			return cm.waitJob(*output.JobID)
-		}
-		return fmt.Errorf("Volume %s has been attached to another instance %s", volumeId, *vol.Instance.InstanceID)
-	}
-}
-
-// ResizeVolume can expand the size of a volume offline
-// requestSize: GB
-func (cm *cloudManager) ResizeVolume(volumeId string, requestSize int) error {
-	zone := *cm.volumeService.Properties.Zone
-	// check volume status
-	vol, err := cm.FindVolume(volumeId)
-	if err != nil {
-		return err
-	}
-	if vol == nil {
-		return fmt.Errorf("ResizeVolume: Cannot found volume %s", volumeId)
-	}
-
-	// resize
-	klog.Infof("Call Iaas ResizeVolume request volume [%s], size [%d Gib] in zone [%s]",
-		volumeId, requestSize, zone)
-	input := &qcservice.ResizeVolumesInput{}
-	input.Size = &requestSize
-	input.Volumes = []*string{&volumeId}
-	output, err := cm.volumeService.ResizeVolumes(input)
+	// attach volume
+	klog.Infof("Call IaaS AttachVolume request volume id: %s, instance id: %s, zone: %s", volumeId, instanceId,
+		cm.GetZone())
+	output, err := cm.volumeService.AttachVolumes(input)
 	if err != nil {
 		return err
 	}
 	// check output
 	if *output.RetCode != 0 {
 		klog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
-		return fmt.Errorf("ResizeVolume: " + *output.Message)
+		return fmt.Errorf(*output.Message)
 	}
 	// wait job
 	klog.Infof("Call IaaS WaitJob %s", *output.JobID)
@@ -534,7 +419,75 @@ func (cm *cloudManager) ResizeVolume(volumeId string, requestSize int) error {
 	// check output
 	if *output.RetCode != 0 {
 		klog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
-		return fmt.Errorf("ResizeVolume: " + *output.Message)
+		return fmt.Errorf(*output.Message)
+	}
+	klog.Infof("Call IaaS AttachVolume %s on instance %s succeed", volumeId, instanceId)
+	return nil
+}
+
+// detach volume
+// 1. detach volume
+// 2. wait job
+func (cm *cloudManager) DetachVolume(volumeId string, instanceId string) error {
+	// set input parameter
+	input := &qcservice.DetachVolumesInput{
+		Volumes:  []*string{&volumeId},
+		Instance: &instanceId,
+	}
+	// detach volume
+	klog.Infof("Call IaaS DetachVolume request volume id: %s, instance id: %s, zone: %s", volumeId,
+		instanceId, cm.GetZone())
+	output, err := cm.volumeService.DetachVolumes(input)
+	if err != nil {
+		return err
+	}
+	// check output
+	if *output.RetCode != 0 {
+		klog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
+		return fmt.Errorf(*output.Message)
+	}
+	// wait job
+	klog.Infof("Call IaaS WaitJob %s", *output.JobID)
+	if err := cm.waitJob(*output.JobID); err != nil {
+		return err
+	}
+	// check output
+	if *output.RetCode != 0 {
+		klog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
+		return fmt.Errorf(*output.Message)
+	}
+	klog.Infof("Call IaaS DetachVolume %s succeed", volumeId)
+	return nil
+}
+
+// ResizeVolume can expand the size of a volume offline
+// requestSize: GB
+func (cm *cloudManager) ResizeVolume(volumeId string, requestSize int) error {
+	// resize
+	klog.Infof("Call IaaS ResizeVolume request volume %s size %d Gib in zone [%s]",
+		volumeId, requestSize, cm.GetZone())
+	input := &qcservice.ResizeVolumesInput{
+		Size:    &requestSize,
+		Volumes: []*string{&volumeId},
+	}
+	output, err := cm.volumeService.ResizeVolumes(input)
+	if err != nil {
+		return err
+	}
+	// check output
+	if *output.RetCode != 0 {
+		klog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
+		return errors.New(*output.Message)
+	}
+	// wait job
+	klog.Infof("Call IaaS WaitJob %s", *output.JobID)
+	if err := cm.waitJob(*output.JobID); err != nil {
+		return err
+	}
+	// check output
+	if *output.RetCode != 0 {
+		klog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
+		return errors.New(*output.Message)
 	}
 	klog.Infof("Call IaaS ResizeVolume id %s size %d succeed", volumeId, requestSize)
 	return nil
@@ -545,11 +498,12 @@ func (cm *cloudManager) ResizeVolume(volumeId string, requestSize int) error {
 //			instance, nil: 	found instance
 //			nil, 	error:	internal error
 func (cm *cloudManager) FindInstance(id string) (instance *qcservice.Instance, err error) {
+	seeCluster := EnableDescribeInstanceAppCluster
 	// set describe instance input
-	input := qcservice.DescribeInstancesInput{}
-	var seeCluster int = 1
-	input.IsClusterNode = &seeCluster
-	input.Instances = append(input.Instances, &id)
+	input := qcservice.DescribeInstancesInput{
+		Instances:     []*string{&id},
+		IsClusterNode: &seeCluster,
+	}
 	// call describe instance
 	output, err := cm.instanceService.DescribeInstances(&input)
 	// error
@@ -577,7 +531,7 @@ func (cm *cloudManager) FindInstance(id string) (instance *qcservice.Instance, e
 // GetZone
 // Get current zone in Qingcloud IaaS
 func (cm *cloudManager) GetZone() string {
-	if cm == nil || cm.cloudService.Config.Zone == "" {
+	if cm == nil {
 		return ""
 	}
 	return cm.cloudService.Config.Zone
@@ -592,7 +546,7 @@ func (zm *cloudManager) GetZoneList() (zones []string, err error) {
 		return nil, err
 	}
 	if output == nil {
-		klog.Errorf("should not response [%#v]", output)
+		klog.Error("should not response nil")
 	}
 	for i := range output.ZoneSet {
 		if *output.ZoneSet[i].Status == ZoneStatusActive {
