@@ -28,6 +28,7 @@ import (
 	"k8s.io/klog"
 	"k8s.io/kubernetes/pkg/util/mount"
 	"k8s.io/kubernetes/pkg/util/resizefs"
+	"k8s.io/kubernetes/pkg/volume"
 	"os"
 	"strconv"
 	"strings"
@@ -421,9 +422,72 @@ func (ns *DiskNodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExp
 	}, nil
 }
 
+// NodeGetVolumeStats
+// Input Arguments:
+//  volume id: REQUIRED
+//  volume path: REQUIRED
 func (ns *DiskNodeServer) NodeGetVolumeStats(ctx context.Context,
 	req *csi.NodeGetVolumeStatsRequest) (*csi.NodeGetVolumeStatsResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "")
+	defer common.EntryFunction("NodeGetVolumeStats")()
+	// 0. Preflight
+	// check arguments
+	klog.Info("Check input arguments")
+	if len(req.GetVolumeId()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "Volume ID missing in request")
+	}
+	if len(req.GetVolumePath()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "Volume path missing in request")
+	}
+
+	volumeId := req.GetVolumeId()
+	volumePath := req.GetVolumePath()
+
+	// Get volume info
+	klog.Infof("Get volume %s info", volumeId)
+	volInfo, err := ns.cloud.FindVolume(volumeId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if volInfo == nil || volInfo.Instance == nil || volInfo.Instance.Device == nil {
+		return nil, status.Errorf(codes.NotFound, "cannot find volume %s", volumeId)
+	}
+
+	// Checkout device
+	klog.Infof("Get device name from mount point %s", volumePath)
+	volume.NewMetricsDu(volumePath)
+	devicePath, _, err := mount.GetDeviceNameFromMount(ns.mounter, volumePath)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "cannot get device name from mount point %s", volumePath)
+	}
+	klog.Infof("Succeed to get device name %s", devicePath)
+	if devicePath == "" || *volInfo.Instance.Device != devicePath {
+		return nil, status.Errorf(codes.NotFound, "device path mismatch, from mount point %s, "+
+			"from cloud provider %s", devicePath, volInfo)
+	}
+
+	// Get metrics
+	metricsStatFs := volume.NewMetricsStatFS(volumePath)
+	metrics, err := metricsStatFs.GetMetrics()
+	if err != nil {
+		return nil, status.Error(codes.Unknown, err.Error())
+	}
+
+	return &csi.NodeGetVolumeStatsResponse{
+		Usage: []*csi.VolumeUsage{
+			{
+				Available: metrics.Available.Value(),
+				Total:     metrics.Capacity.Value(),
+				Used:      metrics.Used.Value(),
+				Unit:      csi.VolumeUsage_BYTES,
+			},
+			{
+				Available: metrics.InodesFree.Value(),
+				Total:     metrics.Inodes.Value(),
+				Used:      metrics.InodesUsed.Value(),
+				Unit:      csi.VolumeUsage_INODES,
+			},
+		},
+	}, nil
 }
 
 func (ns *DiskNodeServer) getBlockSizeBytes(devicePath string) (int64, error) {

@@ -9,6 +9,8 @@ import (
 	"k8s.io/klog"
 )
 
+var _ CloudManager = &cloudManager{}
+
 type CloudManager interface {
 	// Snapshot Method
 	FindSnapshot(snapId string) (snapInfo *qcservice.Snapshot, err error)
