@@ -18,6 +18,7 @@ var DefaultControllerServiceCapability = []csi.ControllerServiceCapability_RPC_T
 var DefaultNodeServiceCapability = []csi.NodeServiceCapability_RPC_Type{
 	csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME,
 	csi.NodeServiceCapability_RPC_EXPAND_VOLUME,
+	csi.NodeServiceCapability_RPC_GET_VOLUME_STATS,
 }
 var DefaultPluginCapability = []*csi.PluginCapability{
 	{
