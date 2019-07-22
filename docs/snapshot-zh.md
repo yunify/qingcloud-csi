@@ -32,7 +32,7 @@ fio-645b5d6499-8tc7p   1/1     Running   0          23s
 $ kubectl exec -ti fio-645b5d6499-8tc7p /bin/bash
 root@fio-645b5d6499-8tc7p:/# cd root
 root@fio-645b5d6499-8tc7p:/# ./start-test.sh
-crtl+c (停止写数据)
+crtl+c (5 秒后执行此命令，停止写数据)
 root@fio-645b5d6499-8tc7p:/# ls -lh /mnt
 total 20G
 drwx------ 2 root root  16K Jul  5 06:09 lost+found
