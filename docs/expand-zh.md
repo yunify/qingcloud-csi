@@ -9,7 +9,7 @@
 
 ## 卸载存储卷
 ```
-$ kubectl scacle deploy nginx --replicas=0
+$ kubectl scale deploy nginx --replicas=0
 ```
 
 ## 扩容存储卷
