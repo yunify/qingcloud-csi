@@ -14,14 +14,16 @@
 # | limitations under the License.
 # +-------------------------------------------------------------------------
 
+FROM golang:1.12.7-alpine as builder
+WORKDIR /go/src/github.com/yunify/qingcloud-csi
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -o  _output/qingcloud-disk-csi-driver ./cmd/disk
 
 FROM k8s.gcr.io/debian-base:v1.0.0
 LABEL maintainers="Yunify"
 LABEL description="QingCloud CSI plugin"
-
 RUN clean-install util-linux e2fsprogs xfsprogs  mount ca-certificates udev
-COPY qingcloud-disk-csi-driver /qingcloud-disk-csi-driver
+COPY --from=builder /go/src/github.com/yunify/qingcloud-csi/_output/qingcloud-disk-csi-driver /qingcloud-disk-csi-driver
 RUN chmod +x /qingcloud-disk-csi-driver && \
     mkdir -p /var/log/qingcloud-disk-csi-driver
-
 ENTRYPOINT ["/qingcloud-disk-csi-driver"]

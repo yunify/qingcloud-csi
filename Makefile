@@ -17,18 +17,15 @@
 .PHONY: all disk
 
 DISK_IMAGE_NAME=dockerhub.qingcloud.com/csiplugin/csi-qingcloud
-DISK_IMAGE_VERSION=canary
-DISK_PLUGIN_NAME=qingcloud-disk-csi-driver
+DISK_IMAGE_TAG=canary
 ROOT_PATH=$(pwd)
 PACKAGE_LIST=./cmd/... ./pkg/...
 
 disk:
-	if [ ! -d ./vendor ]; then dep ensure; fi
-	CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-extldflags "-static"' -o  _output/${DISK_PLUGIN_NAME} ./cmd/disk
+	docker build -t ${DISK_IMAGE_NAME}-builder:${DISK_IMAGE_TAG} -f deploy/disk/docker/Dockerfile . --target builder
 
-disk-container: disk
-	cp _output/${DISK_PLUGIN_NAME} deploy/disk/docker
-	docker build -t $(DISK_IMAGE_NAME):$(DISK_IMAGE_VERSION) deploy/disk/docker
+disk-container:
+	docker build -t ${DISK_IMAGE_NAME}:${DISK_IMAGE_TAG} -f deploy/disk/docker/Dockerfile  .
 
 install-dev:
 	cp /root/.qingcloud/config.yaml deploy/disk/kubernetes/base/config.yaml
@@ -61,5 +58,3 @@ sanity-test:
 
 clean:
 	go clean -r -x
-	rm -rf ./_output
-	rm -rf deploy/disk/docker/${DISK_PLUGIN_NAME}
