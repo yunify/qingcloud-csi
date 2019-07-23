@@ -1,7 +1,7 @@
 package mock
 
 import (
-	"github.com/yunify/qingcloud-csi/pkg/cloudprovider"
+	"github.com/yunify/qingcloud-csi/pkg/cloud"
 	"github.com/yunify/qingcloud-csi/pkg/disk/driver"
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
 	"reflect"
@@ -20,7 +20,7 @@ func TestMockVolumeDB_Create(t *testing.T) {
 		name    string
 		volName string
 		volSize int
-		volType int
+		volType driver.VolumeType
 		volRepl string
 		errStr  string
 		volId   string
@@ -29,15 +29,16 @@ func TestMockVolumeDB_Create(t *testing.T) {
 		volName: "normal-vol",
 		volSize: 10,
 		volType: driver.HighPerformanceDiskType,
-		volRepl: cloudprovider.DiskReplicaTypeName[cloudprovider.DiskMultiReplicaType],
+		volRepl: cloud.DiskReplicaTypeName[cloud.DiskMultiReplicaType],
 		errStr:  "",
 	}
 
 	// 1 CreateVolume
+	volType := test.volType.Int()
 	volId, err := db.Create(&qcservice.Volume{
 		VolumeName: &test.volName,
 		Size:       &test.volSize,
-		VolumeType: &test.volType,
+		VolumeType: &volType,
 		Repl:       &test.volRepl,
 	})
 	if err != nil {
@@ -61,8 +62,8 @@ func TestMockVolumeDB_Create(t *testing.T) {
 	}
 	// SearchVolume
 	volInfoAttached := db.Search(test.volId)
-	if volInfoAttached != nil && *volInfoAttached.Status != cloudprovider.DiskStatusInuse {
-		t.Errorf("name %s: expect %s but actually %s", test.name, cloudprovider.DiskStatusInuse,
+	if volInfoAttached != nil && *volInfoAttached.Status != cloud.DiskStatusInuse {
+		t.Errorf("name %s: expect %s but actually %s", test.name, cloud.DiskStatusInuse,
 			*volInfoAttached.Status)
 	}
 	// 4 Try to DeleteVolume
@@ -77,8 +78,8 @@ func TestMockVolumeDB_Create(t *testing.T) {
 	}
 	// SearchVolumeId
 	volInfoDetached := db.Search(test.volId)
-	if *volInfoDetached.Status != cloudprovider.DiskStatusAvailable {
-		t.Errorf("name %s: expect %s but actually %s", test.name, cloudprovider.DiskStatusAvailable, *volInfoDetached.Status)
+	if *volInfoDetached.Status != cloud.DiskStatusAvailable {
+		t.Errorf("name %s: expect %s but actually %s", test.name, cloud.DiskStatusAvailable, *volInfoDetached.Status)
 	}
 	// 6 DeleteVolume
 	err = db.Delete(test.volId)
@@ -87,8 +88,8 @@ func TestMockVolumeDB_Create(t *testing.T) {
 	}
 	// SearchVolumeId
 	volInfoDeleted := db.Search(test.volId)
-	if *volInfoDeleted.Status != cloudprovider.DiskStatusDeleted {
-		t.Logf("name %s: expect %s but actually %s", test.name, cloudprovider.DiskStatusDeleted, *volInfoDeleted.Status)
+	if *volInfoDeleted.Status != cloud.DiskStatusDeleted {
+		t.Logf("name %s: expect %s but actually %s", test.name, cloud.DiskStatusDeleted, *volInfoDeleted.Status)
 	}
 
 }

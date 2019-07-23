@@ -51,7 +51,7 @@ fmt:
 	go fmt ${PACKAGE_LIST}
 
 fmt-deep: fmt
-	gofmt -s -w -l ./pkg/cloudprovider/ ./pkg/common/ ./pkg/disk/driver ./pkg/disk/rpcserver
+	gofmt -s -w -l ./pkg/cloud/ ./pkg/common/ ./pkg/disk/driver ./pkg/disk/rpcserver
 
 sanity-test:
 	${ROOT_PATH}/csi-sanity --csi.endpoint /var/lib/kubelet/plugins/disk.csi.qingcloud.com/csi.sock --csi.testvolumesize 107374182400

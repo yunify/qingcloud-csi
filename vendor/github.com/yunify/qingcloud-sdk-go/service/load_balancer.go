@@ -354,6 +354,7 @@ type CreateLoadBalancerInput struct {
 	LoadBalancerType *int    `json:"loadbalancer_type" name:"loadbalancer_type" default:"0" location:"params"`
 	NodeCount        *int    `json:"node_count" name:"node_count" location:"params"`
 	PrivateIP        *string `json:"private_ip" name:"private_ip" location:"params"`
+	ProjectID        *string `json:"project_id" name:"project_id" location:"params"`
 	SecurityGroup    *string `json:"security_group" name:"security_group" location:"params"`
 	VxNet            *string `json:"vxnet" name:"vxnet" location:"params"`
 }

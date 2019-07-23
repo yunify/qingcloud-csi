@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package cloudprovider
+package cloud
 
 import (
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
@@ -90,7 +90,7 @@ type SnapshotManager interface {
 	// Return:
 	//   volume id, nil: succeed to create volume
 	//   nil, error: failed to create volume
-	CreateVolumeFromSnapshot(volName string, snapId string) (volId string, err error)
+	CreateVolumeFromSnapshot(volName string, snapId string, zone string) (volId string, err error)
 }
 
 type UtilManager interface {

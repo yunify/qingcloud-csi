@@ -18,14 +18,14 @@ package mock
 
 import (
 	"fmt"
-	"github.com/yunify/qingcloud-csi/pkg/cloudprovider"
+	"github.com/yunify/qingcloud-csi/pkg/cloud"
 	"github.com/yunify/qingcloud-csi/pkg/common"
 	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
 	"time"
 )
 
-var _ cloudprovider.CloudManager = &mockCloudManager{}
+var _ cloud.CloudManager = &mockCloudManager{}
 
 type mockCloudManager struct {
 	qcconfig  *qcconfig.Config
@@ -33,7 +33,7 @@ type mockCloudManager struct {
 	volumes   map[string]*qcservice.Volume
 }
 
-func NewMockCloudManagerFromConfig(config *qcconfig.Config) (cloudprovider.CloudManager, error) {
+func NewMockCloudManagerFromConfig(config *qcconfig.Config) (cloud.CloudManager, error) {
 	return &mockCloudManager{
 		qcconfig: config,
 	}, nil
@@ -64,7 +64,7 @@ func (m *mockCloudManager) CreateSnapshot(snapName string, volId string) (snapId
 	if volInfo == nil {
 		return "", fmt.Errorf("create snapshot %s error: volume %s does not exist", snapName, volId)
 	}
-	snapStatus := string(cloudprovider.SnapshotStatusAvailable)
+	snapStatus := string(cloud.SnapshotStatusAvailable)
 	snapId = common.GenerateHashInEightBytes(snapName + volId + time.Now().UTC().String())
 	snapEntity := &qcservice.Snapshot{
 		SnapshotID:   &snapId,
@@ -85,14 +85,15 @@ func (m *mockCloudManager) DeleteSnapshot(snapId string) (err error) {
 	if err != nil {
 		return err
 	}
-	if snapInfo == nil || *snapInfo.Status == cloudprovider.SnapshotStatusDeleted {
+	if snapInfo == nil || *snapInfo.Status == cloud.SnapshotStatusDeleted {
 		return fmt.Errorf("delete snapshot %s error: snapshot has been deleted", snapId)
 	}
 
 	return nil
 }
 
-func (m *mockCloudManager) CreateVolumeFromSnapshot(volName string, snapId string) (volId string, err error) {
+func (m *mockCloudManager) CreateVolumeFromSnapshot(volName string, snapId string, zone string) (volId string,
+	err error) {
 	exVol, err := m.FindVolumeByName(volName)
 	if err != nil {
 		return "", err
@@ -111,9 +112,9 @@ func (m *mockCloudManager) FindVolume(volId string) (volInfo *qcservice.Volume, 
 		return nil, nil
 	}
 	switch *info.Status {
-	case cloudprovider.DiskStatusDeleted:
+	case cloud.DiskStatusDeleted:
 		fallthrough
-	case cloudprovider.DiskStatusCeased:
+	case cloud.DiskStatusCeased:
 		return nil, nil
 	default:
 		return info, nil
@@ -124,9 +125,9 @@ func (m *mockCloudManager) FindVolumeByName(volName string) (volInfo *qcservice.
 	for _, v := range m.volumes {
 		if *v.VolumeName == volName {
 			switch *v.Status {
-			case cloudprovider.DiskStatusDeleted:
+			case cloud.DiskStatusDeleted:
 				fallthrough
-			case cloudprovider.DiskStatusCeased:
+			case cloud.DiskStatusCeased:
 				continue
 			default:
 				return v, nil
@@ -146,8 +147,8 @@ func (m *mockCloudManager) CreateVolume(volName string, requestSize int, replica
 		return "", fmt.Errorf("create volume error: volume %s already exist", volName)
 	}
 	volId = "vol-" + common.GenerateHashInEightBytes(volName+time.Now().UTC().String())
-	replStr := cloudprovider.DiskReplicaTypeName[replicas]
-	status := cloudprovider.DiskStatusAvailable
+	replStr := cloud.DiskReplicaTypeName[replicas]
+	status := cloud.DiskStatusAvailable
 	vol := &qcservice.Volume{
 		VolumeID:   &volId,
 		VolumeName: &volName,
@@ -168,7 +169,7 @@ func (m *mockCloudManager) DeleteVolume(volId string) (err error) {
 	if exVol == nil {
 		return fmt.Errorf("delete volume error: volume %s does not exist", volId)
 	}
-	status := cloudprovider.DiskStatusDeleted
+	status := cloud.DiskStatusDeleted
 	exVol.Status = &status
 	m.volumes[volId] = exVol
 	return nil

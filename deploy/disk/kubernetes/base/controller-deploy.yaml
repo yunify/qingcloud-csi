@@ -59,6 +59,7 @@ spec:
         - "--retry-interval-start=5s"
         - "--retry-interval-max=5m"
         - "--worker-threads=5"
+        - "--feature-gates=Topology=true"
         - "--v=5"
         env:
         - name: ADDRESS

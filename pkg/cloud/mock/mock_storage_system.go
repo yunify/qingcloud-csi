@@ -2,7 +2,7 @@ package mock
 
 import (
 	"fmt"
-	"github.com/yunify/qingcloud-csi/pkg/cloudprovider"
+	"github.com/yunify/qingcloud-csi/pkg/cloud"
 	"github.com/yunify/qingcloud-csi/pkg/common"
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
 	"k8s.io/klog"
@@ -33,7 +33,7 @@ func (m mockVolumeDB) Create(item *qcservice.Volume) (string, error) {
 		return "", fmt.Errorf("create volume error: lack of input args")
 	}
 	volId := "vol-" + common.GenerateHashInEightBytes(*item.VolumeName+time.Now().UTC().String())
-	status := cloudprovider.DiskStatusAvailable
+	status := cloud.DiskStatusAvailable
 	item.Status = &status
 	m.Lock()
 	defer m.Unlock()
@@ -46,10 +46,10 @@ func (m mockVolumeDB) Delete(volId string) error {
 	if m.Search(volId) == nil {
 		return fmt.Errorf("delete volume error: volume %s does not exist", volId)
 	}
-	if *m.volume[volId].Status != cloudprovider.DiskStatusAvailable {
+	if *m.volume[volId].Status != cloud.DiskStatusAvailable {
 		return fmt.Errorf("delete volume error: volume %s does not available", volId)
 	}
-	status := cloudprovider.DiskStatusDeleted
+	status := cloud.DiskStatusDeleted
 	m.Lock()
 	m.volume[volId].Status = &status
 	defer m.Unlock()
@@ -76,10 +76,10 @@ func (m mockVolumeDB) Attach(volumeId string, instanceId string) error {
 	if volInfo == nil {
 		return fmt.Errorf("attach volume error: volume %s does not exist", volumeId)
 	}
-	if *volInfo.Status == cloudprovider.DiskStatusInuse {
+	if *volInfo.Status == cloud.DiskStatusInuse {
 		return fmt.Errorf("attach volume error: volume %s already attached", volumeId)
 	}
-	status := cloudprovider.DiskStatusInuse
+	status := cloud.DiskStatusInuse
 	m.Lock()
 	volInfo.Instance = &qcservice.Instance{
 		InstanceID: &instanceId,
@@ -93,19 +93,19 @@ func (m mockVolumeDB) Attach(volumeId string, instanceId string) error {
 func (m mockVolumeDB) Detach(volumeId string, instanceId string) error {
 	volInfo := m.Search(volumeId)
 	if volInfo == nil {
-		return fmt.Errorf("attach volume error: volume %s does not exist", volumeId)
+		return fmt.Errorf("detach volume error: volume %s does not exist", volumeId)
 	}
-	if *volInfo.Status != cloudprovider.DiskStatusInuse {
-		return fmt.Errorf("attach volume error: volume %s does not attached", volumeId)
+	if *volInfo.Status != cloud.DiskStatusInuse {
+		return fmt.Errorf("detach volume error: volume %s does not attached", volumeId)
 	}
 	if *volInfo.Instance.InstanceID != instanceId {
-		return fmt.Errorf("attach volume error: volume %s has been attached to another instance", volumeId)
+		return fmt.Errorf("detach volume error: volume %s has been attached to another instance", volumeId)
 	}
-	status := cloudprovider.DiskStatusAvailable
+	status := cloud.DiskStatusAvailable
 	m.Lock()
 	volInfo.Instance.InstanceID = nil
 	volInfo.Status = &status
 	defer m.Unlock()
-	klog.Infof("succeed to attach volume %s", volumeId)
+	klog.Infof("succeed to detach volume %s", volumeId)
 	return nil
 }

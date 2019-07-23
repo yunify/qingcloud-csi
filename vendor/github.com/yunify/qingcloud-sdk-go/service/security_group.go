@@ -162,6 +162,55 @@ type ApplySecurityGroupOutput struct {
 	RetCode *int    `json:"ret_code" name:"ret_code" location:"elements"`
 }
 
+// Documentation URL: https://docs.qingcloud.com/api/sg/apply_security_group_ipsets.html
+func (s *SecurityGroupService) ApplySecurityGroupIPSets(i *ApplySecurityGroupIPSetsInput) (*ApplySecurityGroupIPSetsOutput, error) {
+	if i == nil {
+		i = &ApplySecurityGroupIPSetsInput{}
+	}
+	o := &data.Operation{
+		Config:        s.Config,
+		Properties:    s.Properties,
+		APIName:       "ApplySecurityGroupIPSets",
+		RequestMethod: "GET",
+	}
+
+	x := &ApplySecurityGroupIPSetsOutput{}
+	r, err := request.New(o, i, x)
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.Send()
+	if err != nil {
+		return nil, err
+	}
+
+	return x, err
+}
+
+type ApplySecurityGroupIPSetsInput struct {
+	SecurityGroupIPSets []*string `json:"security_group_ipsets" name:"security_group_ipsets" location:"params"` // Required
+}
+
+func (v *ApplySecurityGroupIPSetsInput) Validate() error {
+
+	if len(v.SecurityGroupIPSets) == 0 {
+		return errors.ParameterRequiredError{
+			ParameterName: "SecurityGroupIPSets",
+			ParentName:    "ApplySecurityGroupIPSetsInput",
+		}
+	}
+
+	return nil
+}
+
+type ApplySecurityGroupIPSetsOutput struct {
+	Message *string `json:"message" name:"message"`
+	Action  *string `json:"action" name:"action" location:"elements"`
+	JobID   *string `json:"job_id" name:"job_id" location:"elements"`
+	RetCode *int    `json:"ret_code" name:"ret_code" location:"elements"`
+}
+
 // Documentation URL: https://docs.qingcloud.com/api/sg/create_security_group.html
 func (s *SecurityGroupService) CreateSecurityGroup(i *CreateSecurityGroupInput) (*CreateSecurityGroupOutput, error) {
 	if i == nil {
@@ -564,6 +613,7 @@ type DescribeSecurityGroupIPSetsInput struct {
 	Limit                  *int      `json:"limit" name:"limit" default:"20" location:"params"`
 	Offset                 *int      `json:"offset" name:"offset" default:"0" location:"params"`
 	Owner                  *string   `json:"owner" name:"owner" location:"params"`
+	ProjectID              *string   `json:"project_id" name:"project_id" location:"params"`
 	SecurityGroupIPSetName *string   `json:"security_group_ipset_name" name:"security_group_ipset_name" location:"params"`
 	SecurityGroupIPSets    []*string `json:"security_group_ipsets" name:"security_group_ipsets" location:"params"`
 	Tags                   []*string `json:"tags" name:"tags" location:"params"`
@@ -702,6 +752,7 @@ func (s *SecurityGroupService) DescribeSecurityGroupSnapshots(i *DescribeSecurit
 type DescribeSecurityGroupSnapshotsInput struct {
 	Limit                  *int      `json:"limit" name:"limit" default:"20" location:"params"`
 	Offset                 *int      `json:"offset" name:"offset" default:"0" location:"params"`
+	ProjectID              *string   `json:"project_id" name:"project_id" location:"params"`
 	Reverse                *int      `json:"reverse" name:"reverse" default:"1" location:"params"`
 	SecurityGroup          *string   `json:"security_group" name:"security_group" location:"params"` // Required
 	SecurityGroupSnapshots []*string `json:"security_group_snapshots" name:"security_group_snapshots" location:"params"`
@@ -757,6 +808,7 @@ type DescribeSecurityGroupsInput struct {
 	Limit          *int      `json:"limit" name:"limit" default:"20" location:"params"`
 	Offset         *int      `json:"offset" name:"offset" default:"0" location:"params"`
 	Owner          *string   `json:"owner" name:"owner" location:"params"`
+	ProjectID      *string   `json:"project_id" name:"project_id" location:"params"`
 	SearchWord     *string   `json:"search_word" name:"search_word" location:"params"`
 	SecurityGroups []*string `json:"security_groups" name:"security_groups" location:"params"`
 	Tags           []*string `json:"tags" name:"tags" location:"params"`

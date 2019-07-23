@@ -18,7 +18,7 @@ package main
 
 import (
 	"flag"
-	"github.com/yunify/qingcloud-csi/pkg/cloudprovider"
+	"github.com/yunify/qingcloud-csi/pkg/cloud"
 	"github.com/yunify/qingcloud-csi/pkg/common"
 	"github.com/yunify/qingcloud-csi/pkg/disk/driver"
 	"github.com/yunify/qingcloud-csi/pkg/disk/rpcserver"
@@ -57,11 +57,15 @@ func handle() {
 	// Get Instance Id
 	instanceId, err := driver.GetInstanceIdFromFile(driver.DefaultInstanceIdFilePath)
 	if err != nil {
-		klog.Warningf("Failed to get instance id from file, use --nodeId flag. error: %s", err)
-		instanceId = *nodeId
+		if os.IsNotExist(err) {
+			klog.Warningf("Failed to get instance id from file, use --nodeId flag. error: %s", err)
+			instanceId = *nodeId
+		} else {
+			klog.Fatalf("Failed to get instance id from file, error: %s", err)
+		}
 	}
 	// Get qingcloud config object
-	cloud, err := cloudprovider.NewQingCloudManagerFromFile(*configPath)
+	cloud, err := cloud.NewQingCloudManagerFromFile(*configPath)
 	if err != nil {
 		klog.Fatal(err)
 	}

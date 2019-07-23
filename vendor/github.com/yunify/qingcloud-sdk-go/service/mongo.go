@@ -486,6 +486,7 @@ type DescribeMongosInput struct {
 	MongoName *string   `json:"mongo_name" name:"mongo_name" location:"params"`
 	Mongos    []*string `json:"mongos" name:"mongos" location:"params"`
 	Offset    *int      `json:"offset" name:"offset" default:"0" location:"params"`
+	ProjectID *string   `json:"project_id" name:"project_id" location:"params"`
 	Status    []*string `json:"status" name:"status" location:"params"`
 	Tags      []*string `json:"tags" name:"tags" location:"params"`
 	Verbose   *int      `json:"verbose" name:"verbose" location:"params"`

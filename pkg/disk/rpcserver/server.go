@@ -17,16 +17,15 @@ limitations under the License.
 package rpcserver
 
 import (
-	"github.com/yunify/qingcloud-csi/pkg/cloudprovider"
+	"github.com/yunify/qingcloud-csi/pkg/cloud"
 	"github.com/yunify/qingcloud-csi/pkg/common"
 	"github.com/yunify/qingcloud-csi/pkg/disk/driver"
 	"k8s.io/kubernetes/pkg/util/mount"
 )
 
 // Run
-// Initial and start CSI drivermakee
-
-func Run(driver *driver.DiskDriver, cloud cloudprovider.CloudManager, mounter *mount.SafeFormatAndMount,
+// Initial and start CSI driver
+func Run(driver *driver.DiskDriver, cloud cloud.CloudManager, mounter *mount.SafeFormatAndMount,
 	endpoint string) {
 	// Initialize default library driver
 	ids := NewIdentityServer(driver, cloud)
