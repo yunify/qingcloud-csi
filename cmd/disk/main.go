@@ -23,6 +23,7 @@ import (
 	"github.com/yunify/qingcloud-csi/pkg/disk/driver"
 	"github.com/yunify/qingcloud-csi/pkg/disk/rpcserver"
 	"k8s.io/klog"
+	"math/rand"
 	"os"
 	"time"
 )
@@ -32,11 +33,6 @@ const (
 	defaultProvisionName = "disk.csi.qingcloud.com"
 	defaultConfigPath    = "/etc/config/config.yaml"
 )
-
-func init() {
-	flag.Set("logtostderr", "true")
-	klog.InitFlags(flag.CommandLine)
-}
 
 var (
 	endpoint   = flag.String("endpoint", "unix://tmp/csi.sock", "CSI endpoint")
@@ -50,7 +46,9 @@ var (
 )
 
 func main() {
+	klog.InitFlags(nil)
 	flag.Parse()
+	rand.Seed(time.Now().UTC().UnixNano())
 	handle()
 	os.Exit(0)
 }
@@ -63,11 +61,7 @@ func handle() {
 		instanceId = *nodeId
 	}
 	// Get qingcloud config object
-	cfg, err := cloudprovider.ReadConfigFromFile(*configPath)
-	if err != nil {
-		klog.Fatal(err)
-	}
-	cloud, err := cloudprovider.NewCloudManager(cfg)
+	cloud, err := cloudprovider.NewQingCloudManagerFromFile(*configPath)
 	if err != nil {
 		klog.Fatal(err)
 	}

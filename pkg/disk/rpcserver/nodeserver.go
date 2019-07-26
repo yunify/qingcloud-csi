@@ -1,18 +1,18 @@
-// +-------------------------------------------------------------------------
-// | Copyright (C) 2018 Yunify, Inc.
-// +-------------------------------------------------------------------------
-// | Licensed under the Apache License, Version 2.0 (the "License");
-// | you may not use this work except in compliance with the License.
-// | You may obtain a copy of the License in the LICENSE file, or at:
-// |
-// | http://www.apache.org/licenses/LICENSE-2.0
-// |
-// | Unless required by applicable law or agreed to in writing, software
-// | distributed under the License is distributed on an "AS IS" BASIS,
-// | WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// | See the License for the specific language governing permissions and
-// | limitations under the License.
-// +-------------------------------------------------------------------------
+/*
+Copyright (C) 2018 Yunify, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this work except in compliance with the License.
+You may obtain a copy of the License in the LICENSE file, or at:
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 
 package rpcserver
 
@@ -357,7 +357,10 @@ func (ns *DiskNodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoR
 //  volume path: REQUIRED
 func (ns *DiskNodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandVolumeRequest) (
 	*csi.NodeExpandVolumeResponse, error) {
-	defer common.EntryFunction("NodeExpandVolume")()
+	funcName := "NodeExpandVolume"
+	info, hash := common.EntryFunction(funcName)
+	klog.Info(info)
+	defer klog.Info(common.ExitFunction(funcName, hash))
 	// 0. Preflight
 	// check arguments
 	klog.Info("Check input arguments")
@@ -428,10 +431,13 @@ func (ns *DiskNodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExp
 //  volume path: REQUIRED
 func (ns *DiskNodeServer) NodeGetVolumeStats(ctx context.Context,
 	req *csi.NodeGetVolumeStatsRequest) (*csi.NodeGetVolumeStatsResponse, error) {
-	defer common.EntryFunction("NodeGetVolumeStats")()
+	funcName := "NodeGetVolumeStats"
+	info, hash := common.EntryFunction(funcName)
+	klog.Info(info)
+	defer klog.Info(common.ExitFunction(funcName, hash))
 	// 0. Preflight
 	// check arguments
-	klog.Info("Check input arguments")
+	klog.Infof("%s: Check input arguments", hash)
 	if len(req.GetVolumeId()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Volume ID missing in request")
 	}
@@ -443,7 +449,7 @@ func (ns *DiskNodeServer) NodeGetVolumeStats(ctx context.Context,
 	volumePath := req.GetVolumePath()
 
 	// Get volume info
-	klog.Infof("Get volume %s info", volumeId)
+	klog.Infof("%s: Get volume %s info", hash, volumeId)
 	volInfo, err := ns.cloud.FindVolume(volumeId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -453,13 +459,13 @@ func (ns *DiskNodeServer) NodeGetVolumeStats(ctx context.Context,
 	}
 
 	// Checkout device
-	klog.Infof("Get device name from mount point %s", volumePath)
+	klog.Infof("%s: Get device name from mount point %s", hash, volumePath)
 	volume.NewMetricsDu(volumePath)
 	devicePath, _, err := mount.GetDeviceNameFromMount(ns.mounter, volumePath)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "cannot get device name from mount point %s", volumePath)
 	}
-	klog.Infof("Succeed to get device name %s", devicePath)
+	klog.Infof("%s: Succeed to get device name %s", hash, devicePath)
 	if devicePath == "" || *volInfo.Instance.Device != devicePath {
 		return nil, status.Errorf(codes.NotFound, "device path mismatch, from mount point %s, "+
 			"from cloud provider %s", devicePath, volInfo)
@@ -471,7 +477,7 @@ func (ns *DiskNodeServer) NodeGetVolumeStats(ctx context.Context,
 	if err != nil {
 		return nil, status.Error(codes.Unknown, err.Error())
 	}
-
+	klog.Infof("%s: Succeed to get metrics", hash)
 	return &csi.NodeGetVolumeStatsResponse{
 		Usage: []*csi.VolumeUsage{
 			{

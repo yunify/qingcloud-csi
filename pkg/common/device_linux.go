@@ -1,3 +1,5 @@
+// +build linux
+
 /*
 Copyright (C) 2018 Yunify, Inc.
 
@@ -14,21 +16,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package cloudprovider
+package common
 
 import (
-	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
+	"k8s.io/kubernetes/pkg/util/mount"
 )
 
-// ReadConfigFromFile
-// Read config file from a path and return config
-func ReadConfigFromFile(filePath string) (*qcconfig.Config, error) {
-	config, err := qcconfig.NewDefault()
-	if err != nil {
-		return nil, err
+func NewSafeMounter() *mount.SafeFormatAndMount {
+	realMounter := mount.New("")
+	realExec := mount.NewOsExec()
+	return &mount.SafeFormatAndMount{
+		Interface: realMounter,
+		Exec:      realExec,
 	}
-	if err = config.LoadConfigFromFilepath(filePath); err != nil {
-		return nil, err
-	}
-	return config, nil
 }
