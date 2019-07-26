@@ -1,18 +1,18 @@
-// +-------------------------------------------------------------------------
-// | Copyright (C) 2018 Yunify, Inc.
-// +-------------------------------------------------------------------------
-// | Licensed under the Apache License, Version 2.0 (the "License");
-// | you may not use this work except in compliance with the License.
-// | You may obtain a copy of the License in the LICENSE file, or at:
-// |
-// | http://www.apache.org/licenses/LICENSE-2.0
-// |
-// | Unless required by applicable law or agreed to in writing, software
-// | distributed under the License is distributed on an "AS IS" BASIS,
-// | WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// | See the License for the specific language governing permissions and
-// | limitations under the License.
-// +-------------------------------------------------------------------------
+/*
+Copyright (C) 2018 Yunify, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this work except in compliance with the License.
+You may obtain a copy of the License in the LICENSE file, or at:
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 
 package rpcserver
 
@@ -53,12 +53,13 @@ func NewControllerServer(d *driver.DiskDriver, c cloudprovider.CloudManager) *Di
 // csi.CreateVolumeRequest: name 				+Required
 //							capability			+Required
 func (cs *DiskControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
-	klog.Info("----- Start CreateVolume -----")
-	defer klog.Info("===== End CreateVolume =====")
+	funcName := "CreateVolume"
+	info, hash := common.EntryFunction(funcName)
+	klog.Info(info)
+	defer klog.Info(common.ExitFunction(funcName, hash))
 	// 0. Prepare
 	if isValid := cs.driver.ValidateControllerServiceRequest(csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME); isValid != true {
-		// TODO
-		return nil, status.Error(codes.PermissionDenied, "")
+		return nil, status.Error(codes.InvalidArgument, "Unsupported controller server capability")
 	}
 	// Required volume capability
 	if req.GetVolumeCapabilities() == nil {
@@ -91,11 +92,12 @@ func (cs *DiskControllerServer) CreateVolume(ctx context.Context, req *csi.Creat
 			err.Error())
 	}
 	if exVol != nil {
-		klog.Infof("Request volume name: %s, request size %d bytes, type: %d, zone: %s",
-			volumeName, requiredSizeByte, sc.DiskType,
+		klog.Infof("%s: Request volume name: %s, request size %d bytes, type: %d, zone: %s",
+			hash, volumeName, requiredSizeByte, sc.DiskType,
 			cs.cloud.GetZone())
-		klog.Infof("Exist volume name: %s, id: %s, capacity: %d bytes, type: %d, zone: %s",
-			*exVol.VolumeName, *exVol.VolumeID, common.GibToByte(*exVol.Size), *exVol.VolumeType, cs.cloud.GetZone())
+		klog.Infof("%s: Exist volume name: %s, id: %s, capacity: %d bytes, type: %d, zone: %s",
+			hash, *exVol.VolumeName, *exVol.VolumeID, common.GibToByte(*exVol.Size), *exVol.VolumeType,
+			cs.cloud.GetZone())
 		exVolSizeByte := common.GibToByte(*exVol.Size)
 		if common.IsValidCapacityBytes(exVolSizeByte, req.GetCapacityRange()) &&
 			*exVol.VolumeType == sc.DiskType {
@@ -108,8 +110,7 @@ func (cs *DiskControllerServer) CreateVolume(ctx context.Context, req *csi.Creat
 				},
 			}, nil
 		}
-		return nil, status.Errorf(codes.AlreadyExists,
-			"Volume %s already exsit but is incompatible", volumeName)
+		return nil, status.Errorf(codes.AlreadyExists, "Volume %s already exist but is incompatible", volumeName)
 	}
 
 	// do create volume
@@ -117,13 +118,13 @@ func (cs *DiskControllerServer) CreateVolume(ctx context.Context, req *csi.Creat
 	if volContSrc == nil {
 		// create a empty volume
 		requiredSizeGib := common.ByteCeilToGib(requiredSizeByte)
-		klog.Infof("Creating empty volume %s with %d Gib in zone %s...", volumeName, requiredSizeGib,
+		klog.Infof("%s: Creating empty volume %s with %d Gib in zone %s...", hash, volumeName, requiredSizeGib,
 			cs.cloud.GetZone())
-		volumeId, err := cs.cloud.CreateVolume(volumeName, requiredSizeGib, sc.Replica, sc.DiskType)
+		volumeId, err := cs.cloud.CreateVolume(volumeName, requiredSizeGib, sc.Replica, sc.DiskType, cs.cloud.GetZone())
 		if err != nil {
 			return nil, err
 		}
-		klog.Infof("Succeed to create empty volume id=[%s] name=[%s].", volumeId, volumeName)
+		klog.Infof("%s: Succeed to create empty volume id=[%s] name=[%s].", hash, volumeId, volumeName)
 		return &csi.CreateVolumeResponse{
 			Volume: &csi.Volume{
 				VolumeId:      volumeId,
@@ -136,8 +137,7 @@ func (cs *DiskControllerServer) CreateVolume(ctx context.Context, req *csi.Creat
 			// Get capability
 			if isValid := cs.driver.ValidateControllerServiceRequest(csi.
 				ControllerServiceCapability_RPC_CREATE_DELETE_SNAPSHOT); isValid != true {
-				// TODO
-				return nil, status.Error(codes.PermissionDenied, "")
+				return nil, status.Error(codes.InvalidArgument, "Unsupported controller server capability")
 			}
 			// Get snapshot id
 			if len(volContSrc.GetSnapshot().GetSnapshotId()) == 0 {
@@ -158,11 +158,11 @@ func (cs *DiskControllerServer) CreateVolume(ctx context.Context, req *csi.Creat
 			if !common.IsValidCapacityBytes(requiredRestoreVolumeSizeInBytes, req.GetCapacityRange()) {
 				klog.Errorf("Restore volume request size [%d], out of the capacity range",
 					requiredRestoreVolumeSizeInBytes)
-				return nil, status.Error(codes.OutOfRange, "unsupported capacity range")
+				return nil, status.Error(codes.OutOfRange, "Unsupported capacity range")
 			}
 			// restore volume from snapshot
-			klog.Infof("Restore volume name [%s] from snapshot id [%s] in zone [%s].",
-				volumeName, snapId, cs.cloud.GetZone())
+			klog.Infof("%s: Restore volume name [%s] from snapshot id [%s] in zone [%s].",
+				hash, volumeName, snapId, cs.cloud.GetZone())
 			volId, err := cs.cloud.CreateVolumeFromSnapshot(volumeName, snapId)
 			if err != nil {
 				return nil, status.Error(codes.Internal, err.Error())
@@ -190,12 +190,12 @@ func (cs *DiskControllerServer) CreateVolume(ctx context.Context, req *csi.Creat
 			// Get capability
 			if isValid := cs.driver.ValidateControllerServiceRequest(csi.
 				ControllerServiceCapability_RPC_CLONE_VOLUME); isValid != true {
-				klog.Errorf("Invalid create volume req: %v", req)
-				return nil, status.Error(codes.PermissionDenied, "")
+				klog.Errorf("%s: Invalid create volume req: %v", hash, req)
+				return nil, status.Error(codes.InvalidArgument, "Unsupported controller server capability")
 			}
 		}
 	}
-	return nil, status.Error(codes.Internal, "MUST NOT run here, there is something wrong.")
+	return nil, status.Error(codes.Internal, "MUST NOT run here, something wrong.")
 }
 
 // This operation MUST be idempotent
@@ -454,7 +454,10 @@ func (cs *DiskControllerServer) ValidateVolumeCapabilities(ctx context.Context, 
 // capacity range is REQUIRED in csi.ControllerExpandVolumeRequest
 func (cs *DiskControllerServer) ControllerExpandVolume(ctx context.Context, req *csi.ControllerExpandVolumeRequest,
 ) (*csi.ControllerExpandVolumeResponse, error) {
-	defer common.EntryFunction("ControllerExpandVolume")()
+	functionName := "ControllerExpandVolume"
+	info, hash := common.EntryFunction(functionName)
+	defer klog.Info(common.ExitFunction(functionName, hash))
+	klog.Info(info)
 	// 0. check input args
 	// require volume id parameter
 	if len(req.GetVolumeId()) == 0 {
@@ -481,9 +484,9 @@ func (cs *DiskControllerServer) ControllerExpandVolume(ctx context.Context, req 
 	// 2. Get capacity
 	volTypeInt := *volInfo.VolumeType
 	if volTypeStr, ok := driver.VolumeTypeName[volTypeInt]; ok == true {
-		klog.Infof("Succeed to get volume [%s] type [%s]", volumeId, volTypeStr)
+		klog.Infof("%s: Succeed to get volume [%s] type [%s]", hash, volumeId, volTypeStr)
 	} else {
-		klog.Errorf("Unsupported volume [%s] type [%d]", volumeId, volTypeInt)
+		klog.Errorf("%s: Unsupported volume [%s] type [%d]", hash, volumeId, volTypeInt)
 		return nil, status.Errorf(codes.Internal, "Unsupported volume [%s] type [%d]", volumeId, volTypeInt)
 	}
 
