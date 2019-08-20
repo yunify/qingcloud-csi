@@ -233,6 +233,7 @@ type DescribeImagesInput struct {
 	Owner    *string   `json:"owner" name:"owner" location:"params"`
 	// ProcessorType's available values: 64bit, 32bit
 	ProcessorType *string `json:"processor_type" name:"processor_type" location:"params"`
+	ProjectID     *string `json:"project_id" name:"project_id" location:"params"`
 	// Provider's available values: system, self
 	Provider   *string   `json:"provider" name:"provider" location:"params"`
 	SearchWord *string   `json:"search_word" name:"search_word" location:"params"`

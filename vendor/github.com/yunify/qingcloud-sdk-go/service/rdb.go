@@ -710,6 +710,7 @@ func (s *RDBService) DescribeRDBs(i *DescribeRDBsInput) (*DescribeRDBsOutput, er
 type DescribeRDBsInput struct {
 	Limit      *int      `json:"limit" name:"limit" location:"params"`
 	Offset     *int      `json:"offset" name:"offset" location:"params"`
+	ProjectID  *string   `json:"project_id" name:"project_id" location:"params"`
 	RDBEngine  *string   `json:"rdb_engine" name:"rdb_engine" location:"params"`
 	RDBName    *string   `json:"rdb_name" name:"rdb_name" location:"params"`
 	RDBs       []*string `json:"rdbs" name:"rdbs" location:"params"`

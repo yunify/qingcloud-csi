@@ -212,7 +212,8 @@ type CreateVolumesInput struct {
 	Size       *int    `json:"size" name:"size" location:"params"` // Required
 	VolumeName *string `json:"volume_name" name:"volume_name" location:"params"`
 	// VolumeType's available values: 0, 1, 2, 3, 4, 5, 10, 100, 200
-	VolumeType *int `json:"volume_type" name:"volume_type" default:"0" location:"params"`
+	VolumeType *int    `json:"volume_type" name:"volume_type" default:"0" location:"params"`
+	Zone       *string `json:"zone" name:"zone" location:"params"`
 }
 
 func (v *CreateVolumesInput) Validate() error {
@@ -334,6 +335,7 @@ type DescribeVolumesInput struct {
 	Limit      *int      `json:"limit" name:"limit" default:"20" location:"params"`
 	Offset     *int      `json:"offset" name:"offset" default:"0" location:"params"`
 	Owner      *string   `json:"owner" name:"owner" location:"params"`
+	ProjectID  *string   `json:"project_id" name:"project_id" location:"params"`
 	SearchWord *string   `json:"search_word" name:"search_word" location:"params"`
 	Status     []*string `json:"status" name:"status" location:"params"`
 	Tags       []*string `json:"tags" name:"tags" location:"params"`
@@ -342,6 +344,7 @@ type DescribeVolumesInput struct {
 	// VolumeType's available values: 0, 1, 2, 3, 4, 5, 10, 100, 200
 	VolumeType *int      `json:"volume_type" name:"volume_type" location:"params"`
 	Volumes    []*string `json:"volumes" name:"volumes" location:"params"`
+	Zone       *string   `json:"zone" name:"zone" location:"params"`
 }
 
 func (v *DescribeVolumesInput) Validate() error {
