@@ -638,6 +638,7 @@ type DescribeRoutersInput struct {
 	Limit      *int      `json:"limit" name:"limit" location:"params"`
 	Offset     *int      `json:"offset" name:"offset" location:"params"`
 	Owner      *string   `json:"owner" name:"owner" location:"params"`
+	ProjectID  *string   `json:"project_id" name:"project_id" location:"params"`
 	Routers    []*string `json:"routers" name:"routers" location:"params"`
 	SearchWord *string   `json:"search_word" name:"search_word" location:"params"`
 	Status     []*string `json:"status" name:"status" location:"params"`

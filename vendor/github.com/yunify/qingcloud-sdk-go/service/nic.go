@@ -237,6 +237,7 @@ type DescribeNicsInput struct {
 	Nics      []*string `json:"nics" name:"nics" location:"params"`
 	Offset    *int      `json:"offset" name:"offset" default:"0" location:"params"`
 	Owner     *string   `json:"owner" name:"owner" location:"params"`
+	ProjectID *string   `json:"project_id" name:"project_id" location:"params"`
 	// Status's available values: available, in-use
 	Status    *string   `json:"status" name:"status" location:"params"`
 	VxNetType []*int    `json:"vxnet_type" name:"vxnet_type" location:"params"`

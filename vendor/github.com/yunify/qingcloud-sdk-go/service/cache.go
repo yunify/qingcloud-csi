@@ -841,6 +841,7 @@ type DescribeCachesInput struct {
 	Caches     []*string `json:"caches" name:"caches" location:"params"`
 	Limit      *int      `json:"limit" name:"limit" default:"20" location:"params"`
 	Offset     *int      `json:"offset" name:"offset" default:"0" location:"params"`
+	ProjectID  *string   `json:"project_id" name:"project_id" location:"params"`
 	SearchWord *string   `json:"search_word" name:"search_word" location:"params"`
 	Status     []*string `json:"status" name:"status" location:"params"`
 	Tags       []*string `json:"tags" name:"tags" location:"params"`
