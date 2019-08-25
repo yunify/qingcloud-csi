@@ -1012,6 +1012,7 @@ type Instance struct {
 	InstanceType     *string        `json:"instance_type" name:"instance_type"`
 	KeyPairIDs       []*string      `json:"keypair_ids" name:"keypair_ids"`
 	MemoryCurrent    *int           `json:"memory_current" name:"memory_current"`
+	Repl             *string        `json:"repl" name:"repl"`
 	SecurityGroup    *SecurityGroup `json:"security_group" name:"security_group"`
 	// Status's available values: pending, running, stopped, suspended, terminated, ceased
 	Status     *string    `json:"status" name:"status"`
@@ -1024,6 +1025,7 @@ type Instance struct {
 	VolumeIDs        []*string   `json:"volume_ids" name:"volume_ids"`
 	Volumes          []*Volume   `json:"volumes" name:"volumes"`
 	VxNets           []*NICVxNet `json:"vxnets" name:"vxnets"`
+	ZoneID           *string     `json:"zone_id" name:"zone_id"`
 }
 
 func (v *Instance) Validate() error {
@@ -1848,6 +1850,44 @@ func (v *NICVxNet) Validate() error {
 	return nil
 }
 
+type Project struct {
+	ConsoleID       *string `json:"console_id" name:"console_id"`
+	CreateTime      *string `json:"create_time" name:"create_time"`
+	Description     *string `json:"description" name:"description"`
+	Enabled         *int    `json:"enabled" name:"enabled"`
+	Meta            *string `json:"meta" name:"meta"`
+	Owner           *string `json:"owner" name:"owner"`
+	OwnerName       *string `json:"owner_name" name:"owner_name"`
+	ProjectID       *string `json:"project_id" name:"project_id"`
+	ProjectName     *string `json:"project_name" name:"project_name"`
+	ResourceGroupID *string `json:"resource_group_id" name:"resource_group_id"`
+	RootUserID      *string `json:"root_user_id" name:"root_user_id"`
+	Status          *string `json:"status" name:"status"`
+}
+
+func (v *Project) Validate() error {
+
+	return nil
+}
+
+type ProjectResourceItem struct {
+	CreateTime      *string `json:"create_time" name:"create_time"`
+	Meta            *string `json:"meta" name:"meta"`
+	Owner           *string `json:"owner" name:"owner"`
+	ProjectID       *string `json:"project_id" name:"project_id"`
+	ProjectName     *string `json:"project_name" name:"project_name"`
+	ResourceGroupID *string `json:"resource_group_id" name:"resource_group_id"`
+	ResourceID      *string `json:"resource_id" name:"resource_id"`
+	ResourceType    *string `json:"resource_type" name:"resource_type"`
+	RootUserID      *string `json:"root_user_id" name:"root_user_id"`
+	ZoneID          *string `json:"zone_id" name:"zone_id"`
+}
+
+func (v *ProjectResourceItem) Validate() error {
+
+	return nil
+}
+
 type QuotaLeft struct {
 	Left         *int    `json:"left" name:"left"`
 	ResourceType *string `json:"resource_type" name:"resource_type"`
@@ -2141,11 +2181,10 @@ func (v *Resource) Validate() error {
 }
 
 type ResourceTagPair struct {
-	ResourceID   *string    `json:"resource_id" name:"resource_id"`
-	ResourceType *string    `json:"resource_type" name:"resource_type"`
-	Status       *string    `json:"status" name:"status"`
-	StatusTime   *time.Time `json:"status_time" name:"status_time" format:"ISO 8601"`
-	TagID        *string    `json:"tag_id" name:"tag_id"`
+	ResourceID   *string `json:"resource_id" name:"resource_id"`
+	ResourceType *string `json:"resource_type" name:"resource_type"`
+	Status       *string `json:"status" name:"status"`
+	TagID        *string `json:"tag_id" name:"tag_id"`
 }
 
 func (v *ResourceTagPair) Validate() error {
@@ -2978,7 +3017,8 @@ type Volume struct {
 	VolumeID         *string `json:"volume_id" name:"volume_id"`
 	VolumeName       *string `json:"volume_name" name:"volume_name"`
 	// VolumeType's available values: 0, 1, 2, 3
-	VolumeType *int `json:"volume_type" name:"volume_type"`
+	VolumeType *int    `json:"volume_type" name:"volume_type"`
+	ZoneID     *string `json:"zone_id" name:"zone_id"`
 }
 
 func (v *Volume) Validate() error {

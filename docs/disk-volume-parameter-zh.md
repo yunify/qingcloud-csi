@@ -13,6 +13,15 @@
 |基础型| Standard|100|
 |SSD 企业型| SSD Enterprise|200|
 
+## 主机类型与 type 参数对应关系
+|主机|英文名|type 值|
+|:---:|:----:|:----:|
+|性能型|High Performance|0|
+|超高性能型|Super High Performance|1|
+|基础型|Standard|101|
+|企业型|Enterprise|201|
+|专业增强型|Premium|301|
+
  ## 硬盘类型与主机适配性
 
  |          | 性能型硬盘    | 容量型硬盘  | 超高性能型硬盘 | NeonSAN 硬盘 |基础型硬盘| SSD 企业型硬盘|

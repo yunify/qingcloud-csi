@@ -19,28 +19,28 @@ package driver
 import (
 	"fmt"
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/yunify/qingcloud-csi/pkg/cloudprovider"
+	"github.com/yunify/qingcloud-csi/pkg/cloud"
 	"github.com/yunify/qingcloud-csi/pkg/common"
 	"strconv"
 )
 
 type QingStorageClass struct {
-	DiskType int    `json:"type"`
-	MaxSize  int    `json:"maxSize"`
-	MinSize  int    `json:"minSize"`
-	StepSize int    `json:"stepSize"`
-	FsType   string `json:"fsType"`
-	Replica  int    `json:"replica"`
+	DiskType VolumeType `json:"type"`
+	MaxSize  int        `json:"maxSize"`
+	MinSize  int        `json:"minSize"`
+	StepSize int        `json:"stepSize"`
+	FsType   string     `json:"fsType"`
+	Replica  int        `json:"replica"`
 }
 
 // NewDefaultQingStorageClass create default qingStorageClass object
 func NewDefaultQingStorageClass() *QingStorageClass {
-	return NewDefaultQingStorageClassFromType(SSDEnterpriseDiskType)
+	return NewDefaultQingStorageClassFromType(SSDEnterpriseVolumeType)
 }
 
 // NewDefaultQingStorageClassFromType create default qingStorageClass by specified volume type
-func NewDefaultQingStorageClassFromType(diskType int) *QingStorageClass {
-	if IsValidDiskType(diskType) != true {
+func NewDefaultQingStorageClassFromType(diskType VolumeType) *QingStorageClass {
+	if diskType.IsValid() != true {
 		return nil
 	}
 	return &QingStorageClass{
@@ -49,7 +49,7 @@ func NewDefaultQingStorageClassFromType(diskType int) *QingStorageClass {
 		MinSize:  VolumeTypeToMinSize[diskType],
 		StepSize: VolumeTypeToStepSize[diskType],
 		FsType:   common.DefaultFileSystem,
-		Replica:  cloudprovider.DefaultDiskReplicaType,
+		Replica:  cloud.DefaultDiskReplicaType,
 	}
 }
 
@@ -69,7 +69,7 @@ func NewQingStorageClassFromMap(opt map[string]string) (*QingStorageClass, error
 	if err != nil {
 		return nil, err
 	}
-	sc := NewDefaultQingStorageClassFromType(iVolType)
+	sc := NewDefaultQingStorageClassFromType(VolumeType(iVolType))
 	if maxSizeOk == true && minSizeOk == true && stepSizeOk == true {
 		// Get volume max size
 		iMaxSize, err := strconv.Atoi(sMaxSize)

@@ -18,7 +18,7 @@ package rpcserver
 
 import (
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/yunify/qingcloud-csi/pkg/cloudprovider"
+	"github.com/yunify/qingcloud-csi/pkg/cloud"
 	"github.com/yunify/qingcloud-csi/pkg/disk/driver"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
@@ -28,12 +28,12 @@ import (
 
 type DiskIdentityServer struct {
 	driver *driver.DiskDriver
-	cloud  cloudprovider.CloudManager
+	cloud  cloud.CloudManager
 }
 
 // NewIdentityServer
 // Create identity server
-func NewIdentityServer(d *driver.DiskDriver, c cloudprovider.CloudManager) *DiskIdentityServer {
+func NewIdentityServer(d *driver.DiskDriver, c cloud.CloudManager) *DiskIdentityServer {
 	return &DiskIdentityServer{
 		driver: d,
 		cloud:  c,

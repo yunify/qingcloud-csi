@@ -17,6 +17,7 @@ limitations under the License.
 package driver
 
 import (
+	"fmt"
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"k8s.io/klog"
 )
@@ -145,6 +146,15 @@ func (d *DiskDriver) ValidateVolumeAccessMode(c csi.VolumeCapability_AccessMode_
 	return false
 }
 
+func (d *DiskDriver) ValidatePluginCapabilityService(cap csi.PluginCapability_Service_Type) bool {
+	for _, v := range d.GetPluginCapability() {
+		if v.GetService() != nil && v.GetService().GetType() == cap {
+			return true
+		}
+	}
+	return false
+}
+
 func (d *DiskDriver) GetName() string {
 	return d.name
 }
@@ -175,4 +185,12 @@ func (d *DiskDriver) GetPluginCapability() []*csi.PluginCapability {
 
 func (d *DiskDriver) GetVolumeCapability() []*csi.VolumeCapability_AccessMode {
 	return d.volumeCap
+}
+
+func (d *DiskDriver) GetTopologyZoneKey() string {
+	return fmt.Sprintf("topology.%s/zone", d.GetName())
+}
+
+func (d *DiskDriver) GetTopologyInstanceTypeKey() string {
+	return fmt.Sprintf("topology.%s/instance-type", d.GetName())
 }

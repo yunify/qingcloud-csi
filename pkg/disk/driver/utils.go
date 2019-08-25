@@ -19,7 +19,7 @@ package driver
 import (
 	"fmt"
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/yunify/qingcloud-csi/pkg/cloudprovider"
+	"github.com/yunify/qingcloud-csi/pkg/cloud"
 	"github.com/yunify/qingcloud-csi/pkg/common"
 	"io/ioutil"
 	"k8s.io/klog"
@@ -30,9 +30,9 @@ import (
 // Support: 2 MultiReplicas, 1 SingleReplica
 func IsValidReplica(replica int) bool {
 	switch replica {
-	case cloudprovider.DiskMultiReplicaType:
+	case cloud.DiskMultiReplicaType:
 		return true
-	case cloudprovider.DiskSingleReplicaType:
+	case cloud.DiskSingleReplicaType:
 		return true
 	default:
 		return false
@@ -54,16 +54,8 @@ func IsValidFileSystemType(fs string) bool {
 	}
 }
 
-// Check disk type
-func IsValidDiskType(volumeType int) bool {
-	if _, ok := VolumeTypeName[volumeType]; ok {
-		return true
-	}
-	return false
-}
-
 // FormatVolumeSize transfer to proper volume size
-func FormatVolumeSize(volType int, volSize int) int {
+func FormatVolumeSize(volType VolumeType, volSize int) int {
 	_, ok := VolumeTypeName[volType]
 	if ok == false {
 		return -1

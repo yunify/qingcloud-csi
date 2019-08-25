@@ -19,7 +19,7 @@ package rpcserver
 import (
 	"fmt"
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/yunify/qingcloud-csi/pkg/cloudprovider"
+	"github.com/yunify/qingcloud-csi/pkg/cloud"
 	"github.com/yunify/qingcloud-csi/pkg/common"
 	"github.com/yunify/qingcloud-csi/pkg/disk/driver"
 	"golang.org/x/net/context"
@@ -36,13 +36,13 @@ import (
 
 type DiskNodeServer struct {
 	driver  *driver.DiskDriver
-	cloud   cloudprovider.CloudManager
+	cloud   cloud.CloudManager
 	mounter *mount.SafeFormatAndMount
 }
 
 // NewNodeServer
 // Create node server
-func NewNodeServer(d *driver.DiskDriver, c cloudprovider.CloudManager, mnt *mount.SafeFormatAndMount) *DiskNodeServer {
+func NewNodeServer(d *driver.DiskDriver, c cloud.CloudManager, mnt *mount.SafeFormatAndMount) *DiskNodeServer {
 	return &DiskNodeServer{
 		driver:  d,
 		cloud:   c,
@@ -344,10 +344,28 @@ func (ns *DiskNodeServer) NodeGetCapabilities(ctx context.Context, req *csi.Node
 func (ns *DiskNodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
 	klog.V(2).Info("----- Start NodeGetInfo -----")
 	defer klog.Info("===== End NodeGetInfo =====")
+	instInfo, err := ns.cloud.FindInstance(ns.driver.GetInstanceId())
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if instInfo == nil {
+		return nil, status.Errorf(codes.NotFound, "cannot found instance %s", ns.driver.GetInstanceId())
+	}
 
+	instanceType, ok := driver.InstanceTypeName[driver.InstanceType(*instInfo.InstanceClass)]
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument, "unsupported instance type %d", *instInfo.InstanceClass)
+	}
+	top := &csi.Topology{
+		Segments: map[string]string{
+			ns.driver.GetTopologyInstanceTypeKey(): instanceType,
+			ns.driver.GetTopologyZoneKey():         *instInfo.ZoneID,
+		},
+	}
 	return &csi.NodeGetInfoResponse{
-		NodeId:            ns.driver.GetInstanceId(),
-		MaxVolumesPerNode: ns.driver.GetMaxVolumePerNode(),
+		NodeId:             ns.driver.GetInstanceId(),
+		MaxVolumesPerNode:  ns.driver.GetMaxVolumePerNode(),
+		AccessibleTopology: top,
 	}, nil
 }
 
@@ -468,7 +486,7 @@ func (ns *DiskNodeServer) NodeGetVolumeStats(ctx context.Context,
 	klog.Infof("%s: Succeed to get device name %s", hash, devicePath)
 	if devicePath == "" || *volInfo.Instance.Device != devicePath {
 		return nil, status.Errorf(codes.NotFound, "device path mismatch, from mount point %s, "+
-			"from cloud provider %s", devicePath, volInfo)
+			"from cloud provider %s", devicePath, *volInfo.Instance.Device)
 	}
 
 	// Get metrics

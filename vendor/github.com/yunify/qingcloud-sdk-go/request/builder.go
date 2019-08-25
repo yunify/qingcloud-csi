@@ -239,9 +239,11 @@ func (b *Builder) parseRequestURL() error {
 	b.parsedURL = endpoint + requestURI
 
 	if b.parsedParams != nil && b.operation.RequestMethod == "GET" {
-		zone := (*b.parsedProperties)["zone"]
-		if zone != "" {
-			(*b.parsedParams)["zone"] = zone
+		if _, ok := (*b.parsedParams)["zone"]; !ok {
+			zone := (*b.parsedProperties)["zone"]
+			if zone != "" {
+				(*b.parsedParams)["zone"] = zone
+			}
 		}
 		paramsParts := []string{}
 		for key, value := range *b.parsedParams {
@@ -260,9 +262,11 @@ func (b *Builder) parseRequestURL() error {
 func (b *Builder) parseRequestForm() error {
 	if b.parsedParams != nil && b.operation.RequestMethod == "POST" {
 		var values = make(url.Values)
-		zone := (*b.parsedProperties)["zone"]
-		if zone != "" {
-			(*b.parsedParams)["zone"] = zone
+		if _, ok := (*b.parsedParams)["zone"]; !ok {
+			zone := (*b.parsedProperties)["zone"]
+			if zone != "" {
+				(*b.parsedParams)["zone"] = zone
+			}
 		}
 		for key, value := range *b.parsedParams {
 			values.Set(key, value)

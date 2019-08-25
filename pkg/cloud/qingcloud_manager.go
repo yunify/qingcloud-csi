@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package cloudprovider
+package cloud
 
 import (
 	"errors"
@@ -35,7 +35,7 @@ type qingCloudManager struct {
 	cloudService    *qcservice.QingCloudService
 }
 
-func NewQingCloudManagerFromConfig(config *qcconfig.Config) (CloudManager, error) {
+func NewQingCloudManagerFromConfig(config *qcconfig.Config) (*qingCloudManager, error) {
 	// initial qingcloud iaas service
 	qs, err := qcservice.Init(config)
 	if err != nil {
@@ -61,7 +61,7 @@ func NewQingCloudManagerFromConfig(config *qcconfig.Config) (CloudManager, error
 
 // NewCloudManagerFromFile
 // Create cloud manager from file
-func NewQingCloudManagerFromFile(filePath string) (CloudManager, error) {
+func NewQingCloudManagerFromFile(filePath string) (*qingCloudManager, error) {
 	// create config
 	config, err := ReadConfigFromFile(filePath)
 	if err != nil {
@@ -293,7 +293,7 @@ func (cm *qingCloudManager) FindVolumeByName(name string) (volume *qcservice.Vol
 // 1. format volume size
 // 2. create volume
 // 3. wait job
-func (cm *qingCloudManager) CreateVolume(volName string, requestSize int, replicas int, volType int, zone string) (
+func (qm *qingCloudManager) CreateVolume(volName string, requestSize int, replicas int, volType int, zone string) (
 	volumeId string, err error) {
 	// 0. Set CreateVolume args
 	// create volume count
@@ -301,23 +301,24 @@ func (cm *qingCloudManager) CreateVolume(volName string, requestSize int, replic
 	// volume replicas
 	replStr := DiskReplicaTypeName[replicas]
 	// set input value
-	in := &qcservice.CreateVolumesInput{
+	input := &qcservice.CreateVolumesInput{
 		Count:      &count,
 		Repl:       &replStr,
 		Size:       &requestSize,
 		VolumeName: &volName,
 		VolumeType: &volType,
+		Zone:       &zone,
 	}
 	// 1. Create volume
-	klog.Infof("Call IaaS CreateVolume request size: %d GB, zone: %s, type: %d, count: %d, replica: %s, name: %s",
-		*in.Size, zone, *in.VolumeType, *in.Count, *in.Repl, *in.VolumeName)
-	output, err := cm.volumeService.CreateVolumes(in)
+	klog.Infof("Call IaaS CreateVolume request name: %s, size: %d GB, type: %d, zone: %s, count: %d, replica: %s",
+		*input.VolumeName, *input.Size, *input.VolumeType, *input.Zone, *input.Count, *input.Repl)
+	output, err := qm.volumeService.CreateVolumes(input)
 	if err != nil {
 		return "", err
 	}
 	// wait job
 	klog.Infof("Call IaaS WaitJob %s", *output.JobID)
-	if err := cm.waitJob(*output.JobID); err != nil {
+	if err := qm.waitJob(*output.JobID); err != nil {
 		return "", err
 	}
 	// check output
@@ -332,12 +333,14 @@ func (cm *qingCloudManager) CreateVolume(volName string, requestSize int, replic
 
 // CreateVolumeFromSnapshot
 // In QingCloud, the volume size created from snapshot is equal to original volume.
-func (cm *qingCloudManager) CreateVolumeFromSnapshot(volumeName string, snapshotId string) (volumeId string, err error) {
+func (cm *qingCloudManager) CreateVolumeFromSnapshot(volName string, snapId string, zone string) (
+	volId string, err error) {
 	input := &qcservice.CreateVolumeFromSnapshotInput{
-		VolumeName: &volumeName,
-		Snapshot:   &snapshotId,
+		VolumeName: &volName,
+		Snapshot:   &snapId,
+		Zone:       &zone,
 	}
-	klog.Infof("Call IaaS CreateVolumeFromSnapshot request volume name: %s, snapshot id: %s\n",
+	klog.Infof("Call IaaS CreateVolumeFromSnapshot request volume name: %s, snapshot id: %s",
 		*input.VolumeName, *input.Snapshot)
 	output, err := cm.snapshotService.CreateVolumeFromSnapshot(input)
 	if err != nil {
@@ -389,14 +392,14 @@ func (cm *qingCloudManager) DeleteVolume(id string) error {
 // AttachVolume
 // 1. attach volume on instance
 // 2. wait job
-func (cm *qingCloudManager) AttachVolume(volumeId string, instanceId string) error {
+func (cm *qingCloudManager) AttachVolume(volId string, instId string) error {
 	// set input parameter
 	input := &qcservice.AttachVolumesInput{
-		Volumes:  []*string{&volumeId},
-		Instance: &instanceId,
+		Volumes:  []*string{&volId},
+		Instance: &instId,
 	}
 	// attach volume
-	klog.Infof("Call IaaS AttachVolume request volume id: %s, instance id: %s, zone: %s", volumeId, instanceId,
+	klog.Infof("Call IaaS AttachVolume request volume id: %s, instance id: %s, zone: %s", volId, instId,
 		cm.GetZone())
 	output, err := cm.volumeService.AttachVolumes(input)
 	if err != nil {
@@ -417,7 +420,7 @@ func (cm *qingCloudManager) AttachVolume(volumeId string, instanceId string) err
 		klog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
 		return fmt.Errorf(*output.Message)
 	}
-	klog.Infof("Call IaaS AttachVolume %s on instance %s succeed", volumeId, instanceId)
+	klog.Infof("Call IaaS AttachVolume %s on instance %s succeed", volId, instId)
 	return nil
 }
 
@@ -494,11 +497,13 @@ func (cm *qingCloudManager) ResizeVolume(volumeId string, requestSize int) error
 //			instance, nil: 	found instance
 //			nil, 	error:	internal error
 func (cm *qingCloudManager) FindInstance(id string) (instance *qcservice.Instance, err error) {
-	seeCluster := EnableDescribeInstanceAppCluster
+	seeAppCluster := EnableDescribeInstanceAppCluster
+	verboseMode := EnableDescribeInstanceVerboseMode
 	// set describe instance input
 	input := qcservice.DescribeInstancesInput{
 		Instances:     []*string{&id},
-		IsClusterNode: &seeCluster,
+		IsClusterNode: &seeAppCluster,
+		Verbose:       &verboseMode,
 	}
 	// call describe instance
 	output, err := cm.instanceService.DescribeInstances(&input)
