@@ -21,7 +21,7 @@ DISK_IMAGE_TAG=canary
 ROOT_PATH=$(pwd)
 PACKAGE_LIST=./cmd/... ./pkg/...
 
-disk:
+disk: mod
 	docker build -t ${DISK_IMAGE_NAME}-builder:${DISK_IMAGE_TAG} -f deploy/disk/docker/Dockerfile . --target builder
 
 disk-container:
@@ -47,6 +47,12 @@ uninstall-prod:
 gen-prod:
 	kustomize build deploy/disk/kubernetes/overlays/dev
 
+mod:
+	go build ./...
+	go mod download
+	go mod tidy
+	go mod vendor
+
 fmt:
 	go fmt ${PACKAGE_LIST}
 
@@ -57,4 +63,5 @@ sanity-test:
 	${ROOT_PATH}/csi-sanity --csi.endpoint /var/lib/kubelet/plugins/disk.csi.qingcloud.com/csi.sock --csi.testvolumesize 107374182400
 
 clean:
-	go clean -r -x
+	go clean -r -x ./...
+	rm -rf ./_output
