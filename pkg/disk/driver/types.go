@@ -66,6 +66,7 @@ var DefaultPluginCapability = []*csi.PluginCapability{
 }
 
 const (
+	DefaultVolumeType              VolumeType = SSDEnterpriseVolumeType
 	HighPerformanceVolumeType      VolumeType = 0
 	HighCapacityVolumeType         VolumeType = 2
 	SuperHighPerformanceVolumeType VolumeType = 3

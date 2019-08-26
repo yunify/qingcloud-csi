@@ -1,3 +1,19 @@
+/*
+Copyright (C) 2018 Yunify, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this work except in compliance with the License.
+You may obtain a copy of the License in the LICENSE file, or at:
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package cloud
 
 import (
@@ -212,6 +228,119 @@ func TestQingCloudManager_CreateVolumeFromSnapshot(t *testing.T) {
 			if volId == "" {
 				t.Errorf("testcase %s: cannot get volume %s id", test.name, test.volName)
 			}
+		}
+	}
+}
+
+const (
+	tagId                 = "tag-qaf8td3d"
+	tagId2                = "tag-1phpmfym"
+	tagIdInOtherZone      = "tag-glozcqzd"
+	resourceId            = "vol-zqxq0i9k"
+	resourceType          = "volume"
+	resourceIdInOtherZone = "vol-t6jgk2fp"
+)
+
+func TestQingCloudManager_FindTag(t *testing.T) {
+	tests := []struct {
+		name     string
+		tagId    string
+		foundTag bool
+		isError  bool
+	}{
+		{
+			name:     "valid tag",
+			tagId:    tagId,
+			foundTag: true,
+			isError:  false,
+		},
+		{
+			name:     "other zone",
+			tagId:    tagIdInOtherZone,
+			foundTag: false,
+			isError:  false,
+		},
+	}
+	for _, v := range tests {
+		tagInfo, err := cfg.FindTag(v.tagId)
+		if (tagInfo != nil) != v.foundTag && (err == nil) != v.isError {
+			t.Errorf("name %s, expect [%t,%t], but actually [%t,%t]", v.name, v.foundTag, v.isError,
+				tagInfo != nil, err == nil)
+		}
+	}
+}
+
+func TestQingCloudManager_IsValidTags(t *testing.T) {
+	tests := []struct {
+		name    string
+		tagId   []string
+		isValid bool
+	}{
+		{
+			name:    "multiple tags",
+			tagId:   []string{tagId, tagId2},
+			isValid: true,
+		},
+		{
+			name:    "single tags",
+			tagId:   []string{tagId},
+			isValid: true,
+		},
+		{
+			name:    "tags in other zone",
+			tagId:   []string{tagIdInOtherZone},
+			isValid: false,
+		},
+	}
+	for _, test := range tests {
+		res := cfg.IsValidTags(test.tagId)
+		if test.isValid != res {
+			t.Errorf("name %s, expect %t, but actually %t", test.name, test.isValid, res)
+		}
+	}
+}
+
+func TestQingCloudManager_AttachTags(t *testing.T) {
+	tests := []struct {
+		name         string
+		tagId        []string
+		resourceId   string
+		resourceType string
+		isError      bool
+	}{
+		{
+			name:         "add multiple tags",
+			tagId:        []string{tagId, tagId2},
+			resourceId:   resourceId,
+			resourceType: ResourceTypeVolume,
+			isError:      false,
+		},
+		{
+			name:         "re-attach tags",
+			tagId:        []string{tagId, tagId2},
+			resourceId:   resourceId,
+			resourceType: ResourceTypeVolume,
+			isError:      false,
+		},
+		{
+			name:         "attach other zone resource",
+			tagId:        []string{tagId},
+			resourceId:   resourceIdInOtherZone,
+			resourceType: ResourceTypeVolume,
+			isError:      true,
+		},
+		{
+			name:         "invalid resource type",
+			tagId:        []string{tagId},
+			resourceId:   resourceId,
+			resourceType: ResourceTypeSnapshot,
+			isError:      true,
+		},
+	}
+	for _, v := range tests {
+		err := cfg.AttachTags(v.tagId, v.resourceId, v.resourceType)
+		if (err != nil) != v.isError {
+			t.Errorf("name %s, expect %t, but actually %t", v.name, v.isError, err != nil)
 		}
 	}
 }

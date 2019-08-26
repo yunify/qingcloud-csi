@@ -103,3 +103,8 @@ const (
 	EnableDescribeInstanceVerboseMode  = 1
 	DisableDescribeInstanceVerboseMode = 0
 )
+
+const (
+	ResourceTypeVolume   = "volume"
+	ResourceTypeSnapshot = "snapshot"
+)

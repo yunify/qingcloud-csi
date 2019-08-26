@@ -22,20 +22,32 @@ import (
 	"github.com/yunify/qingcloud-csi/pkg/cloud"
 	"github.com/yunify/qingcloud-csi/pkg/common"
 	"strconv"
+	"strings"
+)
+
+const (
+	StorageClassTypeName     = "type"
+	StorageClassMaxSizeName  = "maxSize"
+	StorageClassMinSizeName  = "minSize"
+	StorageClassStepSizeName = "stepSize"
+	StorageClassFsTypeName   = "fsType"
+	StorageClassReplicaName  = "replica"
+	StorageClassTagsName     = "tags"
 )
 
 type QingStorageClass struct {
-	DiskType VolumeType `json:"type"`
-	MaxSize  int        `json:"maxSize"`
-	MinSize  int        `json:"minSize"`
-	StepSize int        `json:"stepSize"`
-	FsType   string     `json:"fsType"`
-	Replica  int        `json:"replica"`
+	DiskType VolumeType
+	MaxSize  int
+	MinSize  int
+	StepSize int
+	FsType   string
+	Replica  int
+	Tags     []string
 }
 
-// NewDefaultQingStorageClass create default qingStorageClass object
+// NewDefaultQingStorageClass create default QingStorageClass object
 func NewDefaultQingStorageClass() *QingStorageClass {
-	return NewDefaultQingStorageClassFromType(SSDEnterpriseVolumeType)
+	return NewDefaultQingStorageClassFromType(DefaultVolumeType)
 }
 
 // NewDefaultQingStorageClassFromType create default qingStorageClass by specified volume type
@@ -55,22 +67,29 @@ func NewDefaultQingStorageClassFromType(diskType VolumeType) *QingStorageClass {
 
 // NewQingStorageClassFromMap create qingStorageClass object from map
 func NewQingStorageClassFromMap(opt map[string]string) (*QingStorageClass, error) {
-	sVolType, volTypeOk := opt["type"]
-	sMaxSize, maxSizeOk := opt["maxSize"]
-	sMinSize, minSizeOk := opt["minSize"]
-	sStepSize, stepSizeOk := opt["stepSize"]
-	sFsType, fsTypeOk := opt["fsType"]
-	sReplica, replicaOk := opt["replica"]
-	if volTypeOk == false {
-		return NewDefaultQingStorageClass(), nil
+	sVolType, volTypeOk := opt[StorageClassTypeName]
+	sMaxSize, maxSizeOk := opt[StorageClassMaxSizeName]
+	sMinSize, minSizeOk := opt[StorageClassMinSizeName]
+	sStepSize, stepSizeOk := opt[StorageClassStepSizeName]
+	sFsType, fsTypeOk := opt[StorageClassFsTypeName]
+	sReplica, replicaOk := opt[StorageClassReplicaName]
+	sTags, tagsOk := opt[StorageClassTagsName]
+
+	sc := NewDefaultQingStorageClass()
+
+	if volTypeOk {
+		// Convert volume type to integer
+		iVolType, err := strconv.Atoi(sVolType)
+		if err != nil {
+			return nil, err
+		}
+		if !VolumeType(iVolType).IsValid() {
+			return nil, fmt.Errorf("invalid volume type %d", iVolType)
+		}
+		sc.DiskType = VolumeType(iVolType)
 	}
-	// Convert volume type to integer
-	iVolType, err := strconv.Atoi(sVolType)
-	if err != nil {
-		return nil, err
-	}
-	sc := NewDefaultQingStorageClassFromType(VolumeType(iVolType))
-	if maxSizeOk == true && minSizeOk == true && stepSizeOk == true {
+
+	if maxSizeOk && minSizeOk && stepSizeOk {
 		// Get volume max size
 		iMaxSize, err := strconv.Atoi(sMaxSize)
 		if err != nil {
@@ -104,7 +123,7 @@ func NewQingStorageClassFromMap(opt map[string]string) (*QingStorageClass, error
 		sc.StepSize = iStepSize
 	}
 
-	if fsTypeOk == true {
+	if fsTypeOk {
 		if !IsValidFileSystemType(sFsType) {
 			return nil, fmt.Errorf("unsupported filesystem type %s", sFsType)
 		}
@@ -112,7 +131,7 @@ func NewQingStorageClassFromMap(opt map[string]string) (*QingStorageClass, error
 	}
 
 	// Get volume replicas
-	if replicaOk == true {
+	if replicaOk {
 		iReplica, err := strconv.Atoi(sReplica)
 		if err != nil {
 			return nil, err
@@ -123,6 +142,9 @@ func NewQingStorageClassFromMap(opt map[string]string) (*QingStorageClass, error
 		sc.Replica = iReplica
 	}
 
+	if tagsOk && len(sTags) > 0 {
+		sc.Tags = strings.Split(strings.ReplaceAll(sTags, " ", ""), ",")
+	}
 	return sc, nil
 }
 
@@ -135,6 +157,10 @@ func (sc QingStorageClass) GetMaxSizeByte() int64 {
 }
 func (sc QingStorageClass) GetStepSizeByte() int64 {
 	return int64(sc.StepSize) * common.Gib
+}
+
+func (sc QingStorageClass) GetTags() []string {
+	return sc.Tags
 }
 
 // FormatVolumeSize transfer to proper volume size

@@ -33,6 +33,7 @@ type qingCloudManager struct {
 	volumeService   *qcservice.VolumeService
 	jobService      *qcservice.JobService
 	cloudService    *qcservice.QingCloudService
+	tagService      *qcservice.TagService
 }
 
 func NewQingCloudManagerFromConfig(config *qcconfig.Config) (*qingCloudManager, error) {
@@ -46,6 +47,7 @@ func NewQingCloudManagerFromConfig(config *qcconfig.Config) (*qingCloudManager, 
 	ss, _ := qs.Snapshot(config.Zone)
 	vs, _ := qs.Volume(config.Zone)
 	js, _ := qs.Job(config.Zone)
+	ts, _ := qs.Tag(config.Zone)
 
 	// initial cloud manager
 	cm := qingCloudManager{
@@ -54,6 +56,7 @@ func NewQingCloudManagerFromConfig(config *qcconfig.Config) (*qingCloudManager, 
 		volumeService:   vs,
 		jobService:      js,
 		cloudService:    qs,
+		tagService:      ts,
 	}
 	klog.Infof("Succeed to initial cloud manager")
 	return &cm, nil
@@ -555,6 +558,75 @@ func (zm *qingCloudManager) GetZoneList() (zones []string, err error) {
 		}
 	}
 	return zones, nil
+}
+
+// FindTags finds and gets tags information
+func (cm *qingCloudManager) FindTag(tagId string) (tagInfo *qcservice.Tag, err error) {
+	if len(tagId) == 0 {
+		return nil, nil
+	}
+	input := &qcservice.DescribeTagsInput{
+		Tags: []*string{&tagId},
+	}
+
+	output, err := cm.tagService.DescribeTags(input)
+	if err != nil {
+		return nil, err
+	}
+	if *output.RetCode != 0 {
+		klog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
+		return nil, fmt.Errorf("call IaaS DescribeTags err: tag id %s in %s", tagId, cm.GetZone())
+	}
+	switch *output.TotalCount {
+	// Not found tag
+	case 0:
+		return nil, nil
+	// Found one tag
+	case 1:
+		return output.TagSet[0], nil
+	// Found duplicate tags
+	default:
+		return nil, fmt.Errorf("call IaaS DescribeTags err: find duplicate tags, tag id %s in %s",
+			tagId, cm.GetZone())
+	}
+}
+
+// AttachTag adds a slice of tags on a object
+func (cm *qingCloudManager) AttachTags(tagsId []string, resourceId string, resourceType string) (err error) {
+	tagPairs := []*qcservice.ResourceTagPair{}
+	for index := range tagsId {
+		tagPairs = append(tagPairs, &qcservice.ResourceTagPair{
+			ResourceID:   &resourceId,
+			ResourceType: &resourceType,
+			TagID:        &tagsId[index],
+		})
+	}
+	input := &qcservice.AttachTagsInput{tagPairs}
+	output, err := cm.tagService.AttachTags(input)
+	if err != nil {
+		return err
+	}
+	if *output.RetCode != 0 {
+		klog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
+		return fmt.Errorf("call IaaS AttachTags err: tag id %v, resource id %s, resource type %s in %s", tagsId,
+			resourceId, resourceType, cm.GetZone())
+	}
+	klog.Infof("Call IaaS AttachTags %v on resource %s succeed", tagsId, resourceId)
+	return nil
+}
+
+// IsValidTags checks tags exists.
+func (cm *qingCloudManager) IsValidTags(tagsId []string) bool {
+	for _, tagId := range tagsId {
+		tagInfo, err := cm.FindTag(tagId)
+		if err != nil {
+			return false
+		}
+		if tagInfo == nil {
+			return false
+		}
+	}
+	return true
 }
 
 func (cm *qingCloudManager) waitJob(jobId string) error {

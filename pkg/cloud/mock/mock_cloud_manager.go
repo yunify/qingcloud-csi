@@ -201,3 +201,18 @@ func (m *mockCloudManager) GetZoneList() (zoneNameList []string, err error) {
 func (m *mockCloudManager) waitJob(jobId string) (err error) {
 	return nil
 }
+
+// FindTags finds and gets tags information
+func (m *mockCloudManager) FindTag(tagId string) (tagInfo *qcservice.Tag, err error) {
+	return nil, nil
+}
+
+// IsValidTags checks tags exists.
+func (m *mockCloudManager) IsValidTags(tagsId []string) bool {
+	return false
+}
+
+// AttachTags add a slice of tags on a object
+func (m *mockCloudManager) AttachTags(tagsId []string, resourceId string, resourceType string) (err error) {
+	return nil
+}
