@@ -16,27 +16,31 @@ limitations under the License.
 
 package driver
 
-type Topology struct {
-	zone         string
-	instanceType InstanceType
+import "strings"
+
+const (
+	SnapshotClassTagsName = "tags"
+)
+
+type QingSnapshotClass struct {
+	Tags []string
 }
 
-func NewTopology(zone string, instanceType InstanceType) *Topology {
-	return &Topology{zone, instanceType}
+// NewDefaultQingSnapshotClass create default QingSnapshotClass object
+func NewDefaultQingSnapshotClass() *QingSnapshotClass {
+	return &QingSnapshotClass{}
 }
 
-func (t *Topology) GetZone() string {
-	return t.zone
+func NewQingSnapshotClassFromMap(opt map[string]string) (*QingSnapshotClass, error) {
+	sTags, tagsOk := opt[SnapshotClassTagsName]
+
+	sc := NewDefaultQingSnapshotClass()
+	if tagsOk && len(sTags) > 0 {
+		sc.Tags = strings.Split(strings.ReplaceAll(sTags, " ", ""), ",")
+	}
+	return sc, nil
 }
 
-func (t *Topology) GetInstanceType() InstanceType {
-	return t.instanceType
-}
-
-func (t *Topology) SetZone(zone string) {
-	t.zone = zone
-}
-
-func (t *Topology) SetInstanceType(instanceType InstanceType) {
-	t.instanceType = instanceType
+func (sc QingSnapshotClass) GetTags() []string {
+	return sc.Tags
 }

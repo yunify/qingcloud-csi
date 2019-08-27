@@ -12,31 +12,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: PersistentVolumeClaim
 metadata:
-  name: snap-example
+  name: pvc-snap-1
 spec:
-  selector:
-    matchLabels:
-      app: snap-example
-      tier: csi-qingcloud
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: snap-example
-        tier: csi-qingcloud
-    spec:
-      containers:
-      - name: nginx
-        image: nginx
-        volumeMounts:
-        - mountPath: /mnt
-          name: mypvc
-      volumes:
-      - name: mypvc
-        persistentVolumeClaim:
-          claimName: pvc-snap-2
-          readOnly: false
-
+  storageClassName: csi-qingcloud
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi

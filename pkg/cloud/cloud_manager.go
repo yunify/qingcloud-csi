@@ -104,6 +104,12 @@ type UtilManager interface {
 	GetZone() (zoneName string)
 	// GetZoneList get accessible zone list
 	GetZoneList() (zoneNameList []string, err error)
+	// FindTags finds and gets tags information
+	FindTag(tagId string) (tagInfo *qcservice.Tag, err error)
+	// IsValidTags checks tags exists.
+	IsValidTags(tagsId []string) bool
+	// AttachTags add a slice of tags on a object
+	AttachTags(tagsId []string, resourceId string, resourceType string) (err error)
 }
 
 type CloudManager interface {

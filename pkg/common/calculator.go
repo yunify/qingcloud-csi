@@ -24,45 +24,49 @@ import (
 
 // GibToByte
 // Convert GiB to Byte
-func GibToByte(num int) int64 {
-	return int64(num) * Gib
+func GibToByte(nGib int) int64 {
+	return int64(nGib) * Gib
 }
 
 // ByteCeilToGib
 // Convert Byte to Gib
-func ByteCeilToGib(num int64) int {
-	if num <= 0 {
+func ByteCeilToGib(nByte int64) int {
+	if nByte <= 0 {
 		return 0
 	}
-	res := num / Gib
-	if res*Gib < num {
+	res := nByte / Gib
+	if res*Gib < nByte {
 		res += 1
 	}
 	return int(res)
 }
 
 // Valid capacity bytes in capacity range
-func IsValidCapacityBytes(cur int64, capRanges *csi.CapacityRange) bool {
-	if capRanges == nil {
+func IsValidCapacityBytes(cur int64, capRange *csi.CapacityRange) bool {
+	if capRange == nil {
 		return true
 	}
-	if capRanges.GetRequiredBytes() > 0 && cur < capRanges.GetRequiredBytes() {
+	if capRange.GetRequiredBytes() > 0 && cur < capRange.GetRequiredBytes() {
 		return false
 	}
-	if capRanges.GetLimitBytes() > 0 && cur > capRanges.GetLimitBytes() {
+	if capRange.GetLimitBytes() > 0 && cur > capRange.GetLimitBytes() {
 		return false
 	}
 	return true
 }
 
+// GetRequestSizeBytes get minimal required bytes and not exceed limit bytes.
 func GetRequestSizeBytes(capRange *csi.CapacityRange) (int64, error) {
 	if capRange == nil {
 		return 0, nil
 	}
 
 	requiredBytes := capRange.GetRequiredBytes()
-
 	limitBytes := capRange.GetLimitBytes()
+	if requiredBytes < 0 || limitBytes < 0 {
+		return -1, fmt.Errorf("capacity range [%d,%d] should not less than zero", requiredBytes, limitBytes)
+	}
+
 	if limitBytes == 0 {
 		limitBytes = math.MaxInt64
 	}

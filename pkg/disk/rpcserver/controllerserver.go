@@ -97,7 +97,11 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+	if cs.cloud.IsValidTags(sc.GetTags()) == false {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid tags in storage class %v", sc.GetTags())
+	}
 	klog.Infof("Create storage class %v", sc)
+
 	// get request volume capacity range
 	requiredSizeByte, err := sc.GetRequiredVolumeSizeByte(req.GetCapacityRange())
 	if err != nil {
@@ -161,6 +165,13 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		}
 
 		klog.Infof("%s: Succeed to create empty volume [%s/%s].", hash, volName, newVolId)
+
+		err = cs.cloud.AttachTags(sc.GetTags(), newVolId, cloud.ResourceTypeVolume)
+		if err != nil {
+			klog.Errorf("%s: Failed to add tags %v on %s %s", hash, sc.GetTags(), cloud.ResourceTypeVolume,
+				newVolId)
+			return nil, status.Errorf(codes.Internal, err.Error())
+		}
 		return &csi.CreateVolumeResponse{
 			Volume: &csi.Volume{
 				VolumeId:           newVolId,
@@ -222,6 +233,12 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 				return nil, status.Errorf(codes.Internal,
 					"expected volume size [%d], but actually [%d], volume id [%s], snapshot id [%s]",
 					requiredRestoreVolumeSizeInBytes, actualRestoreVolumeSizeInBytes, newVolId, snapId)
+			}
+			err = cs.cloud.AttachTags(sc.GetTags(), newVolId, cloud.ResourceTypeVolume)
+			if err != nil {
+				klog.Errorf("%s: Failed to add tags %v on %s %s", hash, sc.GetTags(), cloud.ResourceTypeVolume,
+					newVolId)
+				return nil, status.Errorf(codes.Internal, err.Error())
 			}
 			return &csi.CreateVolumeResponse{
 				Volume: &csi.Volume{
@@ -349,6 +366,12 @@ func (cs *ControllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	// Volume published to another node
 	if len(*exVol.Instance.InstanceID) != 0 {
 		if *exVol.Instance.InstanceID == nodeId {
+			if *exVol.Instance.Device != "" {
+				// cannot found device path
+				klog.Errorf("The plugin SHOULD NOT run here, please report at " +
+					"https://github.com/yunify/qingcloud-csi.")
+				return nil, status.Errorf(codes.Aborted, "operation pending for volume %s detaching", volumeId)
+			}
 			klog.Warningf("volume %s has been already attached on instance %s", volumeId, nodeId)
 			return &csi.ControllerPublishVolumeResponse{}, nil
 		} else {
@@ -392,8 +415,7 @@ func (cs *ControllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	// Try to detach volume
 	klog.Infof("Cannot find device path and going to detach volume %s", volumeId)
 	if err := cs.cloud.DetachVolume(volumeId, nodeId); err != nil {
-		return nil, status.Errorf(codes.Internal,
-			"cannot find device path, detach volume %s failed", volumeId)
+		return nil, status.Errorf(codes.Internal, "cannot find device path, detach volume %s failed", volumeId)
 	} else {
 		return nil, status.Errorf(codes.Internal,
 			"cannot find device path, volume %s has been detached, please try attaching to instance %s again.",
@@ -578,18 +600,20 @@ func (cs *ControllerServer) GetCapacity(ctx context.Context, req *csi.GetCapacit
 // the plugin SHOULD return 0 OK and ready_to_use SHOULD be set to false.
 // Source volume id is REQUIRED
 // Snapshot name is REQUIRED
-func (cs *ControllerServer) CreateSnapshot(ctx context.Context, req *csi.CreateSnapshotRequest) (*csi.CreateSnapshotResponse,
-	error) {
-	klog.Info("----- Start CreateSnapshot -----")
-	defer klog.Info("===== End CreateSnapshot =====")
+func (cs *ControllerServer) CreateSnapshot(ctx context.Context, req *csi.CreateSnapshotRequest) (*csi.
+	CreateSnapshotResponse, error) {
+	funcName := "CreateSnapshot"
+	info, hash := common.EntryFunction(funcName)
+	klog.Info(info)
+	defer klog.Info(common.ExitFunction(funcName, hash))
+	// 0. Prepare
 	if isValid := cs.driver.ValidateControllerServiceRequest(csi.
 		ControllerServiceCapability_RPC_CREATE_DELETE_SNAPSHOT); isValid != true {
 		klog.Errorf("invalid create snapshot request: %v", req)
 		return nil, status.Error(codes.Unimplemented, "")
 	}
-	// 0. Preflight
 	// Check source volume id
-	klog.Info("Check required parameters")
+	klog.Infof("%s: Check required parameters", hash)
 	if len(req.GetSourceVolumeId()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "volume ID missing in request")
 	}
@@ -607,13 +631,13 @@ func (cs *ControllerServer) CreateSnapshot(ctx context.Context, req *csi.CreateS
 	// If a snapshot corresponding to the specified snapshot name is successfully cut and ready to use (meaning it MAY
 	// be specified as a volume_content_source in a CreateVolumeRequest), the Plugin MUST reply 0 OK with the
 	// corresponding CreateSnapshotResponse.
-	klog.Infof("Find existing snapshot name [%s]", snapName)
+	klog.Infof("%s: Find existing snapshot name [%s]", hash, snapName)
 	exSnap, err := cs.cloud.FindSnapshotByName(snapName)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "find snapshot by name error: %s, %s", snapName, err.Error())
 	}
 	if exSnap != nil {
-		klog.Infof("Found existing snapshot name [%s], snapshot id [%s], source volume id %s",
+		klog.Infof("%s: Found existing snapshot name [%s], snapshot id [%s], source volume id %s", hash,
 			*exSnap.SnapshotName, *exSnap.SnapshotID, *exSnap.Resource.ResourceID)
 		if exSnap.Resource != nil && *exSnap.Resource.ResourceType == "volume" &&
 			*exSnap.Resource.ResourceID == srcVolId {
@@ -621,6 +645,7 @@ func (cs *ControllerServer) CreateSnapshot(ctx context.Context, req *csi.CreateS
 			if err != nil {
 				return nil, status.Error(codes.Internal, err.Error())
 			}
+			klog.Infof("%s: Get snapshot %s status %s", hash, snapName, *exSnap.Status)
 			if *exSnap.Status == cloud.SnapshotStatusAvailable {
 				isReadyToUse = true
 			} else {
@@ -640,23 +665,40 @@ func (cs *ControllerServer) CreateSnapshot(ctx context.Context, req *csi.CreateS
 			"snapshot name [%s] id [%s] already exists, but is incompatible with the source volume id [%s]",
 			snapName, *exSnap.SnapshotID, srcVolId)
 	}
+	// Create snapshot class for add tags
+	klog.Infof("%s: Try to create snapshot class from %v", hash, req.GetParameters())
+	sc, err := driver.NewQingSnapshotClassFromMap(req.GetParameters())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	if cs.cloud.IsValidTags(sc.GetTags()) == false {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid tags in storage class %v", sc.GetTags())
+	}
+	klog.Infof("%s: Succeed to create snapshot class %v", hash, sc)
 	// Create a new full snapshot
-	klog.Infof("Creating snapshot [%s] from volume [%s] in zone [%s]...", snapName, srcVolId, cs.cloud.GetZone())
-	snapId, err := cs.cloud.CreateSnapshot(snapName, srcVolId)
+	klog.Infof("%s: Creating snapshot [%s] from volume [%s] in zone [%s]...", hash, snapName, srcVolId,
+		cs.cloud.GetZone())
+	newSnapId, err := cs.cloud.CreateSnapshot(snapName, srcVolId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "create snapshot [%s] from source volume [%s] error: %s",
 			snapName, srcVolId, err.Error())
 	}
-	klog.Infof("Create snapshot [%s] finished, get snapshot id [%s]", snapName, snapId)
-	klog.Infof("Get snapshot id [%s] info...", snapId)
-	snapInfo, err := cs.cloud.FindSnapshot(snapId)
+	klog.Infof("%s: Create snapshot [%s] finished, get snapshot id [%s]", hash, snapName, newSnapId)
+	err = cs.cloud.AttachTags(sc.GetTags(), newSnapId, cloud.ResourceTypeSnapshot)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "Find snapshot [%s] error: %s", snapId, err.Error())
+		klog.Errorf("%s: Failed to add tags %v on %s %s", hash, sc.GetTags(), cloud.ResourceTypeVolume,
+			newSnapId)
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	klog.Infof("%s: Get snapshot id [%s] info...", hash, newSnapId)
+	snapInfo, err := cs.cloud.FindSnapshot(newSnapId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Find snapshot [%s] error: %s", newSnapId, err.Error())
 	}
 	if snapInfo == nil {
-		return nil, status.Errorf(codes.Internal, "cannot find just created snapshot id [%s]", snapId)
+		return nil, status.Errorf(codes.Internal, "cannot find just created snapshot id [%s]", newSnapId)
 	}
-	klog.Infof("Succeed to find snapshot id [%s]", snapId)
+	klog.Infof("%s: Succeed to find snapshot id [%s]", hash, newSnapId)
 	ts, err = ptypes.TimestampProto(*snapInfo.CreateTime)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
