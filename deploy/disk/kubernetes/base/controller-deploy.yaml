@@ -46,8 +46,6 @@ spec:
         role: "controller"
     spec:
       serviceAccount: csi-qingcloud-controller
-      imagePullSecrets:
-      - name: csi-qingcloud
       containers:
       - name: csi-provisioner
         image: quay.io/k8scsi/csi-provisioner:v1.1.0
@@ -121,7 +119,7 @@ spec:
         - name: socket-dir
           mountPath: /csi
       - name: csi-qingcloud
-        image: dockerhub.qingcloud.com/csiplugin/csi-qingcloud:latest
+        image: csiplugin/csi-qingcloud:latest
         args :
         - "--endpoint=$(CSI_ENDPOINT)"
         - "--drivername=disk.csi.qingcloud.com"

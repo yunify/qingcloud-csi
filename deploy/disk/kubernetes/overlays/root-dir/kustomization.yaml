@@ -15,7 +15,7 @@
 kind: Kustomization
 namespace: kube-system
 images:
-  - name: dockerhub.qingcloud.com/csiplugin/csi-qingcloud
+  - name: csiplugin/csi-qingcloud
     newTag: v1.1.0
 commonLabels:
   tier: prod

@@ -16,7 +16,7 @@
 
 .PHONY: all disk
 
-DISK_IMAGE_NAME=dockerhub.qingcloud.com/csiplugin/csi-qingcloud
+DISK_IMAGE_NAME=csiplugin/csi-qingcloud
 DISK_IMAGE_TAG=canary
 ROOT_PATH=$(pwd)
 PACKAGE_LIST=./cmd/... ./pkg/...
