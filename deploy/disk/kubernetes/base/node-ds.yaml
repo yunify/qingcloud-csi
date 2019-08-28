@@ -39,8 +39,6 @@ spec:
       - effect: NoSchedule
         key: node.cloudprovider.kubernetes.io/uninitialized
         value: "true"
-      imagePullSecrets:
-      - name: csi-qingcloud
       hostNetwork: true
       containers:
         - name: node-registrar
@@ -67,7 +65,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
-          image: dockerhub.qingcloud.com/csiplugin/csi-qingcloud:latest
+          image: csiplugin/csi-qingcloud:latest
           args :
             - "--endpoint=$(CSI_ENDPOINT)"
             - "--drivername=disk.csi.qingcloud.com"

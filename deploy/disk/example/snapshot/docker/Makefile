@@ -16,7 +16,7 @@
 
 .PHONY: all image
 
-IMAGE_REPO=dockerhub.qingcloud.com/csiplugin/
+IMAGE_REPO=csiplugin/
 IMAGE_NAME=fio-test
 IMAGE_TAG=latest
 

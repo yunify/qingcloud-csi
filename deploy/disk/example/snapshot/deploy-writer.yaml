@@ -28,11 +28,9 @@ spec:
         app: fio
         tier: csi-qingcloud
     spec:
-      imagePullSecrets:
-        - name: csi-qingcloud
       containers:
       - name: fio
-        image: dockerhub.qingcloud.com/csiplugin/fio-test:latest
+        image: csiplugin/fio-test:latest
         volumeMounts:
         - mountPath: /mnt
           name: mypvc

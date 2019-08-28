@@ -24,7 +24,6 @@ resources:
   - driver.yaml
   - node-ds.yaml
   - node-rbac.yaml
-  - secret.yaml
 configMapGenerator:
   - name: csi-qingcloud
     files:
