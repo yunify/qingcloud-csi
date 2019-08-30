@@ -26,22 +26,24 @@ import (
 	"k8s.io/klog"
 )
 
-type DiskIdentityServer struct {
+type IdentityServer struct {
 	driver *driver.DiskDriver
 	cloud  cloud.CloudManager
 }
 
 // NewIdentityServer
 // Create identity server
-func NewIdentityServer(d *driver.DiskDriver, c cloud.CloudManager) *DiskIdentityServer {
-	return &DiskIdentityServer{
+func NewIdentityServer(d *driver.DiskDriver, c cloud.CloudManager) *IdentityServer {
+	return &IdentityServer{
 		driver: d,
 		cloud:  c,
 	}
 }
 
+var _ csi.IdentityServer = &IdentityServer{}
+
 // Plugin MUST implement this RPC call
-func (is *DiskIdentityServer) Probe(ctx context.Context, req *csi.ProbeRequest) (*csi.ProbeResponse, error) {
+func (is *IdentityServer) Probe(ctx context.Context, req *csi.ProbeRequest) (*csi.ProbeResponse, error) {
 	zones, err := is.cloud.GetZoneList()
 	if err != nil {
 		return nil, status.Error(codes.FailedPrecondition, err.Error())
@@ -51,7 +53,7 @@ func (is *DiskIdentityServer) Probe(ctx context.Context, req *csi.ProbeRequest) 
 }
 
 // Get plugin capabilities: CONTROLLER, ACCESSIBILITY, EXPANSION
-func (d *DiskIdentityServer) GetPluginCapabilities(ctx context.Context, req *csi.GetPluginCapabilitiesRequest) (*csi.
+func (d *IdentityServer) GetPluginCapabilities(ctx context.Context, req *csi.GetPluginCapabilitiesRequest) (*csi.
 	GetPluginCapabilitiesResponse, error) {
 	klog.V(5).Infof("Using default capabilities")
 	return &csi.GetPluginCapabilitiesResponse{
@@ -59,7 +61,7 @@ func (d *DiskIdentityServer) GetPluginCapabilities(ctx context.Context, req *csi
 	}, nil
 }
 
-func (d *DiskIdentityServer) GetPluginInfo(ctx context.Context,
+func (d *IdentityServer) GetPluginInfo(ctx context.Context,
 	req *csi.GetPluginInfoRequest) (*csi.GetPluginInfoResponse, error) {
 	klog.V(5).Infof("Using GetPluginInfo")
 

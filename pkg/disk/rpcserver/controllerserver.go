@@ -37,7 +37,7 @@ import (
 type ControllerServer struct {
 	driver *driver.DiskDriver
 	cloud  cloud.CloudManager
-	// TODO: add mutex
+	locks  *common.ResourceLocks
 }
 
 // NewControllerServer
@@ -46,8 +46,11 @@ func NewControllerServer(d *driver.DiskDriver, c cloud.CloudManager) *Controller
 	return &ControllerServer{
 		driver: d,
 		cloud:  c,
+		locks:  common.NewResourceLocks(),
 	}
 }
+
+var _ csi.ControllerServer = &ControllerServer{}
 
 // This operation MUST be idempotent
 // This operation MAY create three types of volumes:
@@ -282,6 +285,13 @@ func (cs *ControllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 	// Deleting disk
 	klog.Infof("deleting volume %s", volumeId)
 
+	// ensure on call in-flight
+	klog.Infof("try to lock resource %s", volumeId)
+	if acquired := cs.locks.TryAcquire(volumeId); !acquired {
+		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, volumeId)
+	}
+	defer cs.locks.Release(volumeId)
+
 	// For idempotent:
 	// MUST reply OK when volume does not exist
 	volInfo, err := cs.cloud.FindVolume(volumeId)
@@ -345,6 +355,14 @@ func (cs *ControllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 
 	// if volume id not exist
 	volumeId := req.GetVolumeId()
+
+	// ensure one call in-flight
+	klog.Infof("try to lock resource %s", volumeId)
+	if acquired := cs.locks.TryAcquire(volumeId); !acquired {
+		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, volumeId)
+	}
+	defer cs.locks.Release(volumeId)
+
 	exVol, err := cs.cloud.FindVolume(volumeId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -441,6 +459,13 @@ func (cs *ControllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 	}
 	volumeId := req.GetVolumeId()
 	nodeId := req.GetNodeId()
+
+	// ensure one call in-flight
+	klog.Infof("try to lock resource %s", volumeId)
+	if acquired := cs.locks.TryAcquire(volumeId); !acquired {
+		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, volumeId)
+	}
+	defer cs.locks.Release(volumeId)
 
 	// 1. Detach
 	// check volume exist
@@ -539,6 +564,13 @@ func (cs *ControllerServer) ControllerExpandVolume(ctx context.Context, req *csi
 	// 1. Check volume status
 	// does volume exist
 	volumeId := req.GetVolumeId()
+	// ensure one call in-flight
+	klog.Infof("try to lock resource %s", volumeId)
+	if acquired := cs.locks.TryAcquire(volumeId); !acquired {
+		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, volumeId)
+	}
+	defer cs.locks.Release(volumeId)
+
 	volInfo, err := cs.cloud.FindVolume(volumeId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -625,6 +657,12 @@ func (cs *ControllerServer) CreateSnapshot(ctx context.Context, req *csi.CreateS
 	// Create snapshot manager object
 	srcVolId := req.GetSourceVolumeId()
 	snapName := req.GetName()
+	// ensure one call in-flight
+	klog.Infof("try to lock resource %s", srcVolId)
+	if acquired := cs.locks.TryAcquire(srcVolId); !acquired {
+		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, srcVolId)
+	}
+	defer cs.locks.Release(srcVolId)
 	var ts *timestamp.Timestamp
 	var isReadyToUse bool
 	// For idempotent
@@ -738,6 +776,12 @@ func (cs *ControllerServer) DeleteSnapshot(ctx context.Context, req *csi.DeleteS
 		return nil, status.Error(codes.InvalidArgument, "snapshot ID missing in request")
 	}
 	snapId := req.GetSnapshotId()
+	// ensure one call in-flight
+	klog.Infof("try to lock resource %s", snapId)
+	if acquired := cs.locks.TryAcquire(snapId); !acquired {
+		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, snapId)
+	}
+	defer cs.locks.Release(snapId)
 	// 1. For idempotent:
 	// MUST reply OK when snapshot does not exist
 	klog.Infof("Find existing snapshot id [%s].", snapId)
