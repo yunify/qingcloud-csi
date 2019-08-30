@@ -18,7 +18,6 @@ package driver
 
 import (
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/yunify/qingcloud-csi/pkg/cloud"
 	"github.com/yunify/qingcloud-csi/pkg/common"
 	"reflect"
 	"strconv"
@@ -40,7 +39,7 @@ func TestNewDefaultQingStorageClassFromType(t *testing.T) {
 				MinSize:  VolumeTypeToMinSize[DefaultVolumeType],
 				StepSize: VolumeTypeToStepSize[DefaultVolumeType],
 				FsType:   common.DefaultFileSystem,
-				Replica:  cloud.DefaultDiskReplicaType,
+				Replica:  DefaultDiskReplicaType,
 			},
 		},
 		{
@@ -52,7 +51,7 @@ func TestNewDefaultQingStorageClassFromType(t *testing.T) {
 				MinSize:  VolumeTypeToMinSize[HighCapacityVolumeType],
 				StepSize: VolumeTypeToStepSize[HighCapacityVolumeType],
 				FsType:   common.DefaultFileSystem,
-				Replica:  cloud.DefaultDiskReplicaType,
+				Replica:  DefaultDiskReplicaType,
 			},
 		},
 		{
@@ -84,7 +83,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				StorageClassMinSizeName:  strconv.Itoa(VolumeTypeToMinSize[DefaultVolumeType]),
 				StorageClassStepSizeName: strconv.Itoa(VolumeTypeToStepSize[DefaultVolumeType]),
 				StorageClassFsTypeName:   common.FileSystemExt3,
-				StorageClassReplicaName:  strconv.Itoa(cloud.DiskSingleReplicaType),
+				StorageClassReplicaName:  strconv.Itoa(DiskSingleReplicaType),
 			},
 			sc: &QingStorageClass{
 				DiskType: DefaultVolumeType,
@@ -92,7 +91,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				MinSize:  VolumeTypeToMinSize[DefaultVolumeType],
 				StepSize: VolumeTypeToStepSize[DefaultVolumeType],
 				FsType:   common.FileSystemExt3,
-				Replica:  cloud.DiskSingleReplicaType,
+				Replica:  DiskSingleReplicaType,
 			},
 			isError: false,
 		},
@@ -104,7 +103,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				StorageClassMinSizeName:  strconv.Itoa(VolumeTypeToMinSize[DefaultVolumeType]),
 				StorageClassStepSizeName: strconv.Itoa(VolumeTypeToStepSize[DefaultVolumeType]),
 				StorageClassFsTypeName:   common.FileSystemExt3,
-				StorageClassReplicaName:  strconv.Itoa(cloud.DiskSingleReplicaType),
+				StorageClassReplicaName:  strconv.Itoa(DiskSingleReplicaType),
 				StorageClassTagsName:     "",
 			},
 			sc: &QingStorageClass{
@@ -113,7 +112,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				MinSize:  VolumeTypeToMinSize[DefaultVolumeType],
 				StepSize: VolumeTypeToStepSize[DefaultVolumeType],
 				FsType:   common.FileSystemExt3,
-				Replica:  cloud.DiskSingleReplicaType,
+				Replica:  DiskSingleReplicaType,
 			},
 			isError: false,
 		},
@@ -125,7 +124,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				StorageClassMinSizeName:  strconv.Itoa(VolumeTypeToMinSize[DefaultVolumeType]),
 				StorageClassStepSizeName: strconv.Itoa(VolumeTypeToStepSize[DefaultVolumeType]),
 				StorageClassFsTypeName:   common.FileSystemExt3,
-				StorageClassReplicaName:  strconv.Itoa(cloud.DiskSingleReplicaType),
+				StorageClassReplicaName:  strconv.Itoa(DiskSingleReplicaType),
 				StorageClassTagsName:     "tag-12345567",
 			},
 			sc: &QingStorageClass{
@@ -134,7 +133,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				MinSize:  VolumeTypeToMinSize[DefaultVolumeType],
 				StepSize: VolumeTypeToStepSize[DefaultVolumeType],
 				FsType:   common.FileSystemExt3,
-				Replica:  cloud.DiskSingleReplicaType,
+				Replica:  DiskSingleReplicaType,
 				Tags:     []string{"tag-12345567"},
 			},
 			isError: false,
@@ -147,7 +146,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				StorageClassMinSizeName:  strconv.Itoa(VolumeTypeToMinSize[DefaultVolumeType]),
 				StorageClassStepSizeName: strconv.Itoa(VolumeTypeToStepSize[DefaultVolumeType]),
 				StorageClassFsTypeName:   common.FileSystemExt3,
-				StorageClassReplicaName:  strconv.Itoa(cloud.DiskSingleReplicaType),
+				StorageClassReplicaName:  strconv.Itoa(DiskSingleReplicaType),
 				StorageClassTagsName:     "tag-12345567,tag-22345567,  tag-32345567 ",
 			},
 			sc: &QingStorageClass{
@@ -156,7 +155,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				MinSize:  VolumeTypeToMinSize[DefaultVolumeType],
 				StepSize: VolumeTypeToStepSize[DefaultVolumeType],
 				FsType:   common.FileSystemExt3,
-				Replica:  cloud.DiskSingleReplicaType,
+				Replica:  DiskSingleReplicaType,
 				Tags:     []string{"tag-12345567", "tag-22345567", "tag-32345567"},
 			},
 			isError: false,

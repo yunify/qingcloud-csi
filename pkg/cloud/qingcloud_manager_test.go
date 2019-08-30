@@ -17,6 +17,7 @@ limitations under the License.
 package cloud
 
 import (
+	"github.com/yunify/qingcloud-csi/pkg/disk/driver"
 	"k8s.io/klog"
 	"os"
 	"path"
@@ -25,7 +26,7 @@ import (
 
 const (
 	findSnapshotId = "ss-yv7iaiqw"
-	findVolumeId   = "vol-ez60gw9f"
+	findVolumeId   = "vol-b81mirdr"
 	findVolumeName = "er"
 	zone           = "pek3d"
 	deleteVolumeId = findVolumeId
@@ -336,11 +337,51 @@ func TestQingCloudManager_AttachTags(t *testing.T) {
 			resourceType: ResourceTypeSnapshot,
 			isError:      true,
 		},
+		{
+			name:         "empty tags slice",
+			tagId:        []string{},
+			resourceId:   resourceId,
+			resourceType: ResourceTypeVolume,
+			isError:      false,
+		},
+		{
+			name:         "nil tags slice",
+			tagId:        nil,
+			resourceId:   resourceId,
+			resourceType: ResourceTypeVolume,
+			isError:      false,
+		},
 	}
 	for _, v := range tests {
 		err := cfg.AttachTags(v.tagId, v.resourceId, v.resourceType)
 		if (err != nil) != v.isError {
-			t.Errorf("name %s, expect %t, but actually %t", v.name, v.isError, err != nil)
+			t.Errorf("name %s, expect %t, but actually %t/%s", v.name, v.isError, err != nil, err.Error())
+		}
+	}
+}
+
+func TestQingCloudManager_CloneVolume(t *testing.T) {
+	tests := []struct {
+		name     string
+		volName  string
+		volType  int
+		srcVolId string
+		zone     string
+		isError  bool
+	}{
+		{
+			name:     "normal",
+			volName:  "clone-test",
+			volType:  driver.StandardVolumeType.Int(),
+			srcVolId: findVolumeId,
+			zone:     zone,
+			isError:  false,
+		},
+	}
+	for _, test := range tests {
+		_, err := cfg.CloneVolume(test.volName, test.volType, test.srcVolId, test.zone)
+		if (err != nil) != test.isError {
+			t.Errorf("name %s: expect %t, but actually %t/%s", test.name, test.isError, err != nil, err.Error())
 		}
 	}
 }

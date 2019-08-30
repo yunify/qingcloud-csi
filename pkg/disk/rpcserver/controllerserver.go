@@ -196,7 +196,12 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 				return nil, status.Error(codes.InvalidArgument, "snapshot id missing in request")
 			}
 			snapId := volContSrc.GetSnapshot().GetSnapshotId()
-
+			// ensure on call in-flight
+			klog.Infof("try to lock resource %s", snapId)
+			if acquired := cs.locks.TryAcquire(snapId); !acquired {
+				return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, snapId)
+			}
+			defer cs.locks.Release(snapId)
 			// Find snapshot before restore volume from snapshot
 			snapInfo, err := cs.cloud.FindSnapshot(snapId)
 			if err != nil {
@@ -259,6 +264,53 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 				klog.Errorf("%s: Invalid create volume req: %v", hash, req)
 				return nil, status.Error(codes.Unimplemented, "Unsupported controller server capability")
 			}
+			// Get snapshot id
+			if len(volContSrc.GetVolume().GetVolumeId()) == 0 {
+				return nil, status.Error(codes.InvalidArgument, "volume id missing in request")
+			}
+			// Check source volume
+			srcVolId := volContSrc.GetVolume().GetVolumeId()
+			// ensure on call in-flight
+			klog.Infof("try to lock resource %s", srcVolId)
+			if acquired := cs.locks.TryAcquire(srcVolId); !acquired {
+				return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, srcVolId)
+			}
+			defer cs.locks.Release(srcVolId)
+			// Get source volume info
+			srcVolInfo, err := cs.cloud.FindVolume(srcVolId)
+			if err != nil {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+			if srcVolInfo == nil {
+				return nil, status.Errorf(codes.NotFound, "cannot find content source volume id [%s]", srcVolId)
+			}
+			newVolId, err := cs.cloud.CloneVolume(volName, *srcVolInfo.VolumeType, srcVolId, top.GetZone())
+			if err != nil {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+			// Find volume
+			newVolInfo, err := cs.cloud.FindVolume(newVolId)
+			if err != nil {
+				return nil, status.Error(codes.Internal, err.Error())
+			}
+			if newVolInfo == nil {
+				klog.Infof("Cannot find just restore volume [%s/%s], please retrying later.", volName, newVolId)
+				return nil, status.Errorf(codes.Aborted, "cannot find volume %s", newVolId)
+			}
+			err = cs.cloud.AttachTags(sc.GetTags(), newVolId, cloud.ResourceTypeVolume)
+			if err != nil {
+				klog.Errorf("%s: Failed to add tags %v on %s %s", hash, sc.GetTags(), cloud.ResourceTypeVolume,
+					newVolId)
+				return nil, status.Errorf(codes.Internal, err.Error())
+			}
+			return &csi.CreateVolumeResponse{
+				Volume: &csi.Volume{
+					VolumeId:           newVolId,
+					CapacityBytes:      common.GibToByte(*newVolInfo.Size),
+					VolumeContext:      req.GetParameters(),
+					AccessibleTopology: cs.GetVolumeTopology(newVolInfo),
+				},
+			}, nil
 		}
 	}
 	return nil, status.Error(codes.Internal, "The plugin SHOULD NOT run here, "+
@@ -384,17 +436,12 @@ func (cs *ControllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	// Volume published to another node
 	if len(*exVol.Instance.InstanceID) != 0 {
 		if *exVol.Instance.InstanceID == nodeId {
-			if *exVol.Instance.Device != "" {
-				// cannot found device path
-				klog.Errorf("The plugin SHOULD NOT run here, please report at " +
-					"https://github.com/yunify/qingcloud-csi.")
-				return nil, status.Errorf(codes.Aborted, "operation pending for volume %s detaching", volumeId)
-			}
-			klog.Warningf("volume %s has been already attached on instance %s", volumeId, nodeId)
+			klog.Warningf("volume %s has been already attached on instance %s:%s", volumeId, nodeId,
+				*exVol.Instance.Device)
 			return &csi.ControllerPublishVolumeResponse{}, nil
 		} else {
-			klog.Warningf("volume %s expected attached on instance %s, but actually %s", volumeId, nodeId,
-				*exVol.Instance.InstanceID)
+			klog.Warningf("volume %s expected attached on instance %s, but actually %s:%s", volumeId, nodeId,
+				*exVol.Instance.InstanceID, *exVol.Instance.Device)
 			return nil, status.Error(codes.FailedPrecondition, "Volume published to another node")
 		}
 	}
