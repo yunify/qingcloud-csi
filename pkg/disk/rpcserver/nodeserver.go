@@ -34,19 +34,23 @@ import (
 	"strings"
 )
 
-type DiskNodeServer struct {
+type NodeServer struct {
 	driver  *driver.DiskDriver
 	cloud   cloud.CloudManager
 	mounter *mount.SafeFormatAndMount
+	locks   *common.ResourceLocks
 }
+
+var _ csi.NodeServer = &NodeServer{}
 
 // NewNodeServer
 // Create node server
-func NewNodeServer(d *driver.DiskDriver, c cloud.CloudManager, mnt *mount.SafeFormatAndMount) *DiskNodeServer {
-	return &DiskNodeServer{
+func NewNodeServer(d *driver.DiskDriver, c cloud.CloudManager, mnt *mount.SafeFormatAndMount) *NodeServer {
+	return &NodeServer{
 		driver:  d,
 		cloud:   c,
 		mounter: mnt,
+		locks:   common.NewResourceLocks(),
 	}
 }
 
@@ -57,7 +61,7 @@ func NewNodeServer(d *driver.DiskDriver, c cloud.CloudManager, mnt *mount.SafeFo
 //									target path			+ Required
 //									volume capability	+ Required
 //									read only			+ Required (This field is NOT provided when requesting in Kubernetes)
-func (ns *DiskNodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.
+func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.
 	NodePublishVolumeResponse, error) {
 	klog.Info("----- Start NodePublishVolume -----")
 	defer klog.Info("===== End NodePublishVolume =====")
@@ -84,6 +88,13 @@ func (ns *DiskNodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePu
 	targetPath := req.GetTargetPath()
 	stagePath := req.GetStagingTargetPath()
 	volumeId := req.GetVolumeId()
+
+	// ensure one call in-flight
+	klog.Infof("try to lock resource %s", volumeId)
+	if acquired := ns.locks.TryAcquire(volumeId); !acquired {
+		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, volumeId)
+	}
+	defer ns.locks.Release(volumeId)
 
 	// set fsType
 	qc, err := driver.NewQingStorageClassFromMap(req.GetVolumeContext())
@@ -145,7 +156,7 @@ func (ns *DiskNodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePu
 
 // csi.NodeUnpublishVolumeRequest:	volume id	+ Required
 //									target path	+ Required
-func (ns *DiskNodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.
+func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.
 	NodeUnpublishVolumeResponse, error) {
 	klog.Info("----- Start NodeUnpublishVolume -----")
 	defer klog.Info("===== End NodeUnpublishVolume =====")
@@ -160,7 +171,12 @@ func (ns *DiskNodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.Node
 	// set parameter
 	volumeId := req.GetVolumeId()
 	targetPath := req.GetTargetPath()
-
+	// ensure one call in-flight
+	klog.Infof("try to lock resource %s", volumeId)
+	if acquired := ns.locks.TryAcquire(volumeId); !acquired {
+		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, volumeId)
+	}
+	defer ns.locks.Release(volumeId)
 	// Check volume exist
 	volInfo, err := ns.cloud.FindVolume(volumeId)
 	if err != nil {
@@ -195,7 +211,7 @@ func (ns *DiskNodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.Node
 // csi.NodeStageVolumeRequest: 	volume id			+ Required
 //								stage target path	+ Required
 //								volume capability	+ Required
-func (ns *DiskNodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRequest) (*csi.NodeStageVolumeResponse,
+func (ns *NodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRequest) (*csi.NodeStageVolumeResponse,
 	error) {
 	klog.Info("----- Start NodeStageVolume -----")
 	defer klog.Info("===== End NodeStageVolume =====")
@@ -216,6 +232,12 @@ func (ns *DiskNodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStag
 	// set parameter
 	volumeId := req.GetVolumeId()
 	targetPath := req.GetStagingTargetPath()
+	// ensure one call in-flight
+	klog.Infof("try to lock resource %s", volumeId)
+	if acquired := ns.locks.TryAcquire(volumeId); !acquired {
+		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, volumeId)
+	}
+	defer ns.locks.Release(volumeId)
 	// set fsType
 	qc, err := driver.NewQingStorageClassFromMap(req.GetPublishContext())
 	if err != nil {
@@ -270,7 +292,7 @@ func (ns *DiskNodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStag
 // This operation MUST be idempotent
 // csi.NodeUnstageVolumeRequest:	volume id	+ Required
 //									target path	+ Required
-func (ns *DiskNodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.
+func (ns *NodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.
 	NodeUnstageVolumeResponse, error) {
 	klog.Info("----- Start NodeUnstageVolume -----")
 	defer klog.Info("===== End NodeUnstageVolume =====")
@@ -288,7 +310,12 @@ func (ns *DiskNodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUn
 	// set parameter
 	volumeId := req.GetVolumeId()
 	targetPath := req.GetStagingTargetPath()
-
+	// ensure one call in-flight
+	klog.Infof("try to lock resource %s", volumeId)
+	if acquired := ns.locks.TryAcquire(volumeId); !acquired {
+		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, volumeId)
+	}
+	defer ns.locks.Release(volumeId)
 	// Check volume exist
 	volInfo, err := ns.cloud.FindVolume(volumeId)
 	if err != nil {
@@ -332,7 +359,7 @@ func (ns *DiskNodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUn
 	return &csi.NodeUnstageVolumeResponse{}, nil
 }
 
-func (ns *DiskNodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetCapabilitiesRequest) (*csi.
+func (ns *NodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetCapabilitiesRequest) (*csi.
 	NodeGetCapabilitiesResponse, error) {
 	klog.Info("----- Start NodeGetCapabilities -----")
 	defer klog.Info("===== End NodeGetCapabilities =====")
@@ -341,7 +368,7 @@ func (ns *DiskNodeServer) NodeGetCapabilities(ctx context.Context, req *csi.Node
 	}, nil
 }
 
-func (ns *DiskNodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
+func (ns *NodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
 	klog.V(2).Info("----- Start NodeGetInfo -----")
 	defer klog.Info("===== End NodeGetInfo =====")
 	instInfo, err := ns.cloud.FindInstance(ns.driver.GetInstanceId())
@@ -373,7 +400,7 @@ func (ns *DiskNodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoR
 // Input Parameters:
 //  volume id: REQUIRED
 //  volume path: REQUIRED
-func (ns *DiskNodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandVolumeRequest) (
+func (ns *NodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandVolumeRequest) (
 	*csi.NodeExpandVolumeResponse, error) {
 	funcName := "NodeExpandVolume"
 	info, hash := common.EntryFunction(funcName)
@@ -395,7 +422,12 @@ func (ns *DiskNodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExp
 	// Set parameter
 	volumeId := req.GetVolumeId()
 	volumePath := req.GetVolumePath()
-
+	// ensure one call in-flight
+	klog.Infof("try to lock resource %s", volumeId)
+	if acquired := ns.locks.TryAcquire(volumeId); !acquired {
+		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, volumeId)
+	}
+	defer ns.locks.Release(volumeId)
 	// Check volume exist
 	klog.Infof("Get volume %s info", volumeId)
 	volInfo, err := ns.cloud.FindVolume(volumeId)
@@ -447,7 +479,7 @@ func (ns *DiskNodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExp
 // Input Arguments:
 //  volume id: REQUIRED
 //  volume path: REQUIRED
-func (ns *DiskNodeServer) NodeGetVolumeStats(ctx context.Context,
+func (ns *NodeServer) NodeGetVolumeStats(ctx context.Context,
 	req *csi.NodeGetVolumeStatsRequest) (*csi.NodeGetVolumeStatsResponse, error) {
 	funcName := "NodeGetVolumeStats"
 	info, hash := common.EntryFunction(funcName)
@@ -514,7 +546,7 @@ func (ns *DiskNodeServer) NodeGetVolumeStats(ctx context.Context,
 	}, nil
 }
 
-func (ns *DiskNodeServer) getBlockSizeBytes(devicePath string) (int64, error) {
+func (ns *NodeServer) getBlockSizeBytes(devicePath string) (int64, error) {
 	output, err := ns.mounter.Exec.Run("blockdev", "--getsize64", devicePath)
 	if err != nil {
 		return -1, fmt.Errorf("error when getting size of block volume at path %s: output: %s, err: %v", devicePath, string(output), err)
