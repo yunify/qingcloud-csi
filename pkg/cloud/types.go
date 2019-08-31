@@ -71,12 +71,6 @@ const (
 	DiskStatusCeased    string = "ceased"
 )
 
-const (
-	DiskSingleReplicaType  int = 1
-	DiskMultiReplicaType   int = 2
-	DefaultDiskReplicaType int = DiskMultiReplicaType
-)
-
 var DiskReplicaTypeName = map[int]string{
 	1: "rpp-00000001",
 	2: "rpp-00000002",

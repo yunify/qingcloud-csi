@@ -188,6 +188,10 @@ func (m *mockCloudManager) ResizeVolume(volId string, requestSize int) (err erro
 	return nil
 }
 
+func (m *mockCloudManager) CloneVolume(volName string, volType int, srcVolId string, zone string) (newVolId string, err error) {
+	return "", nil
+}
+
 // Util Method
 func (m *mockCloudManager) FindInstance(instanceId string) (instanceInfo *qcservice.Instance, err error) {
 	return nil, nil

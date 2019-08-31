@@ -19,7 +19,6 @@ package driver
 import (
 	"fmt"
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/yunify/qingcloud-csi/pkg/cloud"
 	"github.com/yunify/qingcloud-csi/pkg/common"
 	"io/ioutil"
 	"k8s.io/klog"
@@ -30,9 +29,9 @@ import (
 // Support: 2 MultiReplicas, 1 SingleReplica
 func IsValidReplica(replica int) bool {
 	switch replica {
-	case cloud.DiskMultiReplicaType:
+	case DiskMultiReplicaType:
 		return true
-	case cloud.DiskSingleReplicaType:
+	case DiskSingleReplicaType:
 		return true
 	default:
 		return false

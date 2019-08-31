@@ -297,7 +297,7 @@ func (cm *qingCloudManager) FindVolumeByName(name string) (volume *qcservice.Vol
 // 2. create volume
 // 3. wait job
 func (qm *qingCloudManager) CreateVolume(volName string, requestSize int, replicas int, volType int, zone string) (
-	volumeId string, err error) {
+	newVolId string, err error) {
 	// 0. Set CreateVolume args
 	// create volume count
 	count := 1
@@ -327,11 +327,11 @@ func (qm *qingCloudManager) CreateVolume(volName string, requestSize int, replic
 	// check output
 	if *output.RetCode != 0 {
 		klog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
-		return "", fmt.Errorf(*output.Message)
+		return "", errors.New(*output.Message)
 	}
-	volumeId = *output.Volumes[0]
-	klog.Infof("Call IaaS CreateVolume name %s id %s succeed", volName, volumeId)
-	return *output.Volumes[0], nil
+	newVolId = *output.Volumes[0]
+	klog.Infof("Call IaaS CreateVolume name %s id %s succeed", volName, newVolId)
+	return newVolId, nil
 }
 
 // CreateVolumeFromSnapshot
@@ -495,6 +495,43 @@ func (cm *qingCloudManager) ResizeVolume(volumeId string, requestSize int) error
 	return nil
 }
 
+// CloneVolume clones a volume
+// Return:
+//   volume id, nil: succeed to clone volume and return volume id
+//   nil, error: failed to clone volume
+func (qm *qingCloudManager) CloneVolume(volName string, volType int, srcVolId string, zone string) (newVolId string,
+	err error) {
+	// 0. Set CreateVolume args
+	// create volume count
+	count := 1
+	input := &qcservice.CloneVolumesInput{
+		Count:      &count,
+		Volume:     &srcVolId,
+		VolumeName: &volName,
+		VolumeType: &volType,
+		Zone:       &zone,
+	}
+	// 1. Clone volume
+	klog.Infof("Call IaaS CloneVolume request name: %s, source volume id: %s, zone: %s", volName, srcVolId, zone)
+	output, err := qm.volumeService.CloneVolumes(input)
+	if err != nil {
+		return "", err
+	}
+	// wait job
+	klog.Infof("Call IaaS WaitJob %s", *output.JobID)
+	if err := qm.waitJob(*output.JobID); err != nil {
+		return "", err
+	}
+	// check output
+	if *output.RetCode != 0 {
+		klog.Errorf("Ret code: %d, message: %s", *output.RetCode, *output.Message)
+		return "", errors.New(*output.Message)
+	}
+	newVolId = *output.Volumes[0]
+	klog.Infof("Call IaaS CloneVolume name %s id %s succeed", volName, newVolId)
+	return newVolId, nil
+}
+
 // Find instance by instance ID
 // Return: 	nil,	nil: 	not found instance
 //			instance, nil: 	found instance
@@ -593,7 +630,11 @@ func (cm *qingCloudManager) FindTag(tagId string) (tagInfo *qcservice.Tag, err e
 
 // AttachTag adds a slice of tags on a object
 func (cm *qingCloudManager) AttachTags(tagsId []string, resourceId string, resourceType string) (err error) {
-	tagPairs := []*qcservice.ResourceTagPair{}
+	if len(tagsId) == 0 {
+		klog.Infof("No tags need attached")
+		return nil
+	}
+	var tagPairs []*qcservice.ResourceTagPair
 	for index := range tagsId {
 		tagPairs = append(tagPairs, &qcservice.ResourceTagPair{
 			ResourceID:   &resourceId,

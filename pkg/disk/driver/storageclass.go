@@ -19,7 +19,6 @@ package driver
 import (
 	"fmt"
 	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/yunify/qingcloud-csi/pkg/cloud"
 	"github.com/yunify/qingcloud-csi/pkg/common"
 	"strconv"
 	"strings"
@@ -61,7 +60,7 @@ func NewDefaultQingStorageClassFromType(diskType VolumeType) *QingStorageClass {
 		MinSize:  VolumeTypeToMinSize[diskType],
 		StepSize: VolumeTypeToStepSize[diskType],
 		FsType:   common.DefaultFileSystem,
-		Replica:  cloud.DefaultDiskReplicaType,
+		Replica:  DefaultDiskReplicaType,
 	}
 }
 

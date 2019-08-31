@@ -60,6 +60,11 @@ type VolumeManager interface {
 	//   nil: succeed to expand volume
 	//   error: failed to expand volume
 	ResizeVolume(volId string, requestSize int) (err error)
+	// CloneVolume clones a volume
+	// Return:
+	//   volume id, nil: succeed to clone volume and return volume id
+	//   nil, error: failed to clone volume
+	CloneVolume(volName string, volType int, srcVolId string, zone string) (volId string, err error)
 }
 
 type SnapshotManager interface {

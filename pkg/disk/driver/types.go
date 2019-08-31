@@ -33,6 +33,7 @@ var DefaultControllerServiceCapability = []csi.ControllerServiceCapability_RPC_T
 	csi.ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME,
 	csi.ControllerServiceCapability_RPC_CREATE_DELETE_SNAPSHOT,
 	csi.ControllerServiceCapability_RPC_EXPAND_VOLUME,
+	csi.ControllerServiceCapability_RPC_CLONE_VOLUME,
 }
 
 var DefaultNodeServiceCapability = []csi.NodeServiceCapability_RPC_Type{
@@ -208,3 +209,9 @@ var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
 		PremiumInstanceType,
 	},
 }
+
+const (
+	DiskSingleReplicaType  int = 1
+	DiskMultiReplicaType   int = 2
+	DefaultDiskReplicaType int = DiskMultiReplicaType
+)
