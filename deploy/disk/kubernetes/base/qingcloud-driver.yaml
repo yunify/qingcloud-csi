@@ -12,14 +12,10 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-apiVersion: v1
-kind: PersistentVolumeClaim
+apiVersion: storage.k8s.io/v1beta1
+kind: CSIDriver
 metadata:
-  name: pvc-tag
+  name: disk.csi.qingcloud.com
 spec:
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 20Gi
-  storageClassName: csi-qingcloud
+  attachRequired: true
+  podInfoOnMount: false

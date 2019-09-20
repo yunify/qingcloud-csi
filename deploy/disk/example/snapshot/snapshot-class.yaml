@@ -17,3 +17,5 @@ kind: VolumeSnapshotClass
 metadata:
   name: csi-qingcloud
 snapshotter: disk.csi.qingcloud.com
+parameters:
+  tags: "tag-y7uu1q2a"

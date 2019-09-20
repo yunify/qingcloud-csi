@@ -12,24 +12,6 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-# In production, this needs to be in separate files.
-
-# For StatefulSet validation
-kind: Service
-apiVersion: v1
-metadata:
-  name: csi-qingcloud-controller
-  namespace: kube-system
-  labels:
-    role: "controller"
-spec:
-  selector:
-    role: "controller"
-  ports:
-    - name: dummy
-      port: 12345
----
-
 kind: Deployment
 apiVersion: apps/v1
 metadata:
@@ -52,12 +34,13 @@ spec:
         args:
         - "--csi-address=$(ADDRESS)"
         - "--enable-leader-election"
-        - "--leader-election-type=leases"
-        - "--timeout=90s"
-        - "--retry-interval-start=5s"
-        - "--retry-interval-max=5m"
-        - "--worker-threads=5"
         - "--feature-gates=Topology=true"
+        - "--leader-election-type=leases"
+        - "--retry-interval-max=5m"
+        - "--retry-interval-start=5s"
+        - "--timeout=90s"
+        - "--worker-threads=5"
+        - "--volume-name-prefix=pvc"
         - "--v=5"
         env:
         - name: ADDRESS
@@ -67,11 +50,14 @@ spec:
         - name: socket-dir
           mountPath: /csi
       - name: csi-attacher
-        image: quay.io/k8scsi/csi-attacher:v1.2.0
+        image: quay.io/k8scsi/csi-attacher:v2.0.0
         args:
         - "--csi-address=$(ADDRESS)"
         - "--leader-election"
-        - "--leader-election-type=leases"
+        - "--retry-interval-max=5m"
+        - "--retry-interval-start=5s"
+        - "--timeout=90s"
+        - "--worker-threads=5"
         - "--v=5"
         env:
         - name: ADDRESS
@@ -87,9 +73,11 @@ spec:
       - name: csi-snapshotter
         image: quay.io/k8scsi/csi-snapshotter:v1.2.1
         args:
-          - "--csi-address=$(ADDRESS)"
           - "--connection-timeout=90s"
+          - "--csi-address=$(ADDRESS)"
           - "--leader-election=false"
+          - "--snapshot-name-prefix=snapshot"
+          - "--v=5"
         env:
           - name: ADDRESS
             value: /csi/csi.sock
@@ -100,9 +88,9 @@ spec:
       - name: csi-resizer
         image: quay.io/k8scsi/csi-resizer:v0.2.0
         args:
-          - "--v=5"
           - "--csi-address=$(ADDRESS)"
           - "--leader-election"
+          - "--v=5"
         env:
           - name: ADDRESS
             value: /csi/csi.sock
@@ -110,23 +98,15 @@ spec:
         volumeMounts:
           - name: socket-dir
             mountPath: /csi
-      - name: cluster-registrar
-        image: quay.io/k8scsi/csi-cluster-driver-registrar:v1.0.1
-        args:
-        - "--csi-address=/csi/csi.sock"
-        - "--pod-info-mount-version=v1"
-        volumeMounts:
-        - name: socket-dir
-          mountPath: /csi
       - name: csi-qingcloud
         image: csiplugin/csi-qingcloud:latest
         args :
-        - "--endpoint=$(CSI_ENDPOINT)"
-        - "--drivername=disk.csi.qingcloud.com"
-        - "--nodeid=$(NODE_ID)"
-        - "--config=/etc/config/config.yaml"
-        - "--maxvolume=10"
-        - "--v=5"
+          - "--config=/etc/config/config.yaml"
+          - "--drivername=disk.csi.qingcloud.com"
+          - "--endpoint=$(CSI_ENDPOINT)"
+          - "--maxvolume=10"
+          - "--nodeid=$(NODE_ID)"
+          - "--v=5"
         env:
         - name: NODE_ID
           valueFrom:
