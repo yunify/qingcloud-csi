@@ -16,14 +16,14 @@ kind: Kustomization
 namespace: kube-system
 commonLabels:
   app: "csi-qingcloud"
-  csi: "v1.1.0"
   owner: "yunify"
+  ver: "v1.1.0"
 resources:
   - controller-deploy.yaml
   - controller-rbac.yaml
-  - driver.yaml
   - node-ds.yaml
   - node-rbac.yaml
+  - qingcloud-driver.yaml
 configMapGenerator:
   - name: csi-qingcloud
     files:
