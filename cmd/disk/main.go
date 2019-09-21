@@ -35,14 +35,12 @@ const (
 )
 
 var (
-	endpoint   = flag.String("endpoint", "unix://tmp/csi.sock", "CSI endpoint")
-	driverName = flag.String("drivername", defaultProvisionName, "name of the driver")
-	nodeId     = flag.String("nodeid", "",
-		"If driver cannot get instance ID from /etc/qingcloud/instance-id, we would use this flag.")
 	configPath = flag.String("config", defaultConfigPath, "server config file path")
-	maxVolume  = flag.Int64("maxvolume", 10,
-		"Maximum number of volumes that controller can publish to the node.")
-	timeout = flag.Duration("timeout", time.Second*60, "timeout duration for retrying, default 60s")
+	driverName = flag.String("drivername", defaultProvisionName, "name of the driver")
+	endpoint   = flag.String("endpoint", "unix://tmp/csi.sock", "CSI endpoint")
+	maxVolume  = flag.Int64("maxvolume", 10, "Maximum number of volumes that controller can publish to the node.")
+	nodeId = flag.String("nodeid", "", "If driver cannot get instance ID from /etc/qingcloud/instance-id, we would use this flag.")
+	retryIntervalMax = flag.Duration("retry-interval-max", 2*time.Minute, "Maximum retry interval of failed deletion.")
 )
 
 func main() {
@@ -82,9 +80,12 @@ func handle() {
 		PluginCap:     driver.DefaultPluginCapability,
 	}
 
+	// Set BackOff
+	rt := rpcserver.DefaultBackOff
+	rt.Cap = *retryIntervalMax
 	// For resize
 	mounter := common.NewSafeMounter()
 	driver := driver.GetDiskDriver()
 	driver.InitDiskDriver(diskDriverInput)
-	rpcserver.Run(driver, cloud, mounter, *endpoint)
+	rpcserver.Run(driver, cloud, mounter, *endpoint, rt)
 }

@@ -17,9 +17,12 @@ limitations under the License.
 package rpcserver
 
 import (
+	"fmt"
 	"github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/yunify/qingcloud-csi/pkg/cloud"
 	"github.com/yunify/qingcloud-csi/pkg/disk/driver"
 	"github.com/yunify/qingcloud-sdk-go/service"
+	"k8s.io/client-go/util/retry"
 	"reflect"
 	"testing"
 )
@@ -51,7 +54,7 @@ func getMockControllerServer() *ControllerServer {
 			MaxVolume: 10,
 		},
 	)
-	return NewControllerServer(d, nil)
+	return NewControllerServer(d, nil, DefaultBackOff)
 }
 
 func TestDiskControllerServer_PickTopology(t *testing.T) {
@@ -289,4 +292,15 @@ func TestDiskControllerServer_GetVolumeTopology(t *testing.T) {
 			t.Errorf("name %s: expect %v, but actually %v", v.name, v.topology, res)
 		}
 	}
+}
+
+func TestRetry(t *testing.T) {
+	var newVolId string
+	err := retry.OnError(DefaultBackOff, cloud.IsSnapshotNotAvailable, func() error {
+		fmt.Println("in retry")
+		newVolId = "123"
+		return nil
+	})
+	fmt.Println(err)
+	fmt.Println(newVolId)
 }

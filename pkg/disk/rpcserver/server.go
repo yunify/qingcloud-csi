@@ -20,16 +20,25 @@ import (
 	"github.com/yunify/qingcloud-csi/pkg/cloud"
 	"github.com/yunify/qingcloud-csi/pkg/common"
 	"github.com/yunify/qingcloud-csi/pkg/disk/driver"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/kubernetes/pkg/util/mount"
+	"time"
 )
+
+var DefaultBackOff = wait.Backoff{
+	Duration: time.Second,
+	Factor:   1.5,
+	Steps:    20,
+	Cap:      time.Minute * 2,
+}
 
 // Run
 // Initial and start CSI driver
 func Run(driver *driver.DiskDriver, cloud cloud.CloudManager, mounter *mount.SafeFormatAndMount,
-	endpoint string) {
+	endpoint string, retryTime wait.Backoff) {
 	// Initialize default library driver
 	ids := NewIdentityServer(driver, cloud)
-	cs := NewControllerServer(driver, cloud)
+	cs := NewControllerServer(driver, cloud, retryTime)
 	ns := NewNodeServer(driver, cloud, mounter)
 
 	s := common.NewNonBlockingGRPCServer()

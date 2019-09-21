@@ -20,7 +20,7 @@ import "time"
 
 const (
 	// In Qingcloud bare host, the path of the file containing instance id.
-	RetryString     = "please try later"
+
 	WaitJobInterval = 10 * time.Second
 	WaitJobTimeout  = 180 * time.Second
 )

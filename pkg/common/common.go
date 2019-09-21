@@ -19,6 +19,8 @@ package common
 import (
 	"fmt"
 	"hash/fnv"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
 	"time"
 )
 
@@ -42,4 +44,11 @@ func GenerateHashInEightBytes(input string) string {
 	h := fnv.New32a()
 	h.Write([]byte(input))
 	return fmt.Sprintf("%.8x", h.Sum32())
+}
+
+// Retry on any error
+func RetryOnError(backoff wait.Backoff, fn func() error) error {
+	return retry.OnError(backoff, func(e error) bool {
+		return true
+	}, fn)
 }
