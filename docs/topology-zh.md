@@ -4,8 +4,8 @@
 ## 准备工作
 - Kubernetes 1.14+ 集群
 - 在 Kubernetes 控制平面和 Kubelet 的 `feature-gate` 增加 `CSINodeInfo=true`，默认为 `true`
-- 安装 QingCloud CSI 存储插件，`external-provisioner` 边车容器的 `feature-gate` 增加 `Topology=true`，默认为 `true`
-- 配置存储类型
+- 安装 QingCloud CSI v1.1.0 存储插件，`external-provisioner` 边车容器的 `feature-gate` 增加 `Topology=true`，默认为 `true`
+- 配置 QingCloud CSI 存储类型
 
 ### Kubernetes 集群
 本例使用跨 Pek3 可用区的 Kubernetes v1.15 集群。集群中 node1 和 node2 在 Pek3c, node3 和 node4 在 Pek3b，node5 和 node6 在 Pek3d。node 类型均为基础型。

@@ -35,11 +35,11 @@ const (
 )
 
 var (
-	configPath = flag.String("config", defaultConfigPath, "server config file path")
-	driverName = flag.String("drivername", defaultProvisionName, "name of the driver")
-	endpoint   = flag.String("endpoint", "unix://tmp/csi.sock", "CSI endpoint")
-	maxVolume  = flag.Int64("maxvolume", 10, "Maximum number of volumes that controller can publish to the node.")
-	nodeId = flag.String("nodeid", "", "If driver cannot get instance ID from /etc/qingcloud/instance-id, we would use this flag.")
+	configPath       = flag.String("config", defaultConfigPath, "server config file path")
+	driverName       = flag.String("drivername", defaultProvisionName, "name of the driver")
+	endpoint         = flag.String("endpoint", "unix://tmp/csi.sock", "CSI endpoint")
+	maxVolume        = flag.Int64("maxvolume", 10, "Maximum number of volumes that controller can publish to the node.")
+	nodeId           = flag.String("nodeid", "", "If driver cannot get instance ID from /etc/qingcloud/instance-id, we would use this flag.")
 	retryIntervalMax = flag.Duration("retry-interval-max", 2*time.Minute, "Maximum retry interval of failed deletion.")
 )
 

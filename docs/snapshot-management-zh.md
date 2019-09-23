@@ -3,9 +3,9 @@
 
 ## 准备工作
 - Kubernetes 1.14+ 集群
-- 在 apiserver, controller-manager 的 `feature-gate` 增加 `VolumeSnapshotDataSource=true`
-- 安装 QingCloud CSI 存储插件
-- 配置了 QingCloud CSI storageclass
+- 在 kube-apiserver, kube-controller-manager 的 `feature-gate` 增加 `VolumeSnapshotDataSource=true`
+- 安装 QingCloud CSI v1.1.0
+- 配置 QingCloud CSI 存储类型
 - 创建一个带数据的存储卷
 
 ### 创建带数据的存储卷 `pvc-snap-1`
@@ -47,7 +47,7 @@ drwx------ 2 root root  16K Jul  5 06:09 lost+found
 ```
 
 ## 创建快照
-每个 Kubernetes 快照对应于一个 QingCloud 全量备份，请确保有足够全量备份链配额。
+注意：每个 Kubernetes 快照对应于一个 QingCloud 全量备份，请确保有足够全量备份链配额。
 
 ### 创建快照类型
 ```
