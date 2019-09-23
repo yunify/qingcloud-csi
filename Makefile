@@ -17,7 +17,7 @@
 .PHONY: all disk
 
 DISK_IMAGE_NAME=csiplugin/csi-qingcloud
-DISK_IMAGE_TAG=canary
+DISK_IMAGE_TAG=v1.1.0
 ROOT_PATH=$(pwd)
 PACKAGE_LIST=./cmd/... ./pkg/...
 
@@ -38,14 +38,8 @@ gen-dev:
 	cp /root/.qingcloud/config.yaml deploy/disk/kubernetes/base/config.yaml
 	kustomize build deploy/disk/kubernetes/overlays/dev
 
-install-prod:
-	kustomize build  deploy/disk/kubernetes/overlays/prod|kubectl apply -f -
-
-uninstall-prod:
-	kustomize build  deploy/disk/kubernetes/overlays/prod|kubectl delete -f -
-
 gen-prod:
-	kustomize build deploy/disk/kubernetes/overlays/dev
+	kustomize build deploy/disk/kubernetes/overlays/prod > deploy/disk/kubernetes/releases/qingcloud-csi-disk-v1.1.0.yaml
 
 mod:
 	go build ./...

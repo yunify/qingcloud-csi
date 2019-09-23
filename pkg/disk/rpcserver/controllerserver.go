@@ -87,17 +87,17 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	var top *driver.Topology
 	if req.GetAccessibilityRequirements() != nil && cs.driver.ValidatePluginCapabilityService(csi.
 		PluginCapability_Service_VOLUME_ACCESSIBILITY_CONSTRAINTS) {
-		klog.Info("Pick topology from CreateVolumeRequest.AccessibilityRequirements")
+		klog.Infof("%s: Pick topology from CreateVolumeRequest.AccessibilityRequirements", hash)
 		var err error
 		top, err = cs.PickTopology(req.GetAccessibilityRequirements())
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
 	} else {
-		klog.Info("Set zone in topology")
+		klog.Infof("%s: Set zone in topology", hash)
 		top = driver.NewTopology(cs.cloud.GetZone(), 0)
 	}
-	klog.Infof("Picked topology is %v", top)
+	klog.Infof("%s: Picked topology is %v", hash, top)
 	// create StorageClass object
 	sc, err := driver.NewQingStorageClassFromMap(req.GetParameters())
 	if err != nil {
@@ -106,14 +106,14 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	if cs.cloud.IsValidTags(sc.GetTags()) == false {
 		return nil, status.Errorf(codes.InvalidArgument, "Invalid tags in storage class %v", sc.GetTags())
 	}
-	klog.Infof("Create storage class %v", sc)
+	klog.Infof("%s: Create storage class %v", hash, sc)
 
 	// get request volume capacity range
 	requiredSizeByte, err := sc.GetRequiredVolumeSizeByte(req.GetCapacityRange())
 	if err != nil {
 		return nil, status.Errorf(codes.OutOfRange, "unsupported capacity range, error: %s", err.Error())
 	}
-	klog.Infof("Get required creating volume size in bytes %d", requiredSizeByte)
+	klog.Infof("%s: Get required creating volume size in bytes %d", hash, requiredSizeByte)
 
 	// should not fail when requesting to create a volume with already existing name and same capacity
 	// should fail when requesting to create a volume with already existing name and different capacity.
@@ -142,7 +142,7 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 				},
 			}, nil
 		} else {
-			klog.Errorf("volume %s/%s already exist but is incompatible", volName, *exVol.VolumeID)
+			klog.Errorf("%s: volume %s/%s already exist but is incompatible", hash, volName, *exVol.VolumeID)
 			return nil, status.Errorf(codes.AlreadyExists, "volume %s already exist but is incompatible", volName)
 		}
 	}
@@ -151,22 +151,22 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	volContSrc := req.GetVolumeContentSource()
 	if volContSrc == nil {
 		// create an empty volume
-		klog.Infof("Create an empty volume")
+		klog.Infof("%s: Create an empty volume", hash)
 		requiredSizeGib := common.ByteCeilToGib(requiredSizeByte)
 		klog.Infof("%s: Creating empty volume %s with %d Gib in zone %s...", hash, volName, requiredSizeGib,
 			top.GetZone())
 		newVolId, err := cs.cloud.CreateVolume(volName, requiredSizeGib, sc.Replica, sc.DiskType.Int(), top.GetZone())
 		if err != nil {
-			klog.Errorf("Failed to create volume %s, error: %v", volName, err)
+			klog.Errorf("%s: Failed to create volume %s, error: %v", hash, volName, err)
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 		newVolInfo, err := cs.cloud.FindVolume(newVolId)
 		if err != nil {
-			klog.Errorf("Failed to find volume %s, error: %v", newVolId, err)
+			klog.Errorf("%s: Failed to find volume %s, error: %v", hash, newVolId, err)
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 		if newVolInfo == nil {
-			klog.Infof("Cannot find just created volume [%s/%s], please retrying later.", volName, newVolId)
+			klog.Infof("%s: Cannot find just created volume [%s/%s], please retrying later.", hash, volName, newVolId)
 			return nil, status.Errorf(codes.Aborted, "cannot find volume %s", newVolId)
 		}
 
@@ -200,7 +200,7 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 			}
 			snapId := volContSrc.GetSnapshot().GetSnapshotId()
 			// ensure on call in-flight
-			klog.Infof("try to lock resource %s", snapId)
+			klog.Infof("%s: try to lock resource %s", hash, snapId)
 			if acquired := cs.locks.TryAcquire(snapId); !acquired {
 				return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, snapId)
 			}
@@ -216,8 +216,8 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 			// Compare snapshot required volume size
 			requiredRestoreVolumeSizeInBytes := int64(*snapInfo.SnapshotResource.Size) * common.Gib
 			if !common.IsValidCapacityBytes(requiredRestoreVolumeSizeInBytes, req.GetCapacityRange()) {
-				klog.Errorf("Restore volume request size [%d], out of the capacity range",
-					requiredRestoreVolumeSizeInBytes)
+				klog.Errorf("%s: Restore volume request size [%d], out of the capacity range",
+					hash, requiredRestoreVolumeSizeInBytes)
 				return nil, status.Error(codes.OutOfRange, "unsupported capacity range")
 			}
 			// Retry to restore volume from snapshot
@@ -227,10 +227,10 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 					snapId, top.GetZone())
 				newVolId, err = cs.cloud.CreateVolumeFromSnapshot(volName, snapId, top.GetZone())
 				if err != nil {
-					klog.Errorf("Failed to restore volume %s from snapshot %s, error: %v", volName, snapId, err)
+					klog.Errorf("%s: Failed to restore volume %s from snapshot %s, error: %v", hash, volName, snapId, err)
 					return err
 				} else {
-					klog.Infof("Succeed to restore volume %s/%s from snapshot %s", volName, newVolId, snapId)
+					klog.Infof("%s: Succeed to restore volume %s/%s from snapshot %s", hash, volName, newVolId, snapId)
 					return nil
 				}
 			})
@@ -243,14 +243,14 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 				return nil, status.Error(codes.Internal, err.Error())
 			}
 			if newVolInfo == nil {
-				klog.Infof("Cannot find just restore volume [%s/%s], please retrying later.", volName, newVolId)
+				klog.Infof("%s: Cannot find just restore volume [%s/%s], please retrying later.", hash, volName, newVolId)
 				return nil, status.Errorf(codes.Aborted, "cannot find volume %s/%s", volName, newVolId)
 			}
 			actualRestoreVolumeSizeInBytes := int64(*newVolInfo.Size) * common.Gib
-			klog.Infof("Get actual restore volume size %d bytes", actualRestoreVolumeSizeInBytes)
+			klog.Infof("%s: Get actual restore volume size %d bytes", hash, actualRestoreVolumeSizeInBytes)
 			if actualRestoreVolumeSizeInBytes != requiredRestoreVolumeSizeInBytes {
-				klog.Errorf("Actual restore volume size %d is not equal to required size %d",
-					actualRestoreVolumeSizeInBytes, requiredRestoreVolumeSizeInBytes)
+				klog.Errorf("%s: Actual restore volume size %d is not equal to required size %d",
+					hash, actualRestoreVolumeSizeInBytes, requiredRestoreVolumeSizeInBytes)
 				return nil, status.Errorf(codes.Internal,
 					"expected volume size [%d], but actually [%d], volume id [%s], snapshot id [%s]",
 					requiredRestoreVolumeSizeInBytes, actualRestoreVolumeSizeInBytes, newVolId, snapId)
@@ -284,7 +284,7 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 			// Check source volume
 			srcVolId := volContSrc.GetVolume().GetVolumeId()
 			// ensure on call in-flight
-			klog.Infof("try to lock resource %s", srcVolId)
+			klog.Infof("%s: try to lock resource %s", hash, srcVolId)
 			if acquired := cs.locks.TryAcquire(srcVolId); !acquired {
 				return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, srcVolId)
 			}
@@ -307,7 +307,7 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 				return nil, status.Error(codes.Internal, err.Error())
 			}
 			if newVolInfo == nil {
-				klog.Infof("Cannot find just restore volume [%s/%s], please retrying later.", volName, newVolId)
+				klog.Infof("%s: Cannot find just restore volume [%s/%s], please retrying later.", hash, volName, newVolId)
 				return nil, status.Errorf(codes.Aborted, "cannot find volume %s", newVolId)
 			}
 			err = cs.cloud.AttachTags(sc.GetTags(), newVolId, cloud.ResourceTypeVolume)
@@ -333,8 +333,10 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 // This operation MUST be idempotent
 // volume id is REQUIRED in csi.DeleteVolumeRequest
 func (cs *ControllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVolumeRequest) (*csi.DeleteVolumeResponse, error) {
-	klog.Info("----- Start DeleteVolume -----")
-	defer klog.Info("===== End DeleteVolume =====")
+	funcName := "DeleteVolume"
+	info, hash := common.EntryFunction(funcName)
+	klog.Info(info)
+	defer klog.Info(common.ExitFunction(funcName, hash))
 	if isValid := cs.driver.ValidateControllerServiceRequest(csi.
 		ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME); isValid != true {
 		klog.Errorf("invalid delete volume req: %v", req)
@@ -395,11 +397,13 @@ func (cs *ControllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 //										readonly			+ Required (This field is NOT provided when requesting in Kubernetes)
 func (cs *ControllerServer) ControllerPublishVolume(ctx context.Context, req *csi.ControllerPublishVolumeRequest) (*csi.
 	ControllerPublishVolumeResponse, error) {
-	klog.Info("----- Start ControllerPublishVolume -----")
-	defer klog.Info("===== End ControllerPublishVolume =====")
+	funcName := "ControllerPublishVolume"
+	info, hash := common.EntryFunction(funcName)
+	klog.Info(info)
+	defer klog.Info(common.ExitFunction(funcName, hash))
 	if isValid := cs.driver.ValidateControllerServiceRequest(csi.
 		ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME); isValid != true {
-		klog.Errorf("invalid delete volume req: %v", req)
+		klog.Errorf("%s: Invalid delete volume req: %v", hash, req)
 		return nil, status.Error(codes.Unimplemented, "")
 	}
 	// 0. Preflight
@@ -420,12 +424,13 @@ func (cs *ControllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	volumeId := req.GetVolumeId()
 
 	// ensure one call in-flight
-	klog.Infof("try to lock resource %s", volumeId)
+	klog.Infof("%s: Try to lock resource %s", hash, volumeId)
 	if acquired := cs.locks.TryAcquire(volumeId); !acquired {
 		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, volumeId)
 	}
 	defer cs.locks.Release(volumeId)
 
+	klog.Infof("%s: Find volume %s", hash, volumeId)
 	exVol, err := cs.cloud.FindVolume(volumeId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -436,6 +441,7 @@ func (cs *ControllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 
 	// if instance id not exist
 	nodeId := req.GetNodeId()
+	klog.Infof("%s: Find instance %s", hash, nodeId)
 	exIns, err := cs.cloud.FindInstance(nodeId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -447,11 +453,11 @@ func (cs *ControllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	// Volume published to another node
 	if len(*exVol.Instance.InstanceID) != 0 {
 		if *exVol.Instance.InstanceID == nodeId {
-			klog.Warningf("volume %s has been already attached on instance %s:%s", volumeId, nodeId,
+			klog.Warningf("%s: Volume %s has been already attached on instance %s:%s", hash, volumeId, nodeId,
 				*exVol.Instance.Device)
 			return &csi.ControllerPublishVolumeResponse{}, nil
 		} else {
-			klog.Warningf("volume %s expected attached on instance %s, but actually %s:%s", volumeId, nodeId,
+			klog.Errorf("%s: Volume %s expected attached on instance %s, but actually %s:%s", hash, volumeId, nodeId,
 				*exVol.Instance.InstanceID, *exVol.Instance.Device)
 			return nil, status.Error(codes.FailedPrecondition, "Volume published to another node")
 		}
@@ -462,7 +468,7 @@ func (cs *ControllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	}
 	// 1. Attach
 	// attach volume
-	klog.Infof("Attaching volume %s to instance %s in zone %s...", volumeId, nodeId, cs.cloud.GetZone())
+	klog.Infof("%s: Attaching volume %s to instance %s in zone %s...", hash, volumeId, nodeId, cs.cloud.GetZone())
 	err = cs.cloud.AttachVolume(volumeId, nodeId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -479,17 +485,17 @@ func (cs *ControllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 		// check device path
 		if *volInfo.Instance.Device != "" {
 			// found device path
-			klog.Infof("Attaching volume %s on instance %s succeed.", volumeId, nodeId)
+			klog.Infof("%s: Attaching volume %s on instance %s succeed.", hash, volumeId, nodeId)
 			return &csi.ControllerPublishVolumeResponse{}, nil
 		} else {
 			// cannot found device path
-			klog.Infof("Cannot find device path and retry to find volume device %s", volumeId)
+			klog.Infof("%s: Cannot find device path and retry to find volume device %s", hash, volumeId)
 			time.Sleep(time.Duration(i) * time.Second)
 		}
 	}
 	// Cannot find device path
 	// Try to detach volume
-	klog.Infof("Cannot find device path and going to detach volume %s", volumeId)
+	klog.Infof("%s: Cannot find device path and going to detach volume %s", hash, volumeId)
 	if err := cs.cloud.DetachVolume(volumeId, nodeId); err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot find device path, detach volume %s failed", volumeId)
 	} else {
@@ -503,11 +509,13 @@ func (cs *ControllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 // csi.ControllerUnpublishVolumeRequest: 	volume id	+Required
 func (cs *ControllerServer) ControllerUnpublishVolume(ctx context.Context, req *csi.ControllerUnpublishVolumeRequest) (*csi.
 	ControllerUnpublishVolumeResponse, error) {
-	klog.Info("----- Start ControllerUnpublishVolume -----")
-	defer klog.Info("===== End ControllerUnpublishVolume =====")
+	funcName := "ControllerUnpublishVolume"
+	info, hash := common.EntryFunction(funcName)
+	klog.Info(info)
+	defer klog.Info(common.ExitFunction(funcName, hash))
 	if isValid := cs.driver.ValidateControllerServiceRequest(csi.
 		ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME); isValid != true {
-		klog.Errorf("invalid unpublish volume req: %v", req)
+		klog.Errorf("Invalid unpublish volume req: %v", req)
 		return nil, status.Error(codes.Unimplemented, "")
 	}
 	// 0. Preflight
@@ -519,7 +527,7 @@ func (cs *ControllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 	nodeId := req.GetNodeId()
 
 	// ensure one call in-flight
-	klog.Infof("try to lock resource %s", volumeId)
+	klog.Infof("Try to lock resource %s", volumeId)
 	if acquired := cs.locks.TryAcquire(volumeId); !acquired {
 		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, volumeId)
 	}
@@ -527,6 +535,7 @@ func (cs *ControllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 
 	// 1. Detach
 	// check volume exist
+	klog.Infof("Find volume %s", volumeId)
 	exVol, err := cs.cloud.FindVolume(volumeId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -539,6 +548,7 @@ func (cs *ControllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 	}
 
 	// check node exist
+	klog.Infof("Find instance %s", nodeId)
 	exIns, err := cs.cloud.FindInstance(nodeId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -564,8 +574,10 @@ func (cs *ControllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 // 											volume capability 	+ Required
 func (cs *ControllerServer) ValidateVolumeCapabilities(ctx context.Context, req *csi.ValidateVolumeCapabilitiesRequest) (*csi.
 	ValidateVolumeCapabilitiesResponse, error) {
-	klog.Info("----- Start ValidateVolumeCapabilities -----")
-	defer klog.Info("===== End ValidateVolumeCapabilities =====")
+	funcName := "ValidateVolumeCapabilities"
+	info, hash := common.EntryFunction(funcName)
+	klog.Info(info)
+	defer klog.Info(common.ExitFunction(funcName, hash))
 
 	// require volume id parameter
 	if len(req.GetVolumeId()) == 0 {
@@ -597,8 +609,8 @@ func (cs *ControllerServer) ValidateVolumeCapabilities(ctx context.Context, req 
 		}
 		if !found {
 			return &csi.ValidateVolumeCapabilitiesResponse{
-				Message: "Driver doesnot support mode:" + c.GetAccessMode().GetMode().String(),
-			}, status.Error(codes.InvalidArgument, "Driver doesnot support mode:"+c.GetAccessMode().GetMode().String())
+				Message: "Driver does not support mode:" + c.GetAccessMode().GetMode().String(),
+			}, status.Error(codes.InvalidArgument, "Driver does not support mode:"+c.GetAccessMode().GetMode().String())
 		}
 	}
 	return &csi.ValidateVolumeCapabilitiesResponse{}, nil
@@ -623,12 +635,13 @@ func (cs *ControllerServer) ControllerExpandVolume(ctx context.Context, req *csi
 	// does volume exist
 	volumeId := req.GetVolumeId()
 	// ensure one call in-flight
-	klog.Infof("try to lock resource %s", volumeId)
+	klog.Infof("Try to lock resource %s", volumeId)
 	if acquired := cs.locks.TryAcquire(volumeId); !acquired {
 		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, volumeId)
 	}
 	defer cs.locks.Release(volumeId)
 
+	klog.Infof("Find volume %s", volumeId)
 	volInfo, err := cs.cloud.FindVolume(volumeId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -648,17 +661,15 @@ func (cs *ControllerServer) ControllerExpandVolume(ctx context.Context, req *csi
 	if !volType.IsValid() {
 		klog.Errorf("%s: Unsupported volume [%s] type [%d]", hash, volumeId, *volInfo.VolumeType)
 		return nil, status.Errorf(codes.Internal, "Unsupported volume [%s] type [%d]", volumeId, *volInfo.VolumeType)
-	} else {
-		klog.Infof("%s: Succeed to get volume [%s] type [%s]", hash, volumeId, driver.VolumeTypeName[volType])
 	}
-
+	klog.Infof("%s: Succeed to get volume [%s] type [%s]", hash, volumeId, driver.VolumeTypeName[volType])
 	sc := driver.NewDefaultQingStorageClassFromType(volType)
 	requiredSizeBytes, err := sc.GetRequiredVolumeSizeByte(req.GetCapacityRange())
 	if err != nil {
 		return nil, status.Errorf(codes.OutOfRange, err.Error())
 	}
 
-	// 3. Expand volume
+	// 3. Retry to expand volume
 	if requiredSizeBytes%common.Gib != 0 {
 		return nil, status.Errorf(codes.OutOfRange, "required size bytes %d cannot be divided into Gib %d",
 			requiredSizeBytes, common.Gib)
@@ -682,7 +693,6 @@ func (cs *ControllerServer) ControllerExpandVolume(ctx context.Context, req *csi
 			NodeExpansionRequired: true,
 		}, nil
 	}
-
 }
 
 func (cs *ControllerServer) ListVolumes(ctx context.Context, req *csi.ListVolumesRequest) (*csi.ListVolumesResponse, error) {
@@ -710,7 +720,7 @@ func (cs *ControllerServer) CreateSnapshot(ctx context.Context, req *csi.CreateS
 	// 0. Prepare
 	if isValid := cs.driver.ValidateControllerServiceRequest(csi.
 		ControllerServiceCapability_RPC_CREATE_DELETE_SNAPSHOT); isValid != true {
-		klog.Errorf("invalid create snapshot request: %v", req)
+		klog.Errorf("Invalid create snapshot request: %v", req)
 		return nil, status.Error(codes.Unimplemented, "")
 	}
 	// Check source volume id
@@ -727,7 +737,7 @@ func (cs *ControllerServer) CreateSnapshot(ctx context.Context, req *csi.CreateS
 	srcVolId := req.GetSourceVolumeId()
 	snapName := req.GetName()
 	// ensure one call in-flight
-	klog.Infof("try to lock resource %s", srcVolId)
+	klog.Infof("%s: Try to lock resource %s", hash, srcVolId)
 	if acquired := cs.locks.TryAcquire(srcVolId); !acquired {
 		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, srcVolId)
 	}
@@ -831,11 +841,13 @@ func (cs *ControllerServer) CreateSnapshot(ctx context.Context, req *csi.CreateS
 // Snapshot id is REQUIRED
 func (cs *ControllerServer) DeleteSnapshot(ctx context.Context, req *csi.DeleteSnapshotRequest) (*csi.DeleteSnapshotResponse,
 	error) {
-	klog.Info("----- Start DeleteSnapshot -----")
-	defer klog.Info("===== End DeleteSnapshot =====")
+	funcName := "DeleteSnapshot"
+	info, hash := common.EntryFunction(funcName)
+	klog.Info(info)
+	defer klog.Info(common.ExitFunction(funcName, hash))
 	if isValid := cs.driver.ValidateControllerServiceRequest(csi.
 		ControllerServiceCapability_RPC_CREATE_DELETE_SNAPSHOT); isValid != true {
-		klog.Errorf("invalid create snapshot request: %v", req)
+		klog.Errorf("Invalid create snapshot request: %v", req)
 		return nil, status.Error(codes.Unimplemented, "")
 	}
 	// 0. Preflight
@@ -846,7 +858,7 @@ func (cs *ControllerServer) DeleteSnapshot(ctx context.Context, req *csi.DeleteS
 	}
 	snapId := req.GetSnapshotId()
 	// ensure one call in-flight
-	klog.Infof("try to lock resource %s", snapId)
+	klog.Infof("Try to lock resource %s", snapId)
 	if acquired := cs.locks.TryAcquire(snapId); !acquired {
 		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, snapId)
 	}

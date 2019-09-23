@@ -63,8 +63,10 @@ func NewNodeServer(d *driver.DiskDriver, c cloud.CloudManager, mnt *mount.SafeFo
 //									read only			+ Required (This field is NOT provided when requesting in Kubernetes)
 func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.
 	NodePublishVolumeResponse, error) {
-	klog.Info("----- Start NodePublishVolume -----")
-	defer klog.Info("===== End NodePublishVolume =====")
+	funcName := "NodePublishVolume"
+	info, hash := common.EntryFunction(funcName)
+	defer klog.Info(common.ExitFunction(funcName, hash))
+	klog.Info(info)
 	// 0. Preflight
 	// check volume id
 	if len(req.GetVolumeId()) == 0 {
@@ -90,7 +92,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	volumeId := req.GetVolumeId()
 
 	// ensure one call in-flight
-	klog.Infof("try to lock resource %s", volumeId)
+	klog.Infof("Try to lock resource %s", volumeId)
 	if acquired := ns.locks.TryAcquire(volumeId); !acquired {
 		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, volumeId)
 	}
@@ -158,8 +160,10 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 //									target path	+ Required
 func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.
 	NodeUnpublishVolumeResponse, error) {
-	klog.Info("----- Start NodeUnpublishVolume -----")
-	defer klog.Info("===== End NodeUnpublishVolume =====")
+	funcName := "NodeUnpublishVolume"
+	info, hash := common.EntryFunction(funcName)
+	defer klog.Info(common.ExitFunction(funcName, hash))
+	klog.Info(info)
 	// 0. Preflight
 	// check arguments
 	if len(req.GetTargetPath()) == 0 {
@@ -172,7 +176,7 @@ func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 	volumeId := req.GetVolumeId()
 	targetPath := req.GetTargetPath()
 	// ensure one call in-flight
-	klog.Infof("try to lock resource %s", volumeId)
+	klog.Infof("Try to lock resource %s", volumeId)
 	if acquired := ns.locks.TryAcquire(volumeId); !acquired {
 		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, volumeId)
 	}
@@ -198,7 +202,7 @@ func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 		return &csi.NodeUnpublishVolumeResponse{}, nil
 	}
 	// do unmount
-	klog.Infof("Unbind mountvolume %s/%s", targetPath, volumeId)
+	klog.Infof("Unbind mount volume %s/%s", targetPath, volumeId)
 	if err = mounter.Unmount(targetPath); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -213,8 +217,10 @@ func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 //								volume capability	+ Required
 func (ns *NodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRequest) (*csi.NodeStageVolumeResponse,
 	error) {
-	klog.Info("----- Start NodeStageVolume -----")
-	defer klog.Info("===== End NodeStageVolume =====")
+	funcName := "NodeStageVolume"
+	info, hash := common.EntryFunction(funcName)
+	defer klog.Info(common.ExitFunction(funcName, hash))
+	klog.Info(info)
 	if flag := ns.driver.ValidateNodeServiceRequest(csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME); flag == false {
 		return nil, status.Error(codes.Unimplemented, "Node has not stage capability")
 	}
@@ -233,7 +239,7 @@ func (ns *NodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	volumeId := req.GetVolumeId()
 	targetPath := req.GetStagingTargetPath()
 	// ensure one call in-flight
-	klog.Infof("try to lock resource %s", volumeId)
+	klog.Infof("Try to lock resource %s", volumeId)
 	if acquired := ns.locks.TryAcquire(volumeId); !acquired {
 		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, volumeId)
 	}
@@ -294,8 +300,10 @@ func (ns *NodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 //									target path	+ Required
 func (ns *NodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.
 	NodeUnstageVolumeResponse, error) {
-	klog.Info("----- Start NodeUnstageVolume -----")
-	defer klog.Info("===== End NodeUnstageVolume =====")
+	funcName := "NodeUnstageVolume"
+	info, hash := common.EntryFunction(funcName)
+	defer klog.Info(common.ExitFunction(funcName, hash))
+	klog.Info(info)
 	if flag := ns.driver.ValidateNodeServiceRequest(csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME); flag == false {
 		return nil, status.Error(codes.Unimplemented, "Node has not unstage capability")
 	}
@@ -311,7 +319,7 @@ func (ns *NodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstag
 	volumeId := req.GetVolumeId()
 	targetPath := req.GetStagingTargetPath()
 	// ensure one call in-flight
-	klog.Infof("try to lock resource %s", volumeId)
+	klog.Infof("Try to lock resource %s", volumeId)
 	if acquired := ns.locks.TryAcquire(volumeId); !acquired {
 		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, volumeId)
 	}
@@ -348,11 +356,11 @@ func (ns *NodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstag
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	klog.Infof("disk volume %s has been unmounted.", volumeId)
+	klog.Infof("Disk volume %s has been unmounted.", volumeId)
 	cnt--
-	klog.Infof("disk volume mount count: %d", cnt)
+	klog.Infof("Disk volume mount count: %d", cnt)
 	if cnt > 0 {
-		klog.Errorf("image %s still mounted in instance %s", volumeId, ns.driver.GetInstanceId())
+		klog.Errorf("Volume %s still mounted in instance %s", volumeId, ns.driver.GetInstanceId())
 		return nil, status.Error(codes.Internal, "unmount failed")
 	}
 
@@ -361,16 +369,20 @@ func (ns *NodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstag
 
 func (ns *NodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetCapabilitiesRequest) (*csi.
 	NodeGetCapabilitiesResponse, error) {
-	klog.Info("----- Start NodeGetCapabilities -----")
-	defer klog.Info("===== End NodeGetCapabilities =====")
+	funcName := "NodeGetCapabilities"
+	info, hash := common.EntryFunction(funcName)
+	defer klog.Info(common.ExitFunction(funcName, hash))
+	klog.Info(info)
 	return &csi.NodeGetCapabilitiesResponse{
 		Capabilities: ns.driver.GetNodeCapability(),
 	}, nil
 }
 
 func (ns *NodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
-	klog.V(2).Info("----- Start NodeGetInfo -----")
-	defer klog.Info("===== End NodeGetInfo =====")
+	funcName := "NodeGetInfo"
+	info, hash := common.EntryFunction(funcName)
+	defer klog.Info(common.ExitFunction(funcName, hash))
+	klog.Info(info)
 	instInfo, err := ns.cloud.FindInstance(ns.driver.GetInstanceId())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -404,8 +416,8 @@ func (ns *NodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandV
 	*csi.NodeExpandVolumeResponse, error) {
 	funcName := "NodeExpandVolume"
 	info, hash := common.EntryFunction(funcName)
-	klog.Info(info)
 	defer klog.Info(common.ExitFunction(funcName, hash))
+	klog.Info(info)
 	// 0. Preflight
 	// check arguments
 	klog.Info("Check input arguments")
@@ -423,7 +435,7 @@ func (ns *NodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandV
 	volumeId := req.GetVolumeId()
 	volumePath := req.GetVolumePath()
 	// ensure one call in-flight
-	klog.Infof("try to lock resource %s", volumeId)
+	klog.Infof("Try to lock resource %s", volumeId)
 	if acquired := ns.locks.TryAcquire(volumeId); !acquired {
 		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, volumeId)
 	}
@@ -483,8 +495,8 @@ func (ns *NodeServer) NodeGetVolumeStats(ctx context.Context,
 	req *csi.NodeGetVolumeStatsRequest) (*csi.NodeGetVolumeStatsResponse, error) {
 	funcName := "NodeGetVolumeStats"
 	info, hash := common.EntryFunction(funcName)
-	klog.Info(info)
 	defer klog.Info(common.ExitFunction(funcName, hash))
+	klog.Info(info)
 	// 0. Preflight
 	// check arguments
 	klog.Infof("%s: Check input arguments", hash)

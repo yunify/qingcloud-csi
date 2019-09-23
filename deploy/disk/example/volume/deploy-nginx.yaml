@@ -15,17 +15,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: volume-example
+  name: deploy-nginx
 spec:
   selector:
     matchLabels:
-      app: volume-example
+      app: deploy-nginx
       tier: csi-qingcloud
   replicas: 1
   template:
     metadata:
       labels:
-        app: volume-example
+        app: deploy-nginx
         tier: csi-qingcloud
     spec:
       containers:
