@@ -17,15 +17,15 @@
 .PHONY: all disk
 
 DISK_IMAGE_NAME=csiplugin/csi-qingcloud
-DISK_IMAGE_TAG=v1.1.0
+DISK_VERSION=v1.1.0-rc.1
 ROOT_PATH=$(pwd)
 PACKAGE_LIST=./cmd/... ./pkg/...
 
 disk: mod
-	docker build -t ${DISK_IMAGE_NAME}-builder:${DISK_IMAGE_TAG} -f deploy/disk/docker/Dockerfile . --target builder
+	docker build -t ${DISK_IMAGE_NAME}-builder:${DISK_VERSION} -f deploy/disk/docker/Dockerfile . --target builder
 
 disk-container:
-	docker build -t ${DISK_IMAGE_NAME}:${DISK_IMAGE_TAG} -f deploy/disk/docker/Dockerfile  .
+	docker build -t ${DISK_IMAGE_NAME}:${DISK_VERSION} -f deploy/disk/docker/Dockerfile  .
 
 install-dev:
 	cp /root/.qingcloud/config.yaml deploy/disk/kubernetes/base/config.yaml
@@ -39,7 +39,7 @@ gen-dev:
 	kustomize build deploy/disk/kubernetes/overlays/dev
 
 gen-prod:
-	kustomize build deploy/disk/kubernetes/overlays/prod > deploy/disk/kubernetes/releases/qingcloud-csi-disk-v1.1.0.yaml
+	kustomize build deploy/disk/kubernetes/overlays/prod > deploy/disk/kubernetes/releases/qingcloud-csi-disk-${DISK_VERSION}.yaml
 
 mod:
 	go build ./...
@@ -54,7 +54,7 @@ fmt-deep: fmt
 	gofmt -s -w -l ./pkg/cloud/ ./pkg/common/ ./pkg/disk/driver ./pkg/disk/rpcserver
 
 sanity-test:
-	${ROOT_PATH}/csi-sanity --csi.endpoint /var/lib/kubelet/plugins/disk.csi.qingcloud.com/csi.sock --csi.testvolumesize 107374182400
+	nohup ${ROOT_PATH}/csi-sanity --csi.endpoint /var/lib/kubelet/plugins/disk.csi.qingcloud.com/csi.sock -csi.testvolumeexpandsize 21474836480  -ginkgo.noColor &
 
 clean:
 	go clean -r -x ./...

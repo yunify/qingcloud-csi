@@ -778,7 +778,7 @@ spec:
               fieldPath: spec.nodeName
         - name: CSI_ENDPOINT
           value: unix://csi/csi.sock
-        image: csiplugin/csi-qingcloud:v1.1.0
+        image: csiplugin/csi-qingcloud:v1.1.0-rc.1
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 5
@@ -795,10 +795,10 @@ spec:
           protocol: TCP
         resources:
           limits:
-            cpu: 20m
+            cpu: 50m
             memory: 50Mi
           requests:
-            cpu: 20m
+            cpu: 50m
             memory: 50Mi
         volumeMounts:
         - mountPath: /csi
@@ -902,7 +902,7 @@ spec:
               fieldPath: spec.nodeName
         - name: CSI_ENDPOINT
           value: unix://csi/csi.sock
-        image: csiplugin/csi-qingcloud:v1.1.0
+        image: csiplugin/csi-qingcloud:v1.1.0-rc.1
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 5
@@ -919,10 +919,10 @@ spec:
           protocol: TCP
         resources:
           limits:
-            cpu: 20m
+            cpu: 50m
             memory: 50Mi
           requests:
-            cpu: 20m
+            cpu: 50m
             memory: 50Mi
         securityContext:
           allowPrivilegeEscalation: true
