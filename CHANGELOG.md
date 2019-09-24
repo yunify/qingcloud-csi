@@ -24,6 +24,8 @@
 * Add volume cloning ([#111](https://github.com/yunify/qingcloud-csi/pull/111), [@wnxn](https://github.com/wnxn))
 * Add volume name prefix flag ([#113](https://github.com/yunify/qingcloud-csi/pull/113), [@wnxn](https://github.com/wnxn))
 * Add maximum retry interval flag ([#116](https://github.com/yunify/qingcloud-csi/pull/116), [@wnxn](https://github.com/wnxn))
+* Add liveness probe sidecar container ([#122](https://github.com/yunify/qingcloud-csi/pull/122), [@wnxn](https://github.com/wnxn))
+* Add Guarantee class of QoS ([#123](https://github.com/yunify/qingcloud-csi/pull/123), [@wnxn](https://github.com/wnxn))
 
 ### Bug Fixed
 * Fix cannot find device path after volume attached ([#63](https://github.com/yunify/qingcloud-csi/pull/63), [@wnxn](https://github.com/wnxn))

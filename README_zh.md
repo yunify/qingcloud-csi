@@ -5,7 +5,7 @@
 
 > [English](README.md) | 中文
 ## 描述
-QingCloud CSI 插件实现了 [CSI](https://github.com/container-storage-interface/) 接口，并使容器编排平台能够使用 QingCloud 云平台的存储资源。目前 QingCloud CSI 插件实现了块存储插件，可以对接云平台块存储资源。
+QingCloud CSI 插件实现了 [CSI](https://github.com/container-storage-interface/) 接口，并使容器编排平台能够使用 QingCloud 云平台的存储资源。目前 QingCloud CSI 实现了块存储插件，可以对接云平台块存储资源。
 
 ## 块存储插件
 
@@ -22,10 +22,14 @@ QingCloud CSI 插件实现了 [CSI](https://github.com/container-storage-interfa
 
 ### 功能
 
-| | 存储卷管理 | 存储卷扩容 | 存储卷监控 |存储卷克隆| 快照管理|拓扑|
+| | 存储卷管理* | 存储卷扩容 | 存储卷监控 |存储卷克隆| 快照管理**|拓扑|
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 |QingCloud CSI v0.2.x |✓|-|-|-|-|-|
 |QingCloud CSI v1.1.0 |✓|✓|✓|✓|✓|✓|
+
+注：
+- `*`: 存储卷管理包括存储卷创建/删除和存储卷挂载/卸载至容器组
+- `**`: 快照管理包括快照创建/删除和从快照恢复存储卷
 
 ### 安装
 此安装指南将 CSI 插件安装在 Kubernetes v1.14+ 的 *kube-system* namespace 内。用户也可以将插件部署在其他 namespace 内。
@@ -33,7 +37,7 @@ QingCloud CSI 插件实现了 [CSI](https://github.com/container-storage-interfa
 - 设置 Kubernetes 参数
   - kube-apiserver, kube-controller-manager, kube-scheduler, kubelet 设置 `--allow-privileged=true`。
   - 启用（默认开启）[Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) 特性。
-  - kube-apiserver, kube-controller-manager, kube-scheduler, kubelet 设置 `--feature-gates=CSINodeInfo=true,CSIDriverRegistry=true,KubeletPluginsWatcher=true,VolumeSnapshotDataSource=true,ExpandCSIVolumes=true,`
+  - kube-apiserver, kube-controller-manager, kube-scheduler, kubelet 设置 `--feature-gates=CSINodeInfo=true,CSIDriverRegistry=true,KubeletPluginsWatcher=true,VolumeSnapshotDataSource=true,ExpandCSIVolumes=true`
   - kubelet 设置 `--read-only-port=10255`
 
 - 下载安装文件并解压
@@ -66,7 +70,7 @@ $ wget https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/disk
 > 注:  如果 Kubernetes 集群的 [kubelet](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/) 设置了 `--root-dir` 选项（默认值为 *"/var/lib/kubelet"*），请将 DaemonSet 的 `spec.template.spec.containers[name=csi-qingcloud].volumeMounts[name=mount-dir].mountPath` 和 `spec.template.spec.volumes[name=mount-dir].hostPath.path` 的值 *"/var/lib/kubelet"* 替换为 `--root-dir` 选项的值。例如：在通过 QingCloud AppCenter 创建的 Kubernetes 集群内, 需要将 DaemonSet 的 *"/var/lib/kubelet"* 字段替换为 *"/data/var/lib/kubelet"*。
 
 ```
-$ kubectl create -f qingcloud-csi-disk-v1.1.0.yaml
+$ kubectl apply -f qingcloud-csi-disk-v1.1.0.yaml
    ```
 
 - 检查 CSI 插件状态
