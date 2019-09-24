@@ -31,6 +31,13 @@ spec:
       containers:
       - name: csi-provisioner
         image: quay.io/k8scsi/csi-provisioner:v1.4.0-rc1
+        resources:
+          limits:
+            memory: "20Mi"
+            cpu: "20m"
+          requests:
+            memory: "20Mi"
+            cpu: "20m"
         args:
         - "--csi-address=$(ADDRESS)"
         - "--enable-leader-election"
@@ -51,6 +58,13 @@ spec:
           mountPath: /csi
       - name: csi-attacher
         image: quay.io/k8scsi/csi-attacher:v2.0.0
+        resources:
+          limits:
+            memory: "20Mi"
+            cpu: "20m"
+          requests:
+            memory: "20Mi"
+            cpu: "20m"
         args:
         - "--csi-address=$(ADDRESS)"
         - "--leader-election"
@@ -72,6 +86,13 @@ spec:
           mountPath: /csi
       - name: csi-snapshotter
         image: quay.io/k8scsi/csi-snapshotter:v1.2.1
+        resources:
+          limits:
+            memory: "20Mi"
+            cpu: "20m"
+          requests:
+            memory: "20Mi"
+            cpu: "20m"
         args:
           - "--connection-timeout=90s"
           - "--csi-address=$(ADDRESS)"
@@ -87,6 +108,13 @@ spec:
             mountPath: /csi
       - name: csi-resizer
         image: quay.io/k8scsi/csi-resizer:v0.2.0
+        resources:
+          limits:
+            memory: "20Mi"
+            cpu: "20m"
+          requests:
+            memory: "20Mi"
+            cpu: "20m"
         args:
           - "--csi-address=$(ADDRESS)"
           - "--leader-election"
@@ -100,6 +128,13 @@ spec:
             mountPath: /csi
       - name: csi-liveness-probe
         image: quay.io/k8scsi/livenessprobe:v1.1.0
+        resources:
+          limits:
+            memory: "20Mi"
+            cpu: "20m"
+          requests:
+            memory: "20Mi"
+            cpu: "20m"
         args:
           - "--csi-address=/csi/csi.sock"
           - "--health-port=9808"
@@ -111,6 +146,13 @@ spec:
             mountPath: /csi
       - name: csi-qingcloud
         image: csiplugin/csi-qingcloud:latest
+        resources:
+          limits:
+            memory: "50Mi"
+            cpu: "20m"
+          requests:
+            memory: "50Mi"
+            cpu: "20m"
         ports:
           - containerPort: 9808
             name: healthz

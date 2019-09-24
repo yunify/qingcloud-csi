@@ -666,6 +666,13 @@ spec:
         image: quay.io/k8scsi/csi-provisioner:v1.4.0-rc1
         imagePullPolicy: IfNotPresent
         name: csi-provisioner
+        resources:
+          limits:
+            cpu: 20m
+            memory: 20Mi
+          requests:
+            cpu: 20m
+            memory: 20Mi
         volumeMounts:
         - mountPath: /csi
           name: socket-dir
@@ -687,6 +694,13 @@ spec:
         image: quay.io/k8scsi/csi-attacher:v2.0.0
         imagePullPolicy: IfNotPresent
         name: csi-attacher
+        resources:
+          limits:
+            cpu: 20m
+            memory: 20Mi
+          requests:
+            cpu: 20m
+            memory: 20Mi
         volumeMounts:
         - mountPath: /csi
           name: socket-dir
@@ -702,6 +716,13 @@ spec:
         image: quay.io/k8scsi/csi-snapshotter:v1.2.1
         imagePullPolicy: IfNotPresent
         name: csi-snapshotter
+        resources:
+          limits:
+            cpu: 20m
+            memory: 20Mi
+          requests:
+            cpu: 20m
+            memory: 20Mi
         volumeMounts:
         - mountPath: /csi
           name: socket-dir
@@ -715,6 +736,13 @@ spec:
         image: quay.io/k8scsi/csi-resizer:v0.2.0
         imagePullPolicy: IfNotPresent
         name: csi-resizer
+        resources:
+          limits:
+            cpu: 20m
+            memory: 20Mi
+          requests:
+            cpu: 20m
+            memory: 20Mi
         volumeMounts:
         - mountPath: /csi
           name: socket-dir
@@ -726,6 +754,13 @@ spec:
         image: quay.io/k8scsi/livenessprobe:v1.1.0
         imagePullPolicy: IfNotPresent
         name: csi-liveness-probe
+        resources:
+          limits:
+            cpu: 20m
+            memory: 20Mi
+          requests:
+            cpu: 20m
+            memory: 20Mi
         volumeMounts:
         - mountPath: /csi
           name: socket-dir
@@ -758,6 +793,13 @@ spec:
         - containerPort: 9808
           name: healthz
           protocol: TCP
+        resources:
+          limits:
+            cpu: 20m
+            memory: 50Mi
+          requests:
+            cpu: 20m
+            memory: 50Mi
         volumeMounts:
         - mountPath: /csi
           name: socket-dir
@@ -816,6 +858,13 @@ spec:
               - -c
               - rm -rf /registration/disk.csi.qingcloud.com /registration/disk.csi.qingcloud.com-reg.sock
         name: node-registrar
+        resources:
+          limits:
+            cpu: 10m
+            memory: 20Mi
+          requests:
+            cpu: 10m
+            memory: 20Mi
         volumeMounts:
         - mountPath: /csi
           name: socket-dir
@@ -829,6 +878,13 @@ spec:
         image: quay.io/k8scsi/livenessprobe:v1.1.0
         imagePullPolicy: IfNotPresent
         name: csi-liveness-probe
+        resources:
+          limits:
+            cpu: 20m
+            memory: 20Mi
+          requests:
+            cpu: 20m
+            memory: 20Mi
         volumeMounts:
         - mountPath: /csi
           name: socket-dir
@@ -861,6 +917,13 @@ spec:
         - containerPort: 9808
           name: healthz
           protocol: TCP
+        resources:
+          limits:
+            cpu: 20m
+            memory: 50Mi
+          requests:
+            cpu: 20m
+            memory: 50Mi
         securityContext:
           allowPrivilegeEscalation: true
           capabilities:
