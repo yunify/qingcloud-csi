@@ -43,6 +43,13 @@ spec:
       containers:
         - name: node-registrar
           image: quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
+          resources:
+            limits:
+              memory: "20Mi"
+              cpu: "10m"
+            requests:
+              memory: "20Mi"
+              cpu: "10m"
           args:
             - "--csi-address=$(ADDRESS)"
             - "--kubelet-registration-path=/var/lib/kubelet/plugins/disk.csi.qingcloud.com/csi.sock"
@@ -61,6 +68,13 @@ spec:
               mountPath: /registration
         - name: csi-liveness-probe
           image: quay.io/k8scsi/livenessprobe:v1.1.0
+          resources:
+            limits:
+              memory: "20Mi"
+              cpu: "20m"
+            requests:
+              memory: "20Mi"
+              cpu: "20m"
           args:
             - "--csi-address=/csi/csi.sock"
             - "--health-port=9808"
@@ -77,6 +91,13 @@ spec:
               add: ["SYS_ADMIN"]
             allowPrivilegeEscalation: true
           image: csiplugin/csi-qingcloud:latest
+          resources:
+            limits:
+              memory: "50Mi"
+              cpu: "20m"
+            requests:
+              memory: "50Mi"
+              cpu: "20m"
           ports:
             - containerPort: 9808
               name: healthz
