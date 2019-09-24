@@ -1,6 +1,6 @@
 <!-- BEGIN MUNGE: GENERATED_TOC -->
-- [v1.1.0](#v100)
-    - [Changelog since v1.0.0](#changelog-since-v100)
+- [v1.1.0](#v110)
+    - [Changelog since v1.1.0](#changelog-since-v110)
         - [Features](#features)
         - [Bug Fixed](#bug-fixed)
 <!-- END MUNGE: GENERATED_TOC -->

@@ -1,19 +1,3 @@
-#  Copyright (C) 2018 Yunify, Inc.
-#
-#  Licensed under the Apache License, Version 2.0 (the "License");
-#  you may not use this work except in compliance with the License.
-#  You may obtain a copy of the License in the LICENSE file, or at:
-#
-#  http://www.apache.org/licenses/LICENSE-2.0
-#
-#  Unless required by applicable law or agreed to in writing, software
-#  distributed under the License is distributed on an "AS IS" BASIS,
-#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#  See the License for the specific language governing permissions and
-#  limitations under the License.
-
-# Only support Kubernetes v1.14+
-
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -735,6 +719,17 @@ spec:
         - mountPath: /csi
           name: socket-dir
       - args:
+        - --csi-address=/csi/csi.sock
+        - --health-port=9808
+        - --probe-timeout=5s
+        - --v=5
+        image: quay.io/k8scsi/livenessprobe:v1.1.0
+        imagePullPolicy: IfNotPresent
+        name: csi-liveness-probe
+        volumeMounts:
+        - mountPath: /csi
+          name: socket-dir
+      - args:
         - --config=/etc/config/config.yaml
         - --drivername=disk.csi.qingcloud.com
         - --endpoint=$(CSI_ENDPOINT)
@@ -750,7 +745,19 @@ spec:
           value: unix://csi/csi.sock
         image: csiplugin/csi-qingcloud:v1.1.0
         imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /healthz
+            port: healthz
+          initialDelaySeconds: 10
+          periodSeconds: 2
+          timeoutSeconds: 3
         name: csi-qingcloud
+        ports:
+        - containerPort: 9808
+          name: healthz
+          protocol: TCP
         volumeMounts:
         - mountPath: /csi
           name: socket-dir
@@ -815,6 +822,17 @@ spec:
         - mountPath: /registration
           name: registration-dir
       - args:
+        - --csi-address=/csi/csi.sock
+        - --health-port=9808
+        - --probe-timeout=5s
+        - --v=5
+        image: quay.io/k8scsi/livenessprobe:v1.1.0
+        imagePullPolicy: IfNotPresent
+        name: csi-liveness-probe
+        volumeMounts:
+        - mountPath: /csi
+          name: socket-dir
+      - args:
         - --config=/etc/config/config.yaml
         - --drivername=disk.csi.qingcloud.com
         - --endpoint=$(CSI_ENDPOINT)
@@ -830,7 +848,19 @@ spec:
           value: unix://csi/csi.sock
         image: csiplugin/csi-qingcloud:v1.1.0
         imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /healthz
+            port: healthz
+          initialDelaySeconds: 10
+          periodSeconds: 2
+          timeoutSeconds: 3
         name: csi-qingcloud
+        ports:
+        - containerPort: 9808
+          name: healthz
+          protocol: TCP
         securityContext:
           allowPrivilegeEscalation: true
           capabilities:
