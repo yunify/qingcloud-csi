@@ -94,10 +94,10 @@ spec:
           resources:
             limits:
               memory: "50Mi"
-              cpu: "20m"
+              cpu: "50m"
             requests:
               memory: "50Mi"
-              cpu: "20m"
+              cpu: "50m"
           ports:
             - containerPort: 9808
               name: healthz

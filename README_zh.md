@@ -22,7 +22,7 @@ QingCloud CSI 插件实现了 [CSI](https://github.com/container-storage-interfa
 
 ### 功能
 
-| | [存储卷管理](docs/volume-management-zh.md) | [存储卷扩容](docs/expand-volume-zh.md) | 存储卷监控 |[存储卷克隆](docs/volume-clone-zh.md)| [快照管理](docs/snapshot-management-zh.md)|[拓扑](docs/topology-zh.md)|
+| | 存储卷管理 | 存储卷扩容 | 存储卷监控 |存储卷克隆| 快照管理|拓扑|
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 |QingCloud CSI v0.2.x |✓|-|-|-|-|-|
 |QingCloud CSI v1.1.0 |✓|✓|✓|✓|✓|✓|
@@ -87,15 +87,7 @@ $ kubectl delete -f qingcloud-csi-disk-v1.1.0.yaml
 ```
 
 ### 使用文档
-
-- 如何设置存储类型[文档](docs/how-to-set-storageclass-zh.md)
-- 存储卷管理[文档](docs/volume-management-zh.md)
-- 存储卷扩容[文档](docs/volume-expand-zh.md)
-- 存储卷克隆[文档](docs/volume-clone-zh.md)
-- 快照管理[文档](docs/snapshot-management-zh.md)
-- 拓扑[文档](docs/topology-zh.md)
-- 静态分配存储卷[文档](docs/static-provisioner-zh.md)
-
+存储类型参数配置和功能用法请参考[使用文档](docs/user-guide-zh.md)。
 
 ## 支持
 如果有任何问题或建议, 请在 [qingcloud-csi](https://github.com/yunify/qingcloud-csi/issues) 项目提 issue。
