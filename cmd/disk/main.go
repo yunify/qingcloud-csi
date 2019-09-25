@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	version              = "v1.1.0"
+	version              = "v1.1.0-rc.1"
 	defaultProvisionName = "disk.csi.qingcloud.com"
 	defaultConfigPath    = "/etc/config/config.yaml"
 )
@@ -67,7 +67,7 @@ func handle() {
 	if err != nil {
 		klog.Fatal(err)
 	}
-
+	klog.Infof("Version: %s", version)
 	// Set DiskDriverInput
 	diskDriverInput := &driver.InitDiskDriverInput{
 		Name:          *driverName,
