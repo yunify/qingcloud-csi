@@ -747,24 +747,6 @@ spec:
         - mountPath: /csi
           name: socket-dir
       - args:
-        - --csi-address=/csi/csi.sock
-        - --health-port=9808
-        - --probe-timeout=5s
-        - --v=5
-        image: quay.io/k8scsi/livenessprobe:v1.1.0
-        imagePullPolicy: IfNotPresent
-        name: csi-liveness-probe
-        resources:
-          limits:
-            cpu: 20m
-            memory: 20Mi
-          requests:
-            cpu: 20m
-            memory: 20Mi
-        volumeMounts:
-        - mountPath: /csi
-          name: socket-dir
-      - args:
         - --config=/etc/config/config.yaml
         - --drivername=disk.csi.qingcloud.com
         - --endpoint=$(CSI_ENDPOINT)
@@ -778,27 +760,15 @@ spec:
               fieldPath: spec.nodeName
         - name: CSI_ENDPOINT
           value: unix://csi/csi.sock
-        image: csiplugin/csi-qingcloud:v1.1.0
+        image: csiplugin/csi-qingcloud:v1.1.0-rc.1
         imagePullPolicy: IfNotPresent
-        livenessProbe:
-          failureThreshold: 5
-          httpGet:
-            path: /healthz
-            port: healthz
-          initialDelaySeconds: 10
-          periodSeconds: 2
-          timeoutSeconds: 3
         name: csi-qingcloud
-        ports:
-        - containerPort: 9808
-          name: healthz
-          protocol: TCP
         resources:
           limits:
-            cpu: 20m
+            cpu: 50m
             memory: 50Mi
           requests:
-            cpu: 20m
+            cpu: 50m
             memory: 50Mi
         volumeMounts:
         - mountPath: /csi
@@ -871,24 +841,6 @@ spec:
         - mountPath: /registration
           name: registration-dir
       - args:
-        - --csi-address=/csi/csi.sock
-        - --health-port=9808
-        - --probe-timeout=5s
-        - --v=5
-        image: quay.io/k8scsi/livenessprobe:v1.1.0
-        imagePullPolicy: IfNotPresent
-        name: csi-liveness-probe
-        resources:
-          limits:
-            cpu: 20m
-            memory: 20Mi
-          requests:
-            cpu: 20m
-            memory: 20Mi
-        volumeMounts:
-        - mountPath: /csi
-          name: socket-dir
-      - args:
         - --config=/etc/config/config.yaml
         - --drivername=disk.csi.qingcloud.com
         - --endpoint=$(CSI_ENDPOINT)
@@ -902,27 +854,15 @@ spec:
               fieldPath: spec.nodeName
         - name: CSI_ENDPOINT
           value: unix://csi/csi.sock
-        image: csiplugin/csi-qingcloud:v1.1.0
+        image: csiplugin/csi-qingcloud:v1.1.0-rc.1
         imagePullPolicy: IfNotPresent
-        livenessProbe:
-          failureThreshold: 5
-          httpGet:
-            path: /healthz
-            port: healthz
-          initialDelaySeconds: 10
-          periodSeconds: 2
-          timeoutSeconds: 3
         name: csi-qingcloud
-        ports:
-        - containerPort: 9808
-          name: healthz
-          protocol: TCP
         resources:
           limits:
-            cpu: 20m
+            cpu: 50m
             memory: 50Mi
           requests:
-            cpu: 20m
+            cpu: 50m
             memory: 50Mi
         securityContext:
           allowPrivilegeEscalation: true

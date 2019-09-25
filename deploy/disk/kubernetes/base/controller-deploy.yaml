@@ -126,24 +126,6 @@ spec:
         volumeMounts:
           - name: socket-dir
             mountPath: /csi
-      - name: csi-liveness-probe
-        image: quay.io/k8scsi/livenessprobe:v1.1.0
-        resources:
-          limits:
-            memory: "20Mi"
-            cpu: "20m"
-          requests:
-            memory: "20Mi"
-            cpu: "20m"
-        args:
-          - "--csi-address=/csi/csi.sock"
-          - "--health-port=9808"
-          - "--probe-timeout=5s"
-          - "--v=5"
-        imagePullPolicy: "IfNotPresent"
-        volumeMounts:
-          - name: socket-dir
-            mountPath: /csi
       - name: csi-qingcloud
         image: csiplugin/csi-qingcloud:latest
         resources:
@@ -153,18 +135,6 @@ spec:
           requests:
             memory: "50Mi"
             cpu: "50m"
-        ports:
-          - containerPort: 9808
-            name: healthz
-            protocol: TCP
-        livenessProbe:
-          failureThreshold: 5
-          httpGet:
-            path: /healthz
-            port: healthz
-          initialDelaySeconds: 10
-          timeoutSeconds: 3
-          periodSeconds: 2
         args :
           - "--config=/etc/config/config.yaml"
           - "--drivername=disk.csi.qingcloud.com"

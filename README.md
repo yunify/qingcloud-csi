@@ -42,13 +42,13 @@ This guide will install CSI plugin in the *kube-system* namespace of Kubernetes 
   - Enable (Default enabled) [Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) feature gate。
   - Enable `--feature-gates=CSINodeInfo=true,CSIDriverRegistry=true,KubeletPluginsWatcher=true,VolumeSnapshotDataSource=true,ExpandCSIVolumes=true` option on kube-apiserver, kube-controller-manager, kube-scheduler, kubelet
   - Enable `--read-only-port=10255` on kubelet
-- Download and decompress installation package 
+- Download installation file 
 ```
-$ wget https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/disk/kubernetes/releases/qingcloud-csi-disk-v1.1.0.yaml
+$ wget https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/disk/kubernetes/releases/qingcloud-csi-disk-v1.1.0-rc.1.yaml
 ```
 - Add QingCloud platform parameter on ConfigMap
 QingCloud CSI plugin manipulates cloud resource by QingCloud platform API. User must test the connection between QingCloud platform API and user's own instance by and check QingCloud platform configuration by [QingCloud CLI](https://docs.qingcloud.com/product/cli/).
-  - Modify qingcloud-csi configmap parameters in lines 620 to 628 of the qingcloud-csi-disk-v1.1.0.yaml file
+  - Modify `csi-qingcloud` ConfigMap parameters in installation file
     ```
     qy_access_key_id: 'ACCESS_KEY_ID'
     qy_secret_access_key: 'ACCESS_KEY_SECRET'
@@ -62,7 +62,7 @@ QingCloud CSI plugin manipulates cloud resource by QingCloud platform API. User 
     ```
     - `qy_access_key_id`, `qy_secret_access_key`: Access key pair can be created in QingCloud console. The access key pair must have the power to manipulate QingCloud IaaS platform resource.
 
-    - `zone`: `Zone` should be the same as Kubernetes cluster. CSI plugin will manipulate resources in this region or zone. For example, `zone` can be set to `sh1` or `ap2a`.
+    - `zone`: `zone` should be the same as Kubernetes cluster. CSI plugin will manipulate resources in this region or zone. For example, `zone` can be set to `sh1` or `ap2a`.
 
     - `host`, `port`. `protocol`, `uri`: QingCloud IaaS platform service url.
 
@@ -70,12 +70,12 @@ QingCloud CSI plugin manipulates cloud resource by QingCloud platform API. User 
 > IMPORTANT: If kubelet, a component of Kubernetes, set the `--root-dir` option (default: *"/var/lib/kubelet"*), please replace *"/var/lib/kubelet"* with the value of `--root-dir` at the CSI [DaemonSet](deploy/disk/kubernetes/csi-node-ds.yaml) YAML file's `spec.template.spec.containers[name=csi-qingcloud].volumeMounts[name=mount-dir].mountPath` and `spec.template.spec.volumes[name=mount-dir].hostPath.path` fields. For instance, in Kubernetes cluster based on QingCloud AppCenter, you should replace *"/var/lib/kubelet"* with *"/data/var/lib/kubelet"* in the CSI [DaemonSet](deploy/disk/kubernetes/csi-node-ds.yaml) YAML file.
 
 ```
-$ kubectl apply -f qingcloud-csi-disk-v1.1.0.yaml
+$ kubectl apply -f qingcloud-csi-disk-v1.1.0-rc.1.yaml
 ```
 
 - Check CSI plugin
 ```
-$ kubectl get pods -n kube-system --selector=app=csi-qingcloud,ver=v1.1.0
+$ kubectl get pods -n kube-system --selector=app=csi-qingcloud
   NAME                                       READY   STATUS    RESTARTS   AGE
   csi-qingcloud-controller-5bd48bb49-dw9rs   5/5     Running   0          3h16m
   csi-qingcloud-node-d2kdt                   2/2     Running   0          3h16m
@@ -86,7 +86,7 @@ $ kubectl get pods -n kube-system --selector=app=csi-qingcloud,ver=v1.1.0
 
 ### Uninstall
 ```
-$ kubectl delete -f qingcloud-csi-disk-v1.1.0.yaml
+$ kubectl delete -f qingcloud-csi-disk-v1.1.0-rc.1.yaml
 ```
 
 ### StorageClass Parameters
