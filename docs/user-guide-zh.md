@@ -247,7 +247,7 @@ pvc-clone   Bound    pvc-529d2502-02bd-442b-a69f-d3eff28316a8   20Gi       RWO  
 #### 创建带数据的存储卷 `pvc-snap-1`
 - 创建存储卷 
 ```console
-$ kubectl create -f pvc.yaml 
+$ kubectl create -f original-pvc.yaml
 persistentvolumeclaim/pvc-snap-1 created
 ```
 - 检查存储卷
@@ -325,11 +325,11 @@ pvc-snap-2   Bound    pvc-b8a05427-9eef-11e9-9a6a-5254ef68c8c1   20Gi       RWO 
 $ kubectl create -f deploy-viewer.yaml 
 deployment.apps/nginx created
 
-$ kubectl get po |grep nginx
-nginx-7b98f8c4d4-fmjzf   1/1     Running   0          3m6s
+$ kubectl get po |grep snap-example 
+snap-example-85dd9b646c-56g85   1/1     Running   0          3m6s
 
-$ kubectl exec -ti nginx-7b98f8c4d4-fmjzf /bin/bash
-root@nginx-7b98f8c4d4-fmjzf:/# ls /mnt -lh
+$ kubectl exec -ti snap-example-85dd9b646c-56g85 /bin/bash
+root@snap-example-85dd9b646c-56g85:/# ls /mnt -lh
 total 20G
 drwx------ 2 root root  16K Jul  5 06:09 lost+found
 -rw-r--r-- 1 root root    0 Jul  5 06:10 rand-write.0.0
