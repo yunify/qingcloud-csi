@@ -16,7 +16,7 @@ kind: Kustomization
 namespace: kube-system
 images:
   - name: csiplugin/csi-qingcloud
-    newTag: v1.1.0-rc.1
+    newTag: v1.1.0-rc.2
 commonLabels:
   tier: prod
 patchesStrategicMerge:

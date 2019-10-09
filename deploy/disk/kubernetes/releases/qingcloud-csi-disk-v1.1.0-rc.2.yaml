@@ -760,7 +760,7 @@ spec:
               fieldPath: spec.nodeName
         - name: CSI_ENDPOINT
           value: unix://csi/csi.sock
-        image: csiplugin/csi-qingcloud:v1.1.0-rc.1
+        image: csiplugin/csi-qingcloud:v1.1.0-rc.2
         imagePullPolicy: IfNotPresent
         name: csi-qingcloud
         resources:
@@ -854,7 +854,7 @@ spec:
               fieldPath: spec.nodeName
         - name: CSI_ENDPOINT
           value: unix://csi/csi.sock
-        image: csiplugin/csi-qingcloud:v1.1.0-rc.1
+        image: csiplugin/csi-qingcloud:v1.1.0-rc.2
         imagePullPolicy: IfNotPresent
         name: csi-qingcloud
         resources:
