@@ -1,6 +1,7 @@
 package cloud
 
 import (
+	"fmt"
 	"regexp"
 )
 
@@ -20,4 +21,29 @@ func IsSnapshotNotAvailable(err error) bool {
 
 func IsTryLater(err error) bool {
 	return tryLaterRegex.MatchString(err.Error())
+}
+
+type CannotFindDevicePathError struct {
+	volumeId   string
+	instanceId string
+	zoneId     string
+}
+
+func NewCannotFindDevicePathError(vol, ins, zone string) *CannotFindDevicePathError {
+	return &CannotFindDevicePathError{vol, ins, zone}
+}
+
+func (e *CannotFindDevicePathError) Error() string {
+	return fmt.Sprintf("cannot find device path, volume %s on instance %s in zone %s", e.volumeId, e.instanceId, e.zoneId)
+}
+
+func IsCannotFindDevicePath(err error) bool {
+	if err == nil {
+		return false
+	}
+	switch err.(type) {
+	case *CannotFindDevicePathError:
+		return true
+	}
+	return false
 }
