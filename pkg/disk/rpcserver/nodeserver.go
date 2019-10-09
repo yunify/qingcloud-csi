@@ -522,7 +522,6 @@ func (ns *NodeServer) NodeGetVolumeStats(ctx context.Context,
 
 	// Checkout device
 	klog.Infof("%s: Get device name from mount point %s", hash, volumePath)
-	volume.NewMetricsDu(volumePath)
 	devicePath, _, err := mount.GetDeviceNameFromMount(ns.mounter, volumePath)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "cannot get device name from mount point %s", volumePath)

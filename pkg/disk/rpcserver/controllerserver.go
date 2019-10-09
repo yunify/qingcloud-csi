@@ -32,7 +32,6 @@ import (
 	"k8s.io/client-go/util/retry"
 	"k8s.io/klog"
 	"reflect"
-	"time"
 )
 
 type ControllerServer struct {
@@ -475,33 +474,39 @@ func (cs *ControllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 	}
 
 	// When return with retry message at describe volume, retry after several seconds.
-	// Retry times is 3.
-	// Retry interval is changed from 1 second to 3 seconds.
-	for i := 1; i <= 3; i++ {
+
+	err = retry.OnError(DefaultBackOff, cloud.IsCannotFindDevicePath, func() error {
 		volInfo, err := cs.cloud.FindVolume(volumeId)
 		if err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
+			return err
 		}
 		// check device path
 		if *volInfo.Instance.Device != "" {
 			// found device path
 			klog.Infof("%s: Attaching volume %s on instance %s succeed.", hash, volumeId, nodeId)
-			return &csi.ControllerPublishVolumeResponse{}, nil
+			return nil
 		} else {
 			// cannot found device path
 			klog.Infof("%s: Cannot find device path and retry to find volume device %s", hash, volumeId)
-			time.Sleep(time.Duration(i) * time.Second)
+			return cloud.NewCannotFindDevicePathError(volumeId, nodeId, *volInfo.ZoneID)
 		}
-	}
-	// Cannot find device path
-	// Try to detach volume
-	klog.Infof("%s: Cannot find device path and going to detach volume %s", hash, volumeId)
-	if err := cs.cloud.DetachVolume(volumeId, nodeId); err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot find device path, detach volume %s failed", volumeId)
+	})
+
+	if err != nil {
+		// Cannot find device path
+		// Try to detach volume
+		klog.Errorf("%s: Failed to find device path, error: %s", hash, err.Error())
+		klog.Infof("%s: Going to detach volume %s", hash, volumeId)
+		if err := cs.cloud.DetachVolume(volumeId, nodeId); err != nil {
+			return nil, status.Errorf(codes.Internal, "cannot find device path, detach volume %s failed", volumeId)
+		} else {
+			return nil, status.Errorf(codes.Internal,
+				"cannot find device path, volume %s has been detached, CSI framework will try to attach instance %s again.",
+				volumeId, nodeId)
+		}
 	} else {
-		return nil, status.Errorf(codes.Internal,
-			"cannot find device path, volume %s has been detached, please try attaching to instance %s again.",
-			volumeId, nodeId)
+		// Succeed to find device path
+		return &csi.ControllerPublishVolumeResponse{}, nil
 	}
 }
 
