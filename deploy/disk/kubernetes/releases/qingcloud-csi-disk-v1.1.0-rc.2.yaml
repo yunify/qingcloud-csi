@@ -5,7 +5,6 @@ metadata:
     app: csi-qingcloud
     owner: yunify
     role: controller
-    tier: prod
     ver: v1.1.0
   name: csi-qingcloud-controller
   namespace: kube-system
@@ -17,7 +16,6 @@ metadata:
     app: csi-qingcloud
     owner: yunify
     role: node
-    tier: prod
     ver: v1.1.0
   name: csi-qingcloud-node
   namespace: kube-system
@@ -29,7 +27,6 @@ metadata:
     app: csi-qingcloud
     owner: yunify
     role: controller
-    tier: prod
     ver: v1.1.0
   name: csi-qingcloud-attacher
   namespace: kube-system
@@ -64,7 +61,6 @@ metadata:
     app: csi-qingcloud
     owner: yunify
     role: controller
-    tier: prod
     ver: v1.1.0
   name: csi-qingcloud-provisioner
   namespace: kube-system
@@ -99,7 +95,6 @@ metadata:
     app: csi-qingcloud
     owner: yunify
     role: controller
-    tier: prod
     ver: v1.1.0
   name: csi-qingcloud-resizer
   namespace: kube-system
@@ -123,7 +118,6 @@ metadata:
     app: csi-qingcloud
     owner: yunify
     role: controller
-    tier: prod
     ver: v1.1.0
   name: csi-qingcloud-snapshotter
   namespace: kube-system
@@ -147,7 +141,6 @@ metadata:
     app: csi-qingcloud
     owner: yunify
     role: controller
-    tier: prod
     ver: v1.1.0
   name: csi-qingcloud-attacher
 rules:
@@ -205,7 +198,6 @@ metadata:
     app: csi-qingcloud
     owner: yunify
     role: controller
-    tier: prod
     ver: v1.1.0
   name: csi-qingcloud-controller
 rules: []
@@ -217,7 +209,6 @@ metadata:
     app: csi-qingcloud
     owner: yunify
     role: node
-    tier: prod
     ver: v1.1.0
   name: csi-qingcloud-node
 rules:
@@ -240,7 +231,6 @@ metadata:
     app: csi-qingcloud
     owner: yunify
     role: controller
-    tier: prod
     ver: v1.1.0
   name: csi-qingcloud-provisioner
 rules:
@@ -319,7 +309,6 @@ metadata:
     app: csi-qingcloud
     owner: yunify
     role: controller
-    tier: prod
     ver: v1.1.0
   name: csi-qingcloud-resizer
 rules:
@@ -374,7 +363,6 @@ metadata:
     app: csi-qingcloud
     owner: yunify
     role: controller
-    tier: prod
     ver: v1.1.0
   name: csi-qingcloud-snapshotter
 rules:
@@ -473,7 +461,6 @@ metadata:
     app: csi-qingcloud
     owner: yunify
     role: controller
-    tier: prod
     ver: v1.1.0
   name: csi-qingcloud-attacher
   namespace: kube-system
@@ -493,7 +480,6 @@ metadata:
     app: csi-qingcloud
     owner: yunify
     role: controller
-    tier: prod
     ver: v1.1.0
   name: csi-qingcloud-provsioner
   namespace: kube-system
@@ -513,7 +499,6 @@ metadata:
     app: csi-qingcloud
     owner: yunify
     role: controller
-    tier: prod
     ver: v1.1.0
   name: csi-qingcloud-resizer
   namespace: kube-system
@@ -533,7 +518,6 @@ metadata:
     app: csi-qingcloud
     owner: yunify
     role: controller
-    tier: prod
     ver: v1.1.0
   name: csi-qingcloud-snapshotter
   namespace: kube-system
@@ -553,7 +537,6 @@ metadata:
     app: csi-qingcloud
     owner: yunify
     role: controller
-    tier: prod
     ver: v1.1.0
   name: csi-qingcloud-controller
 roleRef:
@@ -572,7 +555,6 @@ metadata:
     app: csi-qingcloud
     owner: yunify
     role: node
-    tier: prod
     ver: v1.1.0
   name: csi-qingcloud-node
 roleRef:
@@ -615,7 +597,6 @@ metadata:
   labels:
     app: csi-qingcloud
     owner: yunify
-    tier: prod
     ver: v1.1.0
   name: csi-qingcloud
   namespace: kube-system
@@ -626,7 +607,6 @@ metadata:
   labels:
     app: csi-qingcloud
     owner: yunify
-    tier: prod
     ver: v1.1.0
   name: csi-qingcloud-controller
   namespace: kube-system
@@ -637,7 +617,6 @@ spec:
       app: csi-qingcloud
       owner: yunify
       role: controller
-      tier: prod
       ver: v1.1.0
   template:
     metadata:
@@ -645,7 +624,6 @@ spec:
         app: csi-qingcloud
         owner: yunify
         role: controller
-        tier: prod
         ver: v1.1.0
     spec:
       containers:
@@ -760,8 +738,8 @@ spec:
               fieldPath: spec.nodeName
         - name: CSI_ENDPOINT
           value: unix://csi/csi.sock
-        image: csiplugin/csi-qingcloud:v1.1.0-rc.2
-        imagePullPolicy: IfNotPresent
+        image: csiplugin/csi-qingcloud:canary
+        imagePullPolicy: Always
         name: csi-qingcloud
         resources:
           limits:
@@ -790,7 +768,6 @@ metadata:
     app: csi-qingcloud
     owner: yunify
     role: node
-    tier: prod
     ver: v1.1.0
   name: csi-qingcloud-node
   namespace: kube-system
@@ -800,7 +777,6 @@ spec:
       app: csi-qingcloud
       owner: yunify
       role: node
-      tier: prod
       ver: v1.1.0
   template:
     metadata:
@@ -808,7 +784,6 @@ spec:
         app: csi-qingcloud
         owner: yunify
         role: node
-        tier: prod
         ver: v1.1.0
     spec:
       containers:
@@ -854,8 +829,8 @@ spec:
               fieldPath: spec.nodeName
         - name: CSI_ENDPOINT
           value: unix://csi/csi.sock
-        image: csiplugin/csi-qingcloud:v1.1.0-rc.2
-        imagePullPolicy: IfNotPresent
+        image: csiplugin/csi-qingcloud:canary
+        imagePullPolicy: Always
         name: csi-qingcloud
         resources:
           limits:
@@ -924,7 +899,6 @@ metadata:
   labels:
     app: csi-qingcloud
     owner: yunify
-    tier: prod
     ver: v1.1.0
   name: disk.csi.qingcloud.com
   namespace: kube-system

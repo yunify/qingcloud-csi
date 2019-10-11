@@ -12,15 +12,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-kind: Kustomization
-namespace: kube-system
-images:
-  - name: csiplugin/csi-qingcloud
-    newTag: canary
-commonLabels:
-  tier: dev
-patchesStrategicMerge:
-  - controller-deploy.yaml
-  - node-ds.yaml
-resources:
-  - ../../base
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: csi-qingcloud-controller
+  namespace: kube-system
+spec:
+  template:
+    spec:
+      containers:
+        - name: csi-qingcloud
+          imagePullPolicy: "Always"

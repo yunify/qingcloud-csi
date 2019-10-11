@@ -12,21 +12,17 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-kind: DaemonSet
-apiVersion: apps/v1
-metadata:
-  name: csi-qingcloud-node
-  namespace: kube-system
-spec:
-  template:
-    spec:
-      containers:
-        - name: csi-qingcloud
-          volumeMounts:
-            - name: kubelet-dir
-              mountPath: /data/var/lib/kubelet
-              mountPropagation: "Bidirectional"
-      volumes:
-        - name: kubelet-dir
-          hostPath:
-            path: /data/var/lib/kubelet
+kind: Kustomization
+namespace: kube-system
+images:
+  - name: csiplugin/csi-qingcloud
+    newTag: v1.1.0-rc.2
+commonLabels:
+  app: "csi-qingcloud"
+  owner: "yunify"
+  ver: "v1.1.0-rc.2"
+patchesStrategicMerge:
+  - controller-deploy.yaml
+  - node-ds.yaml
+resources:
+  - ../../base
