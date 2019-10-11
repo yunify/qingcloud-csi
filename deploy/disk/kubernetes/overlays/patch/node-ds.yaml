@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: csi-qingcloud
-          imagePullPolicy: "Always"
+          imagePullPolicy: "IfNotPresent"
           volumeMounts:
             - name: kubelet-dir
               mountPath: /var/lib/kubelet
