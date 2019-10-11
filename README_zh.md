@@ -4,6 +4,22 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/yunify/qingcloud-csi)](https://goreportcard.com/report/github.com/yunify/qingcloud-csi)
 
 > [English](README.md) | 中文
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+- [描述](#%E6%8F%8F%E8%BF%B0)
+- [块存储插件](#%E5%9D%97%E5%AD%98%E5%82%A8%E6%8F%92%E4%BB%B6)
+  - [Kubernetes 适配性](#kubernetes-%E9%80%82%E9%85%8D%E6%80%A7)
+  - [功能](#%E5%8A%9F%E8%83%BD)
+  - [安装](#%E5%AE%89%E8%A3%85)
+  - [卸载](#%E5%8D%B8%E8%BD%BD)
+  - [使用文档](#%E4%BD%BF%E7%94%A8%E6%96%87%E6%A1%A3)
+- [支持](#%E6%94%AF%E6%8C%81)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+---
+
 ## 描述
 QingCloud CSI 插件实现了 [CSI](https://github.com/container-storage-interface/) 接口，并使容器编排平台能够使用 QingCloud 云平台的存储资源。目前 QingCloud CSI 实现了块存储插件，可以对接云平台块存储资源。
 

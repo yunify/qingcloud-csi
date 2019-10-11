@@ -14,10 +14,6 @@
 
 kind: Kustomization
 namespace: kube-system
-commonLabels:
-  app: "csi-qingcloud"
-  owner: "yunify"
-  ver: "v1.1.0"
 resources:
   - controller-deploy.yaml
   - controller-rbac.yaml

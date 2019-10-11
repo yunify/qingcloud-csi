@@ -31,6 +31,7 @@ spec:
       containers:
       - name: fio
         image: csiplugin/fio-test:latest
+        imagePullPolicy: IfNotPresent
         volumeMounts:
         - mountPath: /mnt
           name: mypvc
