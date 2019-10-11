@@ -31,6 +31,7 @@ spec:
       containers:
       - name: nginx
         image: nginx
+        imagePullPolicy: IfNotPresent
         volumeMounts:
         - mountPath: /mnt
           name: mypvc
