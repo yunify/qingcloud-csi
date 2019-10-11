@@ -713,7 +713,7 @@ spec:
         env:
         - name: ADDRESS
           value: /csi/csi.sock
-        image: quay.io/k8scsi/csi-snapshotter:v1.2.1
+        image: quay.io/k8scsi/csi-snapshotter:v1.2.2
         imagePullPolicy: IfNotPresent
         name: csi-snapshotter
         resources:

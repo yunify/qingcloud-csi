@@ -5,6 +5,21 @@
 
 > English | [中文](README_zh.md)
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+- [Description](#description)
+- [Disk Plugin](#disk-plugin)
+  - [Kubernetes Compatibility Matrix](#kubernetes-compatibility-matrix)
+  - [Feature Matrix](#feature-matrix)
+  - [Installation](#installation)
+  - [Uninstall](#uninstall)
+  - [StorageClass Parameters](#storageclass-parameters)
+- [Support](#support)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+---
+
 ## Description
 QingCloud CSI plugin implements an interface between Container Storage Interface ([CSI](https://github.com/container-storage-interface/)) enabled Container Orchestrator (CO) and the storage of QingCloud. Currently, QingCloud CSI disk plugin has been developed and manages disk volume in QingCloud platform.
 
