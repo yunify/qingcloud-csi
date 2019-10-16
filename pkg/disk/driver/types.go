@@ -185,8 +185,15 @@ var InstanceTypeValue = map[string]InstanceType{
 }
 
 var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
-	HighPerformanceVolumeType:      {HighPerformanceInstanceType},
-	SuperHighPerformanceVolumeType: {SuperHighPerformanceInstanceType},
+	HighPerformanceVolumeType: {
+		HighPerformanceInstanceType,
+		StandardInstanceType,
+	},
+	SuperHighPerformanceVolumeType: {
+		SuperHighPerformanceInstanceType,
+		EnterpriseInstanceType,
+		PremiumInstanceType,
+	},
 	HighCapacityVolumeType: {
 		HighPerformanceInstanceType,
 		SuperHighPerformanceInstanceType,
@@ -195,9 +202,11 @@ var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
 		PremiumInstanceType,
 	},
 	StandardVolumeType: {
+		HighPerformanceInstanceType,
 		StandardInstanceType,
 	},
 	SSDEnterpriseVolumeType: {
+		SuperHighPerformanceInstanceType,
 		EnterpriseInstanceType,
 		PremiumInstanceType,
 	},
