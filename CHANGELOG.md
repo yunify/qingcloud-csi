@@ -8,7 +8,7 @@
 <!-- NEW RELEASE NOTES ENTRY -->
 
 # v1.1.0
-## Changelog since v1.1.0
+## Changelog since v0.2.1
 ### Features
 * Update to CSI v1.1.0 ([#62](https://github.com/yunify/qingcloud-csi/pull/62), [@wnxn](https://github.com/wnxn))
 * Add snapshot creation and deletion ([#72](https://github.com/yunify/qingcloud-csi/pull/72), [@wnxn](https://github.com/wnxn))
@@ -25,6 +25,8 @@
 * Add volume name prefix flag ([#113](https://github.com/yunify/qingcloud-csi/pull/113), [@wnxn](https://github.com/wnxn))
 * Add maximum retry interval flag ([#116](https://github.com/yunify/qingcloud-csi/pull/116), [@wnxn](https://github.com/wnxn))
 * Add Guarantee class of QoS ([#123](https://github.com/yunify/qingcloud-csi/pull/123), [@wnxn](https://github.com/wnxn))
+* Update volume attachment map ([#137](https://github.com/yunify/qingcloud-csi/pull/137), [@wnxn](https://github.com/wnxn))
+* Support more volume and instance types ([#139](https://github.com/yunify/qingcloud-csi/pull/139), [@wnxn](https://github.com/wnxn))
 
 ### Bug Fixed
-* Fix cannot find device path after volume attached ([#63](https://github.com/yunify/qingcloud-csi/pull/63), [@wnxn](https://github.com/wnxn))
+* Fix cannot find device path after volume attached ([#133](https://github.com/yunify/qingcloud-csi/pull/133), [@wnxn](https://github.com/wnxn))
