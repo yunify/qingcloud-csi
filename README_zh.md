@@ -27,7 +27,7 @@ QingCloud CSI 插件实现了 [CSI](https://github.com/container-storage-interfa
 
 插件的设计和安装使用 Kubernetes 社区推荐的 CSI 插件[架构](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/storage/container-storage-interface.md#recommended-mechanism-for-deploying-csi-drivers-on-kubernetes)，插件架构包含 Controller 和 Node 两部分，在 Controller 部分，由 Deployment 在 Kubernetes 集群内创建一个 Pod 副本。在 Node 部分，每个可调度的节点由 DaemonSet 创建一个 Pod 副本。插件已经在 Kubernetes v1.15 环境中通过了 [CSI 测试](https://github.com/kubernetes-csi/csi-test)。
 
-块存储插件部署后, 用户可创建访问模式（Access Mode）为单节点读写（ReadWriteOnce）的基于 QingCloud 的基础型、SSD 企业型、性能型、超高性能型、超高性能容量型（NeonSAN）、容量型硬盘的存储卷并挂载至工作负载。
+块存储插件部署后, 用户可创建访问模式（Access Mode）为单节点读写（ReadWriteOnce）的基于 QingCloud 的基础型、SSD 企业型、性能型、超高性能型、超高性能容量型（NeonSAN）、NeonSAN HDD 型、容量型硬盘的存储卷并挂载至工作负载。
 
 ### Kubernetes 适配性
 
@@ -58,7 +58,7 @@ QingCloud CSI 插件实现了 [CSI](https://github.com/container-storage-interfa
 
 - 下载安装文件并解压
 ```
-$ wget https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/disk/kubernetes/releases/qingcloud-csi-disk-v1.1.0-rc.2.yaml
+$ wget https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/disk/kubernetes/releases/qingcloud-csi-disk-v1.1.0-rc.3.yaml
 ```
 
 - 修改 QingCloud 云平台配置参数
@@ -86,8 +86,8 @@ $ wget https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/disk
 > 注:  如果 Kubernetes 集群的 [kubelet](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/) 设置了 `--root-dir` 选项（默认值为 *"/var/lib/kubelet"*），请将 DaemonSet 的 `spec.template.spec.containers[name=csi-qingcloud].volumeMounts[name=mount-dir].mountPath` 和 `spec.template.spec.volumes[name=mount-dir].hostPath.path` 的值 *"/var/lib/kubelet"* 替换为 `--root-dir` 选项的值。例如：在通过 QingCloud AppCenter 创建的 Kubernetes 集群内, 需要将 DaemonSet 的 *"/var/lib/kubelet"* 字段替换为 *"/data/var/lib/kubelet"*。
 
 ```
-$ kubectl apply -f qingcloud-csi-disk-v1.1.0-rc.2.yaml
-   ```
+$ kubectl apply -f qingcloud-csi-disk-v1.1.0-rc.3.yaml
+```
 
 - 检查 CSI 插件状态
 ```
@@ -103,7 +103,7 @@ $ kubectl get pods -n kube-system --selector=app=csi-qingcloud
 ### 卸载
 
 ```
-$ kubectl delete -f qingcloud-csi-disk-v1.1.0-rc.2.yaml
+$ kubectl delete -f qingcloud-csi-disk-v1.1.0-rc.3.yaml
 ```
 
 ### 使用文档

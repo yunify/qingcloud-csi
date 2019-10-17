@@ -92,12 +92,13 @@ volumeBindingMode: Immediate
 
 |硬盘类型|type|maxSize|minSize|stepSize|
 |:---:|:---:|:---:|:---:|:---:|
-|性能型|0|1000|10|10|
+|性能型|0|2000|10|10|
 |容量型|2|5000|100|50|
-|超高性能型|3|1000|10|10|
-| NeonSAN|5|5000|100|100|
+|超高性能型|3|2000|10|10|
+| NeonSAN|5|50000|100|100|
+|NeonSAN HDD|5|50000|100|100|
 | 基础型|100|2000|10|10|
-| SSD 企业型|200| 2000|10|10|
+| SSD 企业型|2000| 2000|10|10|
 
 #### fsType
 支持 `ext3`, `ext4`, `xfs`. 默认为 `ext4`。
@@ -127,6 +128,7 @@ volumeBindingMode: Immediate
 |容量型| High Capacity|2|
 |超高性能型|Super High Performance|3|
 |NeonSAN| NeonSAN|5|
+|NeonSAN HDD|NeonSAN HDD|6|
 |基础型| Standard|100|
 |SSD 企业型| SSD Enterprise|200|
 
@@ -135,19 +137,25 @@ volumeBindingMode: Immediate
 |:---:|:----:|:----:|
 |性能型|High Performance|0|
 |超高性能型|Super High Performance|1|
+|SAN存储超高性能型|Super High Performance SAN|6|
+|SAN存储性能型|High Performance SAN|7|
 |基础型|Standard|101|
-|企业型|Enterprise|201|
+|企业型e1|Enterprise1|201|
+|企业型e2|Enterprise2|202|
 |专业增强型|Premium|301|
 
 ### 硬盘类型与主机适配性
 
- |          | 性能型硬盘    | 容量型硬盘  | 超高性能型硬盘 | NeonSAN 硬盘 |基础型硬盘| SSD 企业型硬盘|
-|-----------|------------------|------------------|-----------------|---------|----------|-------|
-|性能型主机| ✓        | ✓                | -               | ✓      | ✓     | -     |
-|超高性能型主机| -       | ✓                | ✓               |✓  |-  |✓  |
-|基础型主机| ✓        | ✓                | -               |✓  |✓  |-  |
-|企业型主机| -       | ✓                | ✓               |✓  |-  |✓  |
-|专业增强型| -       | ✓                | ✓               |✓  |-  |✓  |
+ |          | 性能型硬盘    | 容量型硬盘  | 超高性能型硬盘 | NeonSAN 硬盘 | NeonSAN HDD 硬盘 | 基础型硬盘| SSD 企业型硬盘|
+|-----------|------------------|------------------|-----------------|---------|----------|-------|-------|
+|性能型主机| ✓        | ✓                | -               | ✓      |  ✓      | ✓     | -     |
+|超高性能型主机| -       | ✓                | ✓               |✓      |✓     |-  |✓  |
+|SAN存储超高性能型| -       | -                | -              |✓      |-     |-  |-  |
+|SAN存储性能型| -       | -                | -               |-     |✓     |-  |-  |
+|基础型主机| ✓        | ✓                | -               |✓  |✓ |✓ |-  |
+|企业型e1主机| -       | ✓                | ✓               |✓  |✓ |-  |✓  |
+|企业型e1主机| -       | ✓                | ✓               |✓  |✓ |-  |✓  |
+|专业增强型| -       | ✓                | ✓               |✓  |✓ |-  |✓  |
 
 ## 存储卷管理
 存储卷（PVC，PersistentVolumeClaim）管理功能包括动态分配存储卷，删除存储卷，挂载存储卷到 Pod，从 Pod 卸载存储卷。用户可参考[示例 YAML 文件](https://github.com/yunify/qingcloud-csi/tree/master/deploy/disk/example/volume)。
