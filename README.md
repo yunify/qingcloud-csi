@@ -27,7 +27,7 @@ QingCloud CSI plugin implements an interface between Container Storage Interface
 
 Disk plugin's design and installation use Kubernetes community recommended CSI plugin [architecture](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/storage/container-storage-interface.md#recommended-mechanism-for-deploying-csi-drivers-on-kubernetes). Plugin architecture contains Controller part and Node part. In the part of Controller, one Pod is created by Deployment in Kubernetes cluster. In the part of Node, one Pod is created by DaemonSet on every node. Now, it has been passed the [CSI test](https://github.com/kubernetes-csi/csi-test) in Kubernetes v1.15 environment.
 
-After plugin installation completes, user can create volumes based on several types of disk, such as Standard disk, SSD Enterprise disk, High Performance disk, Super High Performance disk, NeonSAN disk and High Capacity disk, with ReadWriteOnce access mode and mount volumes on workloads.
+After plugin installation completes, user can create volumes based on several types of disk, such as Standard disk, SSD Enterprise disk, High Performance disk, Super High Performance disk, NeonSAN disk, NeonSAN HDD disk and High Capacity disk, with ReadWriteOnce access mode and mount volumes on workloads.
 
 ### Kubernetes Compatibility Matrix
 
@@ -57,7 +57,7 @@ This guide will install CSI plugin in the *kube-system* namespace of Kubernetes 
   - Enable `--read-only-port=10255` on kubelet
 - Download installation file 
 ```
-$ wget https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/disk/kubernetes/releases/qingcloud-csi-disk-v1.1.0-rc.2.yaml
+$ wget https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/disk/kubernetes/releases/qingcloud-csi-disk-v1.1.0-rc.3.yaml
 ```
 - Add QingCloud platform parameter on ConfigMap
 QingCloud CSI plugin manipulates cloud resource by QingCloud platform API. User must test the connection between QingCloud platform API and user's own instance by and check QingCloud platform configuration by [QingCloud CLI](https://docs.qingcloud.com/product/cli/).
@@ -83,7 +83,7 @@ QingCloud CSI plugin manipulates cloud resource by QingCloud platform API. User 
 > IMPORTANT: If kubelet, a component of Kubernetes, set the `--root-dir` option (default: *"/var/lib/kubelet"*), please replace *"/var/lib/kubelet"* with the value of `--root-dir` at the CSI [DaemonSet](deploy/disk/kubernetes/csi-node-ds.yaml) YAML file's `spec.template.spec.containers[name=csi-qingcloud].volumeMounts[name=mount-dir].mountPath` and `spec.template.spec.volumes[name=mount-dir].hostPath.path` fields. For instance, in Kubernetes cluster based on QingCloud AppCenter, you should replace *"/var/lib/kubelet"* with *"/data/var/lib/kubelet"* in the CSI [DaemonSet](deploy/disk/kubernetes/csi-node-ds.yaml) YAML file.
 
 ```
-$ kubectl apply -f qingcloud-csi-disk-v1.1.0-rc.2.yaml
+$ kubectl apply -f qingcloud-csi-disk-v1.1.0-rc.3.yaml
 ```
 
 - Check CSI plugin
@@ -99,7 +99,7 @@ $ kubectl get pods -n kube-system --selector=app=csi-qingcloud
 
 ### Uninstall
 ```
-$ kubectl delete -f qingcloud-csi-disk-v1.1.0-rc.2.yaml
+$ kubectl delete -f qingcloud-csi-disk-v1.1.0-rc.3.yaml
 ```
 
 ### StorageClass Parameters
@@ -122,7 +122,7 @@ parameters:
 reclaimPolicy: Delete 
 ```
 
-- `type`: The type of volume in QingCloud IaaS platform. In QingCloud public cloud platform, `0` represents high performance volume. `3` respresents super high performance volume. `2` represents high capacity volume depending on cluster‘s zone. `5` represents enterprise distributed SAN (NeonSAN) volume. `100` represents standard volume. `200` represents SSD enterprise volume. See [QingCloud docs](https://docs.qingcloud.com/product/api/action/volume/create_volumes.html) for details.
+- `type`: The type of volume in QingCloud IaaS platform. In QingCloud public cloud platform, `0` represents high performance volume. `3` respresents super high performance volume. `2` represents high capacity volume depending on cluster‘s zone. `5` represents enterprise distributed SAN (NeonSAN) volume. `6` represents NeonSAN HDD volume. `100` represents standard volume. `200` represents SSD enterprise volume. See [QingCloud docs](https://docs.qingcloud.com/product/api/action/volume/create_volumes.html) for details.
 
 - `maxSize`, `minSize`: Limit the range of volume size in GiB.
 

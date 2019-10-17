@@ -71,9 +71,10 @@ const (
 	HighPerformanceVolumeType      VolumeType = 0
 	HighCapacityVolumeType         VolumeType = 2
 	SuperHighPerformanceVolumeType VolumeType = 3
+	NeonSANVolumeType              VolumeType = 5
+	NeonSANHDDVolumeType           VolumeType = 6
 	StandardVolumeType             VolumeType = 100
 	SSDEnterpriseVolumeType        VolumeType = 200
-	NeonSANVolumeType              VolumeType = 5
 )
 
 type VolumeType int
@@ -105,45 +106,50 @@ var VolumeTypeName = map[VolumeType]string{
 	0:   "HighPerformance",
 	2:   "HighCapacity",
 	3:   "SuperHighPerformance",
+	5:   "NeonSAN",
+	6:   "NeonSANHDD",
 	100: "Standard",
 	200: "SSDEnterprise",
-	5:   "NeonSAN",
 }
 
 var VolumeTypeValue = map[string]VolumeType{
 	"HighPerformance":      0,
 	"HighCapacity":         2,
 	"SuperHighPerformance": 3,
+	"NeonSAN":              5,
+	"NeonSANHDD":           6,
 	"Standard":             100,
 	"SSDEnterprise":        200,
-	"NeonSAN":              5,
 }
 
 var VolumeTypeToStepSize = map[VolumeType]int{
 	0:   10,
 	2:   50,
 	3:   10,
+	5:   100,
+	6:   100,
 	100: 10,
 	200: 10,
-	5:   100,
 }
 
 var VolumeTypeToMinSize = map[VolumeType]int{
 	0:   10,
 	2:   100,
 	3:   10,
+	5:   100,
+	6:   100,
 	100: 10,
 	200: 10,
-	5:   100,
 }
 
 var VolumeTypeToMaxSize = map[VolumeType]int{
 	0:   2000,
 	2:   5000,
 	3:   2000,
+	5:   50000,
+	6:   50000,
 	100: 2000,
 	200: 2000,
-	5:   50000,
 }
 
 type InstanceType int
@@ -161,27 +167,36 @@ func (i InstanceType) IsValid() bool {
 }
 
 const (
-	HighPerformanceInstanceType      InstanceType = 0
-	SuperHighPerformanceInstanceType InstanceType = 1
-	StandardInstanceType             InstanceType = 101
-	EnterpriseInstanceType           InstanceType = 201
-	PremiumInstanceType              InstanceType = 301
+	HighPerformanceInstanceType         InstanceType = 0
+	SuperHighPerformanceInstanceType    InstanceType = 1
+	SuperHighPreformanceSANInstanceType InstanceType = 6
+	HighPerformanceSANInstanceType      InstanceType = 7
+	StandardInstanceType                InstanceType = 101
+	Enterprise1InstanceType             InstanceType = 201
+	Enterprise2InstanceType             InstanceType = 202
+	PremiumInstanceType                 InstanceType = 301
 )
 
 var InstanceTypeName = map[InstanceType]string{
 	0:   "HighPerformance",
 	1:   "SuperHighPerformance",
+	6:   "SuperHighPerformanceSAN",
+	7:   "HighPerformanceSAN",
 	101: "Standard",
-	201: "Enterprise",
+	201: "Enterprise1",
+	202: "Enterprise2",
 	301: "Premium",
 }
 
 var InstanceTypeValue = map[string]InstanceType{
-	"HighPerformance":      0,
-	"SuperHighPerformance": 1,
-	"Standard":             101,
-	"Enterprise":           201,
-	"Premium":              301,
+	"HighPerformance":         0,
+	"SuperHighPerformance":    1,
+	"SuperHighPerformanceSAN": 6,
+	"HighPerformanceSAN":      7,
+	"Standard":                101,
+	"Enterprise1":             201,
+	"Enterprise2":             202,
+	"Premium":                 301,
 }
 
 var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
@@ -189,16 +204,36 @@ var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
 		HighPerformanceInstanceType,
 		StandardInstanceType,
 	},
-	SuperHighPerformanceVolumeType: {
-		SuperHighPerformanceInstanceType,
-		EnterpriseInstanceType,
-		PremiumInstanceType,
-	},
 	HighCapacityVolumeType: {
 		HighPerformanceInstanceType,
 		SuperHighPerformanceInstanceType,
 		StandardInstanceType,
-		EnterpriseInstanceType,
+		Enterprise1InstanceType,
+		Enterprise2InstanceType,
+		PremiumInstanceType,
+	},
+	SuperHighPerformanceVolumeType: {
+		SuperHighPerformanceInstanceType,
+		Enterprise1InstanceType,
+		Enterprise2InstanceType,
+		PremiumInstanceType,
+	},
+	NeonSANVolumeType: {
+		HighPerformanceInstanceType,
+		SuperHighPerformanceInstanceType,
+		SuperHighPreformanceSANInstanceType,
+		StandardInstanceType,
+		Enterprise1InstanceType,
+		Enterprise2InstanceType,
+		PremiumInstanceType,
+	},
+	NeonSANHDDVolumeType: {
+		HighPerformanceInstanceType,
+		SuperHighPerformanceInstanceType,
+		HighPerformanceSANInstanceType,
+		StandardInstanceType,
+		Enterprise1InstanceType,
+		Enterprise2InstanceType,
 		PremiumInstanceType,
 	},
 	StandardVolumeType: {
@@ -207,14 +242,8 @@ var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
 	},
 	SSDEnterpriseVolumeType: {
 		SuperHighPerformanceInstanceType,
-		EnterpriseInstanceType,
-		PremiumInstanceType,
-	},
-	NeonSANVolumeType: {
-		HighPerformanceInstanceType,
-		SuperHighPerformanceInstanceType,
-		StandardInstanceType,
-		EnterpriseInstanceType,
+		Enterprise1InstanceType,
+		Enterprise2InstanceType,
 		PremiumInstanceType,
 	},
 }

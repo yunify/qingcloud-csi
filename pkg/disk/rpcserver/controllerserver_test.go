@@ -71,19 +71,19 @@ func TestDiskControllerServer_PickTopology(t *testing.T) {
 				Requisite: []*csi.Topology{
 					{
 						Segments: map[string]string{
-							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.EnterpriseInstanceType],
+							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.Enterprise1InstanceType],
 							cs.driver.GetTopologyZoneKey():         "pek3b",
 						},
 					},
 					{
 						Segments: map[string]string{
-							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.EnterpriseInstanceType],
+							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.Enterprise1InstanceType],
 							cs.driver.GetTopologyZoneKey():         "pek3c",
 						},
 					},
 					{
 						Segments: map[string]string{
-							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.EnterpriseInstanceType],
+							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.Enterprise1InstanceType],
 							cs.driver.GetTopologyZoneKey():         "pek3d",
 						},
 					},
@@ -91,25 +91,25 @@ func TestDiskControllerServer_PickTopology(t *testing.T) {
 				Preferred: []*csi.Topology{
 					{
 						Segments: map[string]string{
-							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.EnterpriseInstanceType],
+							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.Enterprise1InstanceType],
 							cs.driver.GetTopologyZoneKey():         "pek3b",
 						},
 					},
 					{
 						Segments: map[string]string{
-							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.EnterpriseInstanceType],
+							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.Enterprise1InstanceType],
 							cs.driver.GetTopologyZoneKey():         "pek3c",
 						},
 					},
 					{
 						Segments: map[string]string{
-							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.EnterpriseInstanceType],
+							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.Enterprise1InstanceType],
 							cs.driver.GetTopologyZoneKey():         "pek3d",
 						},
 					},
 				},
 			},
-			topResult: driver.NewTopology("pek3b", driver.EnterpriseInstanceType),
+			topResult: driver.NewTopology("pek3b", driver.Enterprise1InstanceType),
 		},
 		{
 			name: "csi spec example 2",
@@ -117,19 +117,19 @@ func TestDiskControllerServer_PickTopology(t *testing.T) {
 				Requisite: []*csi.Topology{
 					{
 						Segments: map[string]string{
-							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.EnterpriseInstanceType],
+							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.Enterprise1InstanceType],
 							cs.driver.GetTopologyZoneKey():         "pek3b",
 						},
 					},
 					{
 						Segments: map[string]string{
-							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.EnterpriseInstanceType],
+							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.Enterprise1InstanceType],
 							cs.driver.GetTopologyZoneKey():         "pek3c",
 						},
 					},
 					{
 						Segments: map[string]string{
-							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.EnterpriseInstanceType],
+							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.Enterprise1InstanceType],
 							cs.driver.GetTopologyZoneKey():         "pek3d",
 						},
 					},
@@ -137,19 +137,19 @@ func TestDiskControllerServer_PickTopology(t *testing.T) {
 				Preferred: []*csi.Topology{
 					{
 						Segments: map[string]string{
-							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.EnterpriseInstanceType],
+							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.Enterprise1InstanceType],
 							cs.driver.GetTopologyZoneKey():         "pek3c",
 						},
 					},
 					{
 						Segments: map[string]string{
-							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.EnterpriseInstanceType],
+							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.Enterprise1InstanceType],
 							cs.driver.GetTopologyZoneKey():         "pek3d",
 						},
 					},
 				},
 			},
-			topResult: driver.NewTopology("pek3c", driver.EnterpriseInstanceType),
+			topResult: driver.NewTopology("pek3c", driver.Enterprise1InstanceType),
 		},
 	}
 	for _, test := range tests {
@@ -183,13 +183,13 @@ func TestDiskControllerServer_IsValidTopology(t *testing.T) {
 				Requisite: []*csi.Topology{
 					{
 						Segments: map[string]string{
-							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.EnterpriseInstanceType],
+							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.Enterprise1InstanceType],
 							cs.driver.GetTopologyZoneKey():         "pek3b",
 						},
 					},
 					{
 						Segments: map[string]string{
-							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.EnterpriseInstanceType],
+							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.Enterprise1InstanceType],
 							cs.driver.GetTopologyZoneKey():         "pek3c",
 						},
 					},
@@ -204,13 +204,13 @@ func TestDiskControllerServer_IsValidTopology(t *testing.T) {
 				Requisite: []*csi.Topology{
 					{
 						Segments: map[string]string{
-							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.EnterpriseInstanceType],
+							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.Enterprise1InstanceType],
 							cs.driver.GetTopologyZoneKey():         "pek3d",
 						},
 					},
 					{
 						Segments: map[string]string{
-							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.EnterpriseInstanceType],
+							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.Enterprise1InstanceType],
 							cs.driver.GetTopologyZoneKey():         "pek3c",
 						},
 					},
@@ -225,7 +225,7 @@ func TestDiskControllerServer_IsValidTopology(t *testing.T) {
 				Requisite: []*csi.Topology{
 					{
 						Segments: map[string]string{
-							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.EnterpriseInstanceType],
+							cs.driver.GetTopologyInstanceTypeKey(): driver.InstanceTypeName[driver.Enterprise1InstanceType],
 						},
 					},
 					{
@@ -269,7 +269,19 @@ func TestDiskControllerServer_GetVolumeTopology(t *testing.T) {
 			topology: []*csi.Topology{
 				{
 					Segments: map[string]string{
-						cs.driver.GetTopologyInstanceTypeKey(): "Enterprise",
+						cs.driver.GetTopologyInstanceTypeKey(): "SuperHighPerformance",
+						cs.driver.GetTopologyZoneKey():         "pek3b",
+					},
+				},
+				{
+					Segments: map[string]string{
+						cs.driver.GetTopologyInstanceTypeKey(): "Enterprise1",
+						cs.driver.GetTopologyZoneKey():         "pek3b",
+					},
+				},
+				{
+					Segments: map[string]string{
+						cs.driver.GetTopologyInstanceTypeKey(): "Enterprise2",
 						cs.driver.GetTopologyZoneKey():         "pek3b",
 					},
 				},
