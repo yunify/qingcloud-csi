@@ -23,7 +23,7 @@ const (
 )
 
 type QingSnapshotClass struct {
-	Tags []string
+	tags []string
 }
 
 // NewDefaultQingSnapshotClass create default QingSnapshotClass object
@@ -32,15 +32,24 @@ func NewDefaultQingSnapshotClass() *QingSnapshotClass {
 }
 
 func NewQingSnapshotClassFromMap(opt map[string]string) (*QingSnapshotClass, error) {
-	sTags, tagsOk := opt[SnapshotClassTagsName]
-
-	sc := NewDefaultQingSnapshotClass()
-	if tagsOk && len(sTags) > 0 {
-		sc.Tags = strings.Split(strings.ReplaceAll(sTags, " ", ""), ",")
+	var tags []string
+	for k, v := range opt {
+		switch strings.ToLower(k) {
+		case SnapshotClassTagsName:
+			if len(v) > 0 {
+				tags = strings.Split(strings.ReplaceAll(v, " ", ""), ",")
+			}
+		}
 	}
+	sc := NewDefaultQingSnapshotClass()
+	sc.SetTags(tags)
 	return sc, nil
 }
 
 func (sc QingSnapshotClass) GetTags() []string {
-	return sc.Tags
+	return sc.tags
+}
+
+func (sc *QingSnapshotClass) SetTags(tags []string) {
+	sc.tags = tags
 }

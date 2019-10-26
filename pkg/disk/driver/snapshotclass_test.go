@@ -34,7 +34,27 @@ func TestNewDefaultQingSnapshotClass(t *testing.T) {
 				"tags": "tag-glozcqzd, tag-y7uu1q2a",
 			},
 			sc: &QingSnapshotClass{
-				Tags: []string{"tag-glozcqzd", "tag-y7uu1q2a"},
+				tags: []string{"tag-glozcqzd", "tag-y7uu1q2a"},
+			},
+			isError: false,
+		},
+		{
+			name: "upper case1",
+			opt: map[string]string{
+				"Tags": "tag-glozcqzd, tag-y7uu1q2a",
+			},
+			sc: &QingSnapshotClass{
+				tags: []string{"tag-glozcqzd", "tag-y7uu1q2a"},
+			},
+			isError: false,
+		},
+		{
+			name: "upper case2",
+			opt: map[string]string{
+				"TAGS": "tag-glozcqzd, tag-y7uu1q2a",
+			},
+			sc: &QingSnapshotClass{
+				tags: []string{"tag-glozcqzd", "tag-y7uu1q2a"},
 			},
 			isError: false,
 		},
@@ -44,7 +64,7 @@ func TestNewDefaultQingSnapshotClass(t *testing.T) {
 				"tags": "tag-glozcqzd, tag-y7uu1q2a,tag-y7uuweea",
 			},
 			sc: &QingSnapshotClass{
-				Tags: []string{"tag-glozcqzd", "tag-y7uu1q2a", "tag-y7uuweea"},
+				tags: []string{"tag-glozcqzd", "tag-y7uu1q2a", "tag-y7uuweea"},
 			},
 			isError: false,
 		},
@@ -54,7 +74,7 @@ func TestNewDefaultQingSnapshotClass(t *testing.T) {
 				"tags": "",
 			},
 			sc: &QingSnapshotClass{
-				Tags: nil,
+				tags: nil,
 			},
 			isError: false,
 		},
@@ -62,7 +82,7 @@ func TestNewDefaultQingSnapshotClass(t *testing.T) {
 			name: "unset tags",
 			opt:  map[string]string{},
 			sc: &QingSnapshotClass{
-				Tags: nil,
+				tags: nil,
 			},
 			isError: false,
 		},

@@ -22,4 +22,4 @@ spec:
     spec:
       containers:
         - name: csi-qingcloud
-          imagePullPolicy: "IfNotPresent"
+          imagePullPolicy: "Always"
