@@ -17,7 +17,7 @@
 .PHONY: all disk
 
 DISK_IMAGE_NAME=csiplugin/csi-qingcloud
-DISK_VERSION=v1.1.0-rc.3
+DISK_VERSION=v1.1.0-rc.4
 ROOT_PATH=$(pwd)
 PACKAGE_LIST=./cmd/... ./pkg/...
 
@@ -27,7 +27,7 @@ disk: mod
 disk-container:
 	docker build -t ${DISK_IMAGE_NAME}:${DISK_VERSION} -f deploy/disk/docker/Dockerfile  .
 
-gen-yaml:
+yaml:
 	kustomize build deploy/disk/kubernetes/overlays/patch > deploy/disk/kubernetes/releases/qingcloud-csi-disk-${DISK_VERSION}.yaml
 
 install:

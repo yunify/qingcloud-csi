@@ -67,7 +67,7 @@ var DefaultPluginCapability = []*csi.PluginCapability{
 }
 
 const (
-	DefaultVolumeType              VolumeType = SSDEnterpriseVolumeType
+	DefaultVolumeType              VolumeType = StandardVolumeType
 	HighPerformanceVolumeType      VolumeType = 0
 	HighCapacityVolumeType         VolumeType = 2
 	SuperHighPerformanceVolumeType VolumeType = 3
@@ -81,6 +81,10 @@ type VolumeType int
 
 func (v VolumeType) Int() int {
 	return int(v)
+}
+
+func (v VolumeType) String() string {
+	return VolumeTypeName[v]
 }
 
 func (v VolumeType) ValidateAttachedOn(i InstanceType) bool {

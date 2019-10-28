@@ -82,6 +82,12 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		return nil, status.Error(codes.InvalidArgument, "volume name missing in request")
 	}
 	volName := req.GetName()
+	// ensure one call in-flight
+	klog.Infof("%s: Try to lock resource %s", hash, volName)
+	if acquired := cs.locks.TryAcquire(volName); !acquired {
+		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, volName)
+	}
+	defer cs.locks.Release(volName)
 	// Pick one topology
 	var top *driver.Topology
 	if req.GetAccessibilityRequirements() != nil && cs.driver.ValidatePluginCapabilityService(csi.
@@ -123,12 +129,12 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	}
 	if exVol != nil {
 		klog.Infof("%s: Request volume name: %s, request size %d bytes, type: %d, zone: %s", hash, volName,
-			requiredSizeByte, sc.DiskType, top.GetZone())
+			requiredSizeByte, sc.GetDiskType().Int(), top.GetZone())
 		klog.Infof("%s: Exist volume name: %s, id: %s, capacity: %d bytes, type: %d, zone: %s",
 			hash, *exVol.VolumeName, *exVol.VolumeID, common.GibToByte(*exVol.Size), *exVol.VolumeType, top.GetZone())
 		exVolSizeByte := common.GibToByte(*exVol.Size)
 		if common.IsValidCapacityBytes(exVolSizeByte, req.GetCapacityRange()) &&
-			*exVol.VolumeType == sc.DiskType.Int() &&
+			*exVol.VolumeType == sc.GetDiskType().Int() &&
 			cs.IsValidTopology(exVol, req.GetAccessibilityRequirements()) {
 			// existing volume is compatible with new request and should be reused.
 			klog.Infof("Volume %s already exists and compatible with %s", volName, *exVol.VolumeID)
@@ -154,7 +160,7 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		requiredSizeGib := common.ByteCeilToGib(requiredSizeByte)
 		klog.Infof("%s: Creating empty volume %s with %d Gib in zone %s...", hash, volName, requiredSizeGib,
 			top.GetZone())
-		newVolId, err := cs.cloud.CreateVolume(volName, requiredSizeGib, sc.Replica, sc.DiskType.Int(), top.GetZone())
+		newVolId, err := cs.cloud.CreateVolume(volName, requiredSizeGib, sc.GetReplica(), sc.GetDiskType().Int(), top.GetZone())
 		if err != nil {
 			klog.Errorf("%s: Failed to create volume %s, error: %v", hash, volName, err)
 			return nil, status.Error(codes.Internal, err.Error())

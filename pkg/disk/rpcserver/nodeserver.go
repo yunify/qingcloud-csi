@@ -103,7 +103,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	fsType := qc.FsType
+	fsType := qc.GetFsType()
 
 	// Check volume exist
 	volInfo, err := ns.cloud.FindVolume(volumeId)
@@ -249,7 +249,7 @@ func (ns *NodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	fsType := qc.FsType
+	fsType := qc.GetFsType()
 
 	// Check volume exist
 	volInfo, err := ns.cloud.FindVolume(volumeId)

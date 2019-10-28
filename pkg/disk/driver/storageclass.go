@@ -35,18 +35,13 @@ const (
 )
 
 type QingStorageClass struct {
-	DiskType VolumeType
-	MaxSize  int
-	MinSize  int
-	StepSize int
-	FsType   string
-	Replica  int
-	Tags     []string
-}
-
-// NewDefaultQingStorageClass create default QingStorageClass object
-func NewDefaultQingStorageClass() *QingStorageClass {
-	return NewDefaultQingStorageClassFromType(DefaultVolumeType)
+	diskType VolumeType
+	maxSize  int
+	minSize  int
+	stepSize int
+	fsType   string
+	replica  int
+	tags     []string
 }
 
 // NewDefaultQingStorageClassFromType create default qingStorageClass by specified volume type
@@ -55,111 +50,149 @@ func NewDefaultQingStorageClassFromType(diskType VolumeType) *QingStorageClass {
 		return nil
 	}
 	return &QingStorageClass{
-		DiskType: diskType,
-		MaxSize:  VolumeTypeToMaxSize[diskType],
-		MinSize:  VolumeTypeToMinSize[diskType],
-		StepSize: VolumeTypeToStepSize[diskType],
-		FsType:   common.DefaultFileSystem,
-		Replica:  DefaultDiskReplicaType,
+		diskType: diskType,
+		maxSize:  VolumeTypeToMaxSize[diskType],
+		minSize:  VolumeTypeToMinSize[diskType],
+		stepSize: VolumeTypeToStepSize[diskType],
+		fsType:   common.DefaultFileSystem,
+		replica:  DefaultDiskReplicaType,
 	}
 }
 
 // NewQingStorageClassFromMap create qingStorageClass object from map
 func NewQingStorageClassFromMap(opt map[string]string) (*QingStorageClass, error) {
-	sVolType, volTypeOk := opt[StorageClassTypeName]
-	sMaxSize, maxSizeOk := opt[StorageClassMaxSizeName]
-	sMinSize, minSizeOk := opt[StorageClassMinSizeName]
-	sStepSize, stepSizeOk := opt[StorageClassStepSizeName]
-	sFsType, fsTypeOk := opt[StorageClassFsTypeName]
-	sReplica, replicaOk := opt[StorageClassReplicaName]
-	sTags, tagsOk := opt[StorageClassTagsName]
-
-	sc := NewDefaultQingStorageClass()
-
-	if volTypeOk {
-		// Convert volume type to integer
-		iVolType, err := strconv.Atoi(sVolType)
-		if err != nil {
-			return nil, err
+	volType := -1
+	maxSize, minSize, stepSize := -1, -1, -1
+	fsType := ""
+	replica := -1
+	var tags []string
+	for k, v := range opt {
+		switch strings.ToLower(k) {
+		case strings.ToLower(StorageClassTypeName):
+			// Convert to integer
+			iv, err := strconv.Atoi(v)
+			if err != nil {
+				return nil, err
+			}
+			volType = iv
+		case strings.ToLower(StorageClassMaxSizeName):
+			// Convert to integer
+			iv, err := strconv.Atoi(v)
+			if err != nil {
+				return nil, err
+			}
+			maxSize = iv
+		case strings.ToLower(StorageClassMinSizeName):
+			// Convert to integer
+			iv, err := strconv.Atoi(v)
+			if err != nil {
+				return nil, err
+			}
+			minSize = iv
+		case strings.ToLower(StorageClassStepSizeName):
+			// Convert to integer
+			iv, err := strconv.Atoi(v)
+			if err != nil {
+				return nil, err
+			}
+			stepSize = iv
+		case strings.ToLower(StorageClassFsTypeName):
+			if !IsValidFileSystemType(v) {
+				return nil, fmt.Errorf("unsupported filesystem type %s", v)
+			}
+			fsType = v
+		case strings.ToLower(StorageClassReplicaName):
+			iv, err := strconv.Atoi(v)
+			if err != nil {
+				return nil, err
+			}
+			replica = iv
+		case strings.ToLower(StorageClassTagsName):
+			if len(v) > 0 {
+				tags = strings.Split(strings.ReplaceAll(v, " ", ""), ",")
+			}
 		}
-		if !VolumeType(iVolType).IsValid() {
-			return nil, fmt.Errorf("invalid volume type %d", iVolType)
-		}
-		sc.DiskType = VolumeType(iVolType)
 	}
 
-	if maxSizeOk && minSizeOk && stepSizeOk {
-		// Get volume max size
-		iMaxSize, err := strconv.Atoi(sMaxSize)
-		if err != nil {
+	if volType == -1 {
+		return NewDefaultQingStorageClassFromType(DefaultVolumeType), nil
+	} else {
+		t := VolumeType(volType)
+		if !t.IsValid() {
+			return nil, fmt.Errorf("unsupported volume type %d", volType)
+		}
+		sc := NewDefaultQingStorageClassFromType(t)
+		if err := sc.setTypeSize(maxSize, minSize, stepSize); err != nil {
 			return nil, err
 		}
-		if iMaxSize <= 0 {
-			return nil, fmt.Errorf("max size must greater than zero")
-		}
-		sc.MaxSize = iMaxSize
-		// Get volume min size
-		iMinSize, err := strconv.Atoi(sMinSize)
-		if err != nil {
+		if err := sc.setFsType(fsType); err != nil {
 			return nil, err
 		}
-		if iMinSize <= 0 {
-			return nil, fmt.Errorf("min size must greater than zero")
-		}
-		sc.MinSize = iMinSize
-		// Ensure volume minSize less than volume maxSize
-		if sc.MaxSize < sc.MinSize {
-			return nil, fmt.Errorf("max size must greater than or equal to min size")
-		}
-		// Get volume step size
-		iStepSize, err := strconv.Atoi(sStepSize)
-		if err != nil {
+		if err := sc.setReplica(replica); err != nil {
 			return nil, err
 		}
-		if iStepSize <= 0 {
-			return nil, fmt.Errorf("step size must greater than zero")
-		}
-		sc.StepSize = iStepSize
+		sc.setTags(tags)
+		return sc, nil
 	}
+}
 
-	if fsTypeOk {
-		if !IsValidFileSystemType(sFsType) {
-			return nil, fmt.Errorf("unsupported filesystem type %s", sFsType)
-		}
-		sc.FsType = sFsType
-	}
-
-	// Get volume replicas
-	if replicaOk {
-		iReplica, err := strconv.Atoi(sReplica)
-		if err != nil {
-			return nil, err
-		}
-		if !IsValidReplica(iReplica) {
-			return nil, fmt.Errorf("unsupported replica %s", sReplica)
-		}
-		sc.Replica = iReplica
-	}
-
-	if tagsOk && len(sTags) > 0 {
-		sc.Tags = strings.Split(strings.ReplaceAll(sTags, " ", ""), ",")
-	}
-	return sc, nil
+func (sc QingStorageClass) GetDiskType() VolumeType {
+	return sc.diskType
 }
 
 func (sc QingStorageClass) GetMinSizeByte() int64 {
-	return int64(sc.MinSize) * common.Gib
+	return int64(sc.minSize) * common.Gib
 }
 
 func (sc QingStorageClass) GetMaxSizeByte() int64 {
-	return int64(sc.MaxSize) * common.Gib
+	return int64(sc.maxSize) * common.Gib
 }
 func (sc QingStorageClass) GetStepSizeByte() int64 {
-	return int64(sc.StepSize) * common.Gib
+	return int64(sc.stepSize) * common.Gib
+}
+
+func (sc QingStorageClass) GetFsType() string {
+	return sc.fsType
+}
+
+func (sc QingStorageClass) GetReplica() int {
+	return sc.replica
 }
 
 func (sc QingStorageClass) GetTags() []string {
-	return sc.Tags
+	return sc.tags
+}
+
+func (sc *QingStorageClass) setFsType(fs string) error {
+	if !IsValidFileSystemType(fs) {
+		return fmt.Errorf("unsupported filesystem type %s", fs)
+	}
+	sc.fsType = fs
+	return nil
+}
+
+func (sc *QingStorageClass) setReplica(repl int) error {
+	if !IsValidReplica(repl) {
+		return fmt.Errorf("unsupported replica %d", repl)
+	}
+	sc.replica = repl
+	return nil
+}
+
+func (sc *QingStorageClass) setTypeSize(maxSize, minSize, stepSize int) error {
+	if maxSize < 0 || minSize <= 0 || stepSize < 0 {
+		return nil
+	}
+	// Ensure volume minSize less than volume maxSize
+	if sc.maxSize < sc.minSize {
+		return fmt.Errorf("max size must greater than or equal to min size")
+	}
+	sc.maxSize, sc.minSize, sc.stepSize = maxSize, minSize, stepSize
+	return nil
+}
+
+func (sc *QingStorageClass) setTags(tagsStr []string) {
+	sc.tags = tagsStr
 }
 
 // FormatVolumeSize transfer to proper volume size
@@ -181,7 +214,7 @@ func (sc QingStorageClass) FormatVolumeSizeByte(sizeByte int64) int64 {
 // Required Volume Size
 func (sc QingStorageClass) GetRequiredVolumeSizeByte(capRange *csi.CapacityRange) (int64, error) {
 	if capRange == nil {
-		return int64(sc.MinSize) * common.Gib, nil
+		return int64(sc.minSize) * common.Gib, nil
 	}
 	res := int64(0)
 	if capRange.GetRequiredBytes() > 0 {
