@@ -18,6 +18,7 @@ package rpcserver
 
 import (
 	"github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/yunify/qingcloud-csi/pkg/cloud"
 	"github.com/yunify/qingcloud-csi/pkg/disk/driver"
 	"golang.org/x/net/context"
@@ -49,7 +50,9 @@ func (is *IdentityServer) Probe(ctx context.Context, req *csi.ProbeRequest) (*cs
 		return nil, status.Error(codes.FailedPrecondition, err.Error())
 	}
 	klog.V(5).Infof("get active zone lists [%v]", zones)
-	return &csi.ProbeResponse{}, nil
+	return &csi.ProbeResponse{
+		Ready: &wrappers.BoolValue{Value: true},
+	}, nil
 }
 
 // Get plugin capabilities: CONTROLLER, ACCESSIBILITY, EXPANSION

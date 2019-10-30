@@ -51,6 +51,9 @@ func GetDiskDriver() *DiskDriver {
 }
 
 func (d *DiskDriver) InitDiskDriver(input *InitDiskDriverInput) {
+	if input == nil {
+		return
+	}
 	d.name = input.Name
 	d.version = input.Version
 	// Setup Node Id

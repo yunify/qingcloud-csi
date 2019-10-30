@@ -9,7 +9,7 @@ require (
 	github.com/golang/protobuf v1.3.2
 	github.com/googleapis/gnostic v0.3.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
-	github.com/kubernetes-csi/csi-lib-utils v0.2.0
+	github.com/kubernetes-csi/csi-lib-utils v0.6.1
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/prometheus/client_golang v1.1.0 // indirect
 	github.com/stretchr/testify v1.4.0 // indirect

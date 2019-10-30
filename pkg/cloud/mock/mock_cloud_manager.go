@@ -25,21 +25,26 @@ import (
 	"time"
 )
 
-var _ cloud.CloudManager = &mockCloudManager{}
+var _ cloud.CloudManager = &MockCloudManager{}
 
-type mockCloudManager struct {
+type MockCloudManager struct {
 	qcconfig  *qcconfig.Config
 	snapshots map[string]*qcservice.Snapshot
 	volumes   map[string]*qcservice.Volume
+	zones     map[string]*qcservice.Zone
 }
 
 func NewMockCloudManagerFromConfig(config *qcconfig.Config) (cloud.CloudManager, error) {
-	return &mockCloudManager{
+	return &MockCloudManager{
 		qcconfig: config,
 	}, nil
 }
 
-func (m *mockCloudManager) FindSnapshot(snapId string) (snapInfo *qcservice.Snapshot, err error) {
+func (m *MockCloudManager) SetZones(zones map[string]*qcservice.Zone) {
+	m.zones = zones
+}
+
+func (m *MockCloudManager) FindSnapshot(snapId string) (snapInfo *qcservice.Snapshot, err error) {
 	for _, v := range m.snapshots {
 		if *v.SnapshotID == snapId {
 			return v, nil
@@ -48,7 +53,7 @@ func (m *mockCloudManager) FindSnapshot(snapId string) (snapInfo *qcservice.Snap
 	return nil, nil
 }
 
-func (m *mockCloudManager) FindSnapshotByName(snapName string) (snapInfo *qcservice.Snapshot, err error) {
+func (m *MockCloudManager) FindSnapshotByName(snapName string) (snapInfo *qcservice.Snapshot, err error) {
 	for _, v := range m.snapshots {
 		if *v.SnapshotName == snapName {
 			return v, nil
@@ -56,7 +61,7 @@ func (m *mockCloudManager) FindSnapshotByName(snapName string) (snapInfo *qcserv
 	}
 	return nil, nil
 }
-func (m *mockCloudManager) CreateSnapshot(snapName string, volId string) (snapId string, err error) {
+func (m *MockCloudManager) CreateSnapshot(snapName string, volId string) (snapId string, err error) {
 	volInfo, err := m.FindVolume(volId)
 	if err != nil {
 		return "", err
@@ -80,7 +85,7 @@ func (m *mockCloudManager) CreateSnapshot(snapName string, volId string) (snapId
 	return snapId, nil
 }
 
-func (m *mockCloudManager) DeleteSnapshot(snapId string) (err error) {
+func (m *MockCloudManager) DeleteSnapshot(snapId string) (err error) {
 	snapInfo, err := m.FindSnapshot(snapId)
 	if err != nil {
 		return err
@@ -92,7 +97,7 @@ func (m *mockCloudManager) DeleteSnapshot(snapId string) (err error) {
 	return nil
 }
 
-func (m *mockCloudManager) CreateVolumeFromSnapshot(volName string, snapId string, zone string) (volId string,
+func (m *MockCloudManager) CreateVolumeFromSnapshot(volName string, snapId string, zone string) (volId string,
 	err error) {
 	exVol, err := m.FindVolumeByName(volName)
 	if err != nil {
@@ -106,7 +111,7 @@ func (m *mockCloudManager) CreateVolumeFromSnapshot(volName string, snapId strin
 }
 
 // Volume Method
-func (m *mockCloudManager) FindVolume(volId string) (volInfo *qcservice.Volume, err error) {
+func (m *MockCloudManager) FindVolume(volId string) (volInfo *qcservice.Volume, err error) {
 	info, ok := m.volumes[volId]
 	if !ok {
 		return nil, nil
@@ -121,7 +126,7 @@ func (m *mockCloudManager) FindVolume(volId string) (volInfo *qcservice.Volume, 
 	}
 }
 
-func (m *mockCloudManager) FindVolumeByName(volName string) (volInfo *qcservice.Volume, err error) {
+func (m *MockCloudManager) FindVolumeByName(volName string) (volInfo *qcservice.Volume, err error) {
 	for _, v := range m.volumes {
 		if *v.VolumeName == volName {
 			switch *v.Status {
@@ -137,7 +142,7 @@ func (m *mockCloudManager) FindVolumeByName(volName string) (volInfo *qcservice.
 	return nil, nil
 }
 
-func (m *mockCloudManager) CreateVolume(volName string, requestSize int, replicas int, volType int, zone string) (
+func (m *MockCloudManager) CreateVolume(volName string, requestSize int, replicas int, volType int, zone string) (
 	volId string, err error) {
 	exVol, err := m.FindVolumeByName(volName)
 	if err != nil {
@@ -161,7 +166,7 @@ func (m *mockCloudManager) CreateVolume(volName string, requestSize int, replica
 	return volId, nil
 }
 
-func (m *mockCloudManager) DeleteVolume(volId string) (err error) {
+func (m *MockCloudManager) DeleteVolume(volId string) (err error) {
 	exVol, err := m.FindVolume(volId)
 	if err != nil {
 		return err
@@ -175,48 +180,54 @@ func (m *mockCloudManager) DeleteVolume(volId string) (err error) {
 	return nil
 }
 
-func (m *mockCloudManager) AttachVolume(volId string, instanceId string) (err error) {
+func (m *MockCloudManager) AttachVolume(volId string, instanceId string) (err error) {
 
 	return nil
 }
 
-func (m *mockCloudManager) DetachVolume(volId string, instanceId string) (err error) {
+func (m *MockCloudManager) DetachVolume(volId string, instanceId string) (err error) {
 	return nil
 }
 
-func (m *mockCloudManager) ResizeVolume(volId string, requestSize int) (err error) {
+func (m *MockCloudManager) ResizeVolume(volId string, requestSize int) (err error) {
 	return nil
 }
 
-func (m *mockCloudManager) CloneVolume(volName string, volType int, srcVolId string, zone string) (newVolId string, err error) {
+func (m *MockCloudManager) CloneVolume(volName string, volType int, srcVolId string, zone string) (newVolId string, err error) {
 	return "", nil
 }
 
 // Util Method
-func (m *mockCloudManager) FindInstance(instanceId string) (instanceInfo *qcservice.Instance, err error) {
+func (m *MockCloudManager) FindInstance(instanceId string) (instanceInfo *qcservice.Instance, err error) {
 	return nil, nil
 }
-func (m *mockCloudManager) GetZone() (zoneName string) {
-	return ""
+func (m *MockCloudManager) GetZone() (zoneName string) {
+	return "mock_zone"
 }
-func (m *mockCloudManager) GetZoneList() (zoneNameList []string, err error) {
-	return nil, nil
+func (m *MockCloudManager) GetZoneList() (zoneNameList []string, err error) {
+	for zoneId := range m.zones {
+		zoneNameList = append(zoneNameList, zoneId)
+	}
+	if m.zones == nil {
+		err = fmt.Errorf("cannot find any zones")
+	}
+	return zoneNameList, err
 }
-func (m *mockCloudManager) waitJob(jobId string) (err error) {
+func (m *MockCloudManager) waitJob(jobId string) (err error) {
 	return nil
 }
 
 // FindTags finds and gets tags information
-func (m *mockCloudManager) FindTag(tagId string) (tagInfo *qcservice.Tag, err error) {
+func (m *MockCloudManager) FindTag(tagId string) (tagInfo *qcservice.Tag, err error) {
 	return nil, nil
 }
 
 // IsValidTags checks tags exists.
-func (m *mockCloudManager) IsValidTags(tagsId []string) bool {
+func (m *MockCloudManager) IsValidTags(tagsId []string) bool {
 	return false
 }
 
 // AttachTags add a slice of tags on a object
-func (m *mockCloudManager) AttachTags(tagsId []string, resourceId string, resourceType string) (err error) {
+func (m *MockCloudManager) AttachTags(tagsId []string, resourceId string, resourceType string) (err error) {
 	return nil
 }
