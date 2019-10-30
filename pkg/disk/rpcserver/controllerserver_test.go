@@ -17,15 +17,11 @@ limitations under the License.
 package rpcserver
 
 import (
-	"fmt"
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/yunify/qingcloud-csi/pkg/disk/driver"
 	"github.com/yunify/qingcloud-sdk-go/service"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/util/retry"
 	"reflect"
 	"testing"
-	"time"
 )
 
 func getFakeVolume() *service.Volume {
@@ -305,20 +301,4 @@ func TestDiskControllerServer_GetVolumeTopology(t *testing.T) {
 			t.Errorf("name %s: expect %v, but actually %v", v.name, v.topology, res)
 		}
 	}
-}
-
-func TestRetry(t *testing.T) {
-	var newVolId string
-	err := retry.OnError(wait.Backoff{
-		Duration: time.Second,
-		Steps:    5,
-	}, func(error) bool {
-		return true
-	}, func() error {
-		fmt.Println("in retry")
-		newVolId = "123"
-		return nil
-	})
-	fmt.Println(err)
-	fmt.Println(newVolId)
 }

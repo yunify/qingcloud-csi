@@ -10,9 +10,9 @@ github.com/golang/groupcache/lru
 # github.com/golang/protobuf v1.3.2
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/timestamp
+github.com/golang/protobuf/ptypes/wrappers
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/protoc-gen-go/descriptor
-github.com/golang/protobuf/ptypes/wrappers
 github.com/golang/protobuf/descriptor
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
@@ -35,7 +35,7 @@ github.com/hashicorp/golang-lru/simplelru
 github.com/json-iterator/go
 # github.com/konsorten/go-windows-terminal-sequences v1.0.1
 github.com/konsorten/go-windows-terminal-sequences
-# github.com/kubernetes-csi/csi-lib-utils v0.2.0
+# github.com/kubernetes-csi/csi-lib-utils v0.6.1
 github.com/kubernetes-csi/csi-lib-utils/protosanitizer
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
 github.com/modern-go/concurrent

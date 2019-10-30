@@ -54,7 +54,6 @@ type nonBlockingGRPCServer struct {
 func (s *nonBlockingGRPCServer) Start(endpoint string, ids csi.IdentityServer, cs csi.ControllerServer, ns csi.NodeServer) {
 
 	s.wg.Add(1)
-
 	go s.serve(endpoint, ids, cs, ns)
 
 	return
@@ -109,8 +108,8 @@ func (s *nonBlockingGRPCServer) serve(endpoint string, ids csi.IdentityServer, c
 
 	klog.Infof("Listening for connections on address: %#v", listener.Addr())
 
-	server.Serve(listener)
-
+	err = server.Serve(listener)
+	klog.Error(err)
 }
 
 func logGRPC(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
