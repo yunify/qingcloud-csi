@@ -53,12 +53,12 @@ QingCloud CSI 插件实现了 [CSI](https://github.com/container-storage-interfa
 - 设置 Kubernetes 参数
   - kube-apiserver, kube-controller-manager, kube-scheduler, kubelet 设置 `--allow-privileged=true`。
   - 启用（默认开启）[Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) 特性。
-  - kube-apiserver, kube-controller-manager, kube-scheduler, kubelet 设置 `--feature-gates=CSINodeInfo=true,CSIDriverRegistry=true,KubeletPluginsWatcher=true,VolumeSnapshotDataSource=true,ExpandCSIVolumes=true`
+  - kube-apiserver, kube-controller-manager, kube-scheduler, kubelet 设置 `--feature-gates=CSINodeInfo=true,CSIDriverRegistry=true,KubeletPluginsWatcher=true,VolumeSnapshotDataSource=true,ExpandCSIVolumes=true,VolumePVCDataSource=true（仅限 Kubernetes v1.15）` 
   - kubelet 设置 `--read-only-port=10255`
 
 - 下载安装文件并解压
 ```
-$ wget https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/disk/kubernetes/releases/qingcloud-csi-disk-v1.1.0-rc.3.yaml
+$ wget https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/disk/kubernetes/releases/qingcloud-csi-disk-v1.1.0-rc.4.yaml
 ```
 
 - 修改 QingCloud 云平台配置参数
@@ -86,7 +86,7 @@ $ wget https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/disk
 > 注:  如果 Kubernetes 集群的 [kubelet](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/) 设置了 `--root-dir` 选项（默认值为 *"/var/lib/kubelet"*），请将 DaemonSet 的 `spec.template.spec.containers[name=csi-qingcloud].volumeMounts[name=mount-dir].mountPath` 和 `spec.template.spec.volumes[name=mount-dir].hostPath.path` 的值 *"/var/lib/kubelet"* 替换为 `--root-dir` 选项的值。例如：在通过 QingCloud AppCenter 创建的 Kubernetes 集群内, 需要将 DaemonSet 的 *"/var/lib/kubelet"* 字段替换为 *"/data/var/lib/kubelet"*。
 
 ```
-$ kubectl apply -f qingcloud-csi-disk-v1.1.0-rc.3.yaml
+$ kubectl apply -f qingcloud-csi-disk-v1.1.0-rc.4.yaml
 ```
 
 - 检查 CSI 插件状态
@@ -101,13 +101,13 @@ $ kubectl get pods -n kube-system --selector=app=csi-qingcloud
 ```
 
 ### 卸载
-
 ```
-$ kubectl delete -f qingcloud-csi-disk-v1.1.0-rc.3.yaml
+$ kubectl delete -f qingcloud-csi-disk-v1.1.0-rc.4.yaml
 ```
 
-### 使用文档
-存储类型参数配置和功能用法请参考[使用文档](docs/user-guide-zh.md)。
+### 文档
+参数配置和功能用法请参考[使用文档](docs/user-guide-zh.md)。
+开发者请参考[开发文档](docs/developer-guide-zh.md)。
 
 ## 支持
 如果有任何问题或建议, 请在 [qingcloud-csi](https://github.com/yunify/qingcloud-csi/issues) 项目提 issue。
