@@ -275,7 +275,7 @@ Filesystem      Size  Used Avail Use% Mounted on
 
 ### 存储卷克隆准备环境
 - Kubernetes 1.15+ 集群
-- Kubernetes 组件的 `feature-gate` 增加 `ExpandCSIVolumes=true`
+- Kubernetes 组件的 `feature-gate` 增加 `VolumePVCDataSource=true`
 - 安装 QingCloud CSI v1.1.0
 - 配置 QingCloud CSI 存储类型
 - 创建一个存储卷，参考存储卷管理
