@@ -661,12 +661,6 @@ func (cs *ControllerServer) ControllerExpandVolume(ctx context.Context, req *csi
 		return nil, status.Errorf(codes.NotFound, "Volume: %s does not exist", volumeId)
 	}
 
-	// volume in use
-	if *volInfo.Status == cloud.DiskStatusInuse {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"volume %s currently published on a node but plugin only support OFFLINE expansion", volumeId)
-	}
-
 	// 2. Get capacity
 	volType := driver.VolumeType(*volInfo.VolumeType)
 	if !volType.IsValid() {
@@ -678,6 +672,21 @@ func (cs *ControllerServer) ControllerExpandVolume(ctx context.Context, req *csi
 	requiredSizeBytes, err := sc.GetRequiredVolumeSizeByte(req.GetCapacityRange())
 	if err != nil {
 		return nil, status.Errorf(codes.OutOfRange, err.Error())
+	}
+	// For idempotent
+	volSizeBytes := common.GibToByte(*volInfo.Size)
+	if volSizeBytes >= requiredSizeBytes {
+		klog.Infof("%s: Volume %s size %d >= request expand size %d", hash, volumeId, volSizeBytes, requiredSizeBytes)
+		return &csi.ControllerExpandVolumeResponse{
+			CapacityBytes:         volSizeBytes,
+			NodeExpansionRequired: true,
+		}, nil
+	}
+
+	// volume in use
+	if *volInfo.Status == cloud.DiskStatusInuse {
+		return nil, status.Errorf(codes.FailedPrecondition,
+			"volume %s currently published on a node but plugin only support OFFLINE expansion", volumeId)
 	}
 
 	// 3. Retry to expand volume
