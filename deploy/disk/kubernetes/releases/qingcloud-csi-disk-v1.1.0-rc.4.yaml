@@ -739,7 +739,7 @@ spec:
         - name: CSI_ENDPOINT
           value: unix://csi/csi.sock
         image: csiplugin/csi-qingcloud:v1.1.0-rc.4
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         name: csi-qingcloud
         resources:
           limits:
@@ -830,7 +830,7 @@ spec:
         - name: CSI_ENDPOINT
           value: unix://csi/csi.sock
         image: csiplugin/csi-qingcloud:v1.1.0-rc.4
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         name: csi-qingcloud
         resources:
           limits:
