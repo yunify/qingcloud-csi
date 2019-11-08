@@ -33,11 +33,11 @@ spec:
         image: quay.io/k8scsi/csi-provisioner:v1.4.0
         resources:
           limits:
-            memory: "20Mi"
-            cpu: "20m"
+            memory: "80Mi"
+            cpu: "80m"
           requests:
-            memory: "20Mi"
-            cpu: "20m"
+            memory: "80Mi"
+            cpu: "80m"
         args:
         - "--csi-address=$(ADDRESS)"
         - "--enable-leader-election"
@@ -60,11 +60,11 @@ spec:
         image: quay.io/k8scsi/csi-attacher:v2.0.0
         resources:
           limits:
-            memory: "40Mi"
-            cpu: "40m"
+            memory: "80Mi"
+            cpu: "80m"
           requests:
-            memory: "40Mi"
-            cpu: "40m"
+            memory: "80Mi"
+            cpu: "80m"
         args:
         - "--csi-address=$(ADDRESS)"
         - "--leader-election"
