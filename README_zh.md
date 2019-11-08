@@ -58,7 +58,7 @@ QingCloud CSI 插件实现了 [CSI](https://github.com/container-storage-interfa
 
 - 下载安装文件并解压
 ```
-$ wget https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/disk/kubernetes/releases/qingcloud-csi-disk-v1.1.0-rc.4.yaml
+$ wget https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/disk/kubernetes/releases/qingcloud-csi-disk-v1.1.0.yaml
 ```
 
 - 修改 QingCloud 云平台配置参数
@@ -86,7 +86,7 @@ $ wget https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/disk
 > 注:  如果 Kubernetes 集群的 [kubelet](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/) 设置了 `--root-dir` 选项（默认值为 *"/var/lib/kubelet"*），请将 DaemonSet 的 `spec.template.spec.containers[name=csi-qingcloud].volumeMounts[name=mount-dir].mountPath` 和 `spec.template.spec.volumes[name=mount-dir].hostPath.path` 的值 *"/var/lib/kubelet"* 替换为 `--root-dir` 选项的值。例如：在通过 QingCloud AppCenter 创建的 Kubernetes 集群内, 需要将 DaemonSet 的 *"/var/lib/kubelet"* 字段替换为 *"/data/var/lib/kubelet"*。
 
 ```
-$ kubectl apply -f qingcloud-csi-disk-v1.1.0-rc.4.yaml
+$ kubectl apply -f qingcloud-csi-disk-v1.1.0.yaml
 ```
 
 - 检查 CSI 插件状态
@@ -102,7 +102,7 @@ $ kubectl get pods -n kube-system --selector=app=csi-qingcloud
 
 ### 卸载
 ```
-$ kubectl delete -f qingcloud-csi-disk-v1.1.0-rc.4.yaml
+$ kubectl delete -f qingcloud-csi-disk-v1.1.0.yaml
 ```
 
 ### 文档
