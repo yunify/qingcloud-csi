@@ -97,7 +97,7 @@ func NewQingStorageClassFromMap(opt map[string]string) (*QingStorageClass, error
 			}
 			stepSize = iv
 		case strings.ToLower(StorageClassFsTypeName):
-			if !IsValidFileSystemType(v) {
+			if len(v) != 0 && !IsValidFileSystemType(v) {
 				return nil, fmt.Errorf("unsupported filesystem type %s", v)
 			}
 			fsType = v
