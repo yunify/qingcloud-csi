@@ -31,6 +31,7 @@ type MockCloudManager struct {
 	qcconfig  *qcconfig.Config
 	snapshots map[string]*qcservice.Snapshot
 	volumes   map[string]*qcservice.Volume
+	instances map[string]*qcservice.Instance
 	zones     map[string]*qcservice.Zone
 }
 
@@ -40,8 +41,24 @@ func NewMockCloudManagerFromConfig(config *qcconfig.Config) (cloud.CloudManager,
 	}, nil
 }
 
+func (m *MockCloudManager) SetConfig(config *qcconfig.Config) {
+	m.qcconfig = config
+}
+
+func (m *MockCloudManager) SetSnapshots(snapshots map[string]*qcservice.Snapshot) {
+	m.snapshots = snapshots
+}
+
+func (m *MockCloudManager) SetVolumes(volumes map[string]*qcservice.Volume) {
+	m.volumes = volumes
+}
+
 func (m *MockCloudManager) SetZones(zones map[string]*qcservice.Zone) {
 	m.zones = zones
+}
+
+func (m *MockCloudManager) SetInstances(instances map[string]*qcservice.Instance) {
+	m.instances = instances
 }
 
 func (m *MockCloudManager) FindSnapshot(snapId string) (snapInfo *qcservice.Snapshot, err error) {
@@ -199,7 +216,7 @@ func (m *MockCloudManager) CloneVolume(volName string, volType int, srcVolId str
 
 // Util Method
 func (m *MockCloudManager) FindInstance(instanceId string) (instanceInfo *qcservice.Instance, err error) {
-	return nil, nil
+	return m.instances[instanceId], nil
 }
 func (m *MockCloudManager) GetZone() (zoneName string) {
 	return "mock_zone"
