@@ -87,3 +87,24 @@ func TestGenerateHashInEightBytes(t *testing.T) {
 		}
 	}
 }
+
+func TestRetryLimiter(t *testing.T) {
+	maxRetry := 5
+	r := NewRetryLimiter(maxRetry)
+	r.Add("2")
+	r.Add("2")
+	if r.Try("1") != true {
+		t.Errorf("expect true but actually false")
+	}
+	r.Add("2")
+	r.Add("3")
+	r.Add("2")
+	r.Add("2")
+	if r.Try("2") != true {
+		t.Errorf("expect true but actually false")
+	}
+	r.Add("2")
+	if r.Try("2") != false {
+		t.Errorf("expect false but actually true")
+	}
+}
