@@ -35,10 +35,10 @@ var DefaultBackOff = wait.Backoff{
 // Run
 // Initial and start CSI driver
 func Run(driver *driver.DiskDriver, cloud cloud.CloudManager, mounter *mount.SafeFormatAndMount,
-	endpoint string, retryTime wait.Backoff) {
+	endpoint string, retryTime wait.Backoff, retryTimesMax int) {
 	// Initialize default library driver
 	ids := NewIdentityServer(driver, cloud)
-	cs := NewControllerServer(driver, cloud, retryTime)
+	cs := NewControllerServer(driver, cloud, retryTime, retryTimesMax)
 	ns := NewNodeServer(driver, cloud, mounter)
 
 	s := common.NewNonBlockingGRPCServer()

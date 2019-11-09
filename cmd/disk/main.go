@@ -41,6 +41,7 @@ var (
 	maxVolume        = flag.Int64("maxvolume", 10, "Maximum number of volumes that controller can publish to the node.")
 	nodeId           = flag.String("nodeid", "", "If driver cannot get instance ID from /etc/qingcloud/instance-id, we would use this flag.")
 	retryIntervalMax = flag.Duration("retry-interval-max", 2*time.Minute, "Maximum retry interval of failed deletion.")
+	retryTimesMax    = flag.Int("retry-times-max", 10, "Maximum retry times of failed detach volume.")
 )
 
 func main() {
@@ -87,5 +88,5 @@ func handle() {
 	mounter := common.NewSafeMounter()
 	driver := driver.GetDiskDriver()
 	driver.InitDiskDriver(diskDriverInput)
-	rpcserver.Run(driver, cloud, mounter, *endpoint, rt)
+	rpcserver.Run(driver, cloud, mounter, *endpoint, rt, *retryTimesMax)
 }

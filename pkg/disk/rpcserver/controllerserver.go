@@ -35,20 +35,22 @@ import (
 )
 
 type ControllerServer struct {
-	driver    *driver.DiskDriver
-	cloud     cloud.CloudManager
-	locks     *common.ResourceLocks
-	retryTime wait.Backoff
+	driver        *driver.DiskDriver
+	cloud         cloud.CloudManager
+	locks         *common.ResourceLocks
+	retryTime     wait.Backoff
+	detachLimiter common.RetryLimiter
 }
 
 // NewControllerServer
 // Create controller server
-func NewControllerServer(d *driver.DiskDriver, c cloud.CloudManager, rt wait.Backoff) *ControllerServer {
+func NewControllerServer(d *driver.DiskDriver, c cloud.CloudManager, rt wait.Backoff, maxRetry int) *ControllerServer {
 	return &ControllerServer{
-		driver:    d,
-		cloud:     c,
-		locks:     common.NewResourceLocks(),
-		retryTime: rt,
+		driver:        d,
+		cloud:         c,
+		locks:         common.NewResourceLocks(),
+		retryTime:     rt,
+		detachLimiter: common.NewRetryLimiter(maxRetry),
 	}
 }
 
@@ -569,11 +571,16 @@ func (cs *ControllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 	}
 
 	// do detach
+	klog.Infof("Volume id %s retry times is %d", volumeId, cs.detachLimiter.GetCurrentRetryTimes(volumeId))
+	if cs.detachLimiter.Try(volumeId) == false {
+		return nil, status.Errorf(codes.Internal, "volume %s exceeds max retry times %d.", volumeId, cs.detachLimiter.GetMaxRetryTimes())
+	}
 	klog.Infof("Detaching volume %s to instance %s in zone %s...", volumeId, nodeId, cs.cloud.GetZone())
 	err = cs.cloud.DetachVolume(volumeId, nodeId)
 	if err != nil {
 		klog.Errorf("Failed to detach disk image: %s from instance %s with error: %s",
 			volumeId, nodeId, err.Error())
+		cs.detachLimiter.Add(volumeId)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 

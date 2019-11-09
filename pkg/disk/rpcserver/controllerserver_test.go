@@ -51,7 +51,7 @@ func getMockControllerServer() *ControllerServer {
 			MaxVolume: 10,
 		},
 	)
-	return NewControllerServer(d, nil, DefaultBackOff)
+	return NewControllerServer(d, nil, DefaultBackOff, 5)
 }
 
 func TestDiskControllerServer_PickTopology(t *testing.T) {
