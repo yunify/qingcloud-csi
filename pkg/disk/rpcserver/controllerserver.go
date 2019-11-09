@@ -572,9 +572,9 @@ func (cs *ControllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 	klog.Infof("Detaching volume %s to instance %s in zone %s...", volumeId, nodeId, cs.cloud.GetZone())
 	err = cs.cloud.DetachVolume(volumeId, nodeId)
 	if err != nil {
-		klog.Errorf("Failed to detach disk image: %s from instance %s with error: %v",
-			volumeId, nodeId, err)
-		return nil, err
+		klog.Errorf("Failed to detach disk image: %s from instance %s with error: %s",
+			volumeId, nodeId, err.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &csi.ControllerUnpublishVolumeResponse{}, nil
