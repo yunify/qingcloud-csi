@@ -12,12 +12,11 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-apiVersion: snapshot.storage.k8s.io/v1alpha1
+apiVersion: snapshot.storage.k8s.io/v1beta1
 kind: VolumeSnapshot
 metadata:
   name: snap-1
 spec:
-  snapshotClassName: csi-qingcloud
+  volumeSnapshotClassName: csi-qingcloud
   source:
-    name: pvc-snap-1
-    kind: PersistentVolumeClaim
+    persistentVolumeClaimName: pvc-snap-1

@@ -273,6 +273,13 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 					VolumeId:           newVolId,
 					CapacityBytes:      actualRestoreVolumeSizeInBytes,
 					VolumeContext:      req.GetParameters(),
+					ContentSource:		&csi.VolumeContentSource{
+						Type: &csi.VolumeContentSource_Snapshot{
+							Snapshot: &csi.VolumeContentSource_SnapshotSource{
+								SnapshotId: snapId,
+							},
+						},
+					},
 					AccessibleTopology: cs.GetVolumeTopology(newVolInfo),
 				},
 			}, nil
@@ -328,6 +335,13 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 					VolumeId:           newVolId,
 					CapacityBytes:      common.GibToByte(*newVolInfo.Size),
 					VolumeContext:      req.GetParameters(),
+					ContentSource:		&csi.VolumeContentSource{
+						Type: &csi.VolumeContentSource_Volume{
+							Volume: &csi.VolumeContentSource_VolumeSource{
+								VolumeId: srcVolId,
+							},
+						},
+					},
 					AccessibleTopology: cs.GetVolumeTopology(newVolInfo),
 				},
 			}, nil

@@ -16,8 +16,8 @@
 
 .PHONY: all disk
 
-DISK_IMAGE_NAME=csiplugin/csi-qingcloud
-DISK_VERSION=v1.1.0
+DISK_IMAGE_NAME=csidriver/csi-qingcloud
+DISK_VERSION=canary
 ROOT_PATH=$(pwd)
 PACKAGE_LIST=./cmd/... ./pkg/...
 

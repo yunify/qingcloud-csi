@@ -19,7 +19,7 @@ WORKDIR /qingcloud-csi
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -mod=vendor  -ldflags "-s -w" -o  _output/qingcloud-disk-csi-driver ./cmd/disk
 
-FROM k8s.gcr.io/debian-base:v1.0.0
+FROM gcr.azk8s.cn/google_containers/debian-base:v1.0.0
 LABEL maintainers="Yunify"
 LABEL description="QingCloud CSI plugin"
 RUN clean-install util-linux e2fsprogs xfsprogs  mount ca-certificates udev

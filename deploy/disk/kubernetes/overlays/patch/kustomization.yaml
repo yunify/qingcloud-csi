@@ -16,11 +16,12 @@ kind: Kustomization
 namespace: kube-system
 images:
   - name: csiplugin/csi-qingcloud
-    newTag: v1.1.0
+    newName: csidriver/csi-qingcloud
+    newTag: canary
 commonLabels:
   app: "csi-qingcloud"
   owner: "yunify"
-  ver: "v1.1.0"
+  ver: "v1.2.0"
 patchesStrategicMerge:
   - controller-deploy.yaml
   - node-ds.yaml

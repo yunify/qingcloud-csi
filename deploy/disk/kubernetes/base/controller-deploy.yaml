@@ -30,7 +30,7 @@ spec:
       serviceAccount: csi-qingcloud-controller
       containers:
       - name: csi-provisioner
-        image: quay.io/k8scsi/csi-provisioner:v1.4.0
+        image: quay.io/k8scsi/csi-provisioner:v1.5.0
         resources:
           limits:
             memory: "80Mi"
@@ -57,7 +57,7 @@ spec:
         - name: socket-dir
           mountPath: /csi
       - name: csi-attacher
-        image: quay.io/k8scsi/csi-attacher:v2.0.0
+        image: quay.io/k8scsi/csi-attacher:v2.1.1
         resources:
           limits:
             memory: "80Mi"
@@ -85,7 +85,7 @@ spec:
         - name: socket-dir
           mountPath: /csi
       - name: csi-snapshotter
-        image: quay.io/k8scsi/csi-snapshotter:v1.2.2
+        image: quay.io/k8scsi/csi-snapshotter:v2.0.1
         resources:
           limits:
             memory: "20Mi"
@@ -94,10 +94,8 @@ spec:
             memory: "20Mi"
             cpu: "20m"
         args:
-          - "--connection-timeout=90s"
           - "--csi-address=$(ADDRESS)"
           - "--leader-election=false"
-          - "--snapshot-name-prefix=snapshot"
           - "--v=5"
         env:
           - name: ADDRESS
@@ -107,7 +105,7 @@ spec:
           - name: socket-dir
             mountPath: /csi
       - name: csi-resizer
-        image: quay.io/k8scsi/csi-resizer:v0.2.0
+        image: quay.io/k8scsi/csi-resizer:v0.4.0
         resources:
           limits:
             memory: "20Mi"
@@ -118,6 +116,9 @@ spec:
         args:
           - "--csi-address=$(ADDRESS)"
           - "--leader-election"
+          - "--retry-interval-max=5m"
+          - "--retry-interval-start=5s"
+          - "--timeout=90s"
           - "--v=5"
         env:
           - name: ADDRESS
@@ -127,7 +128,7 @@ spec:
           - name: socket-dir
             mountPath: /csi
       - name: csi-qingcloud
-        image: csiplugin/csi-qingcloud:latest
+        image: csiplugin/csi-qingcloud:canary
         resources:
           limits:
             memory: "50Mi"

@@ -1,4 +1,4 @@
-# github.com/container-storage-interface/spec v1.1.0
+# github.com/container-storage-interface/spec v1.2.0
 github.com/container-storage-interface/spec/lib/go/csi
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
@@ -43,7 +43,7 @@ github.com/modern-go/concurrent
 github.com/modern-go/reflect2
 # github.com/sirupsen/logrus v1.4.2
 github.com/sirupsen/logrus
-# github.com/yunify/qingcloud-sdk-go v0.0.0-20190806070725-5b519baeba90
+# github.com/yunify/qingcloud-sdk-go v2.0.0-alpha.37+incompatible
 github.com/yunify/qingcloud-sdk-go/client
 github.com/yunify/qingcloud-sdk-go/config
 github.com/yunify/qingcloud-sdk-go/service
