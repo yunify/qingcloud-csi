@@ -98,7 +98,7 @@ volumeBindingMode: Immediate
 | NeonSAN|5|50000|100|100|
 |NeonSAN HDD|5|50000|100|100|
 | 基础型|100|2000|10|10|
-| SSD 企业型|2000| 2000|10|10|
+| SSD 企业型|200| 2000|10|10|
 
 #### fsType
 支持 `ext3`, `ext4`, `xfs`. 默认为 `ext4`。

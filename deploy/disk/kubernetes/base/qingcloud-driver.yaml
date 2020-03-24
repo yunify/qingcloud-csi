@@ -19,3 +19,5 @@ metadata:
 spec:
   attachRequired: true
   podInfoOnMount: false
+  volumeLifecycleModes:
+  - Persistent
