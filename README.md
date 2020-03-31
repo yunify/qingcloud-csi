@@ -3,17 +3,16 @@
 [![Build Status](https://travis-ci.org/yunify/qingcloud-csi.svg?branch=master)](https://travis-ci.org/yunify/qingcloud-csi)
 [![Go Report Card](https://goreportcard.com/badge/github.com/yunify/qingcloud-csi)](https://goreportcard.com/report/github.com/yunify/qingcloud-csi)
 
-> English | [中文](README_zh.md)
-
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
 - [Description](#description)
 - [Disk Plugin](#disk-plugin)
   - [Kubernetes Compatibility Matrix](#kubernetes-compatibility-matrix)
   - [Feature Matrix](#feature-matrix)
   - [Installation](#installation)
   - [Uninstall](#uninstall)
-  - [StorageClass Parameters](#storageclass-parameters)
+  - [Document](#document)
 - [Support](#support)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -102,37 +101,9 @@ $ kubectl get pods -n kube-system --selector=app=csi-qingcloud
 $ kubectl delete -f qingcloud-csi-disk-v1.1.0.yaml
 ```
 
-### StorageClass Parameters
-
-StorageClass definition [file](deploy/disk/example/sc.yaml) shown below is used to create StorageClass object.
-```
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: csi-qingcloud
-provisioner: disk.csi.qingcloud.com
-parameters:
-  type: "0"
-  maxSize: "500"
-  minSize: "10"
-  stepSize: "10"
-  fsType: "ext4"
-  replica: "2"
-  tags: "tag-y7uu1q2a"
-reclaimPolicy: Delete 
-```
-
-- `type`: The type of volume in QingCloud IaaS platform. In QingCloud public cloud platform, `0` represents high performance volume. `3` respresents super high performance volume. `2` represents high capacity volume depending on cluster‘s zone. `5` represents enterprise distributed SAN (NeonSAN) volume. `6` represents NeonSAN HDD volume. `100` represents standard volume. `200` represents SSD enterprise volume. See [QingCloud docs](https://docs.qingcloud.com/product/api/action/volume/create_volumes.html) for details.
-
-- `maxSize`, `minSize`: Limit the range of volume size in GiB.
-
-- `stepSize`: Set the increment of volumes size in GiB.
-
-- `fsType`: `ext3`, `ext4`, `xfs`. Default `ext4`.
-
-- `replica`: `1` means single replica, `2` means multiple replicas. Default `2`.
-
-- `tags`: Tags ID in QingCloud IaaS platform split with a comma.
+### Document
+- [User Guide](docs/user-guide.md)
+- [Developer Guide](docs/developer-guide.md)
 
 ## Support
 If you have any qustions or suggestions, please submit an issue at [qingcloud-csi](https://github.com/yunify/qingcloud-csi/issues)

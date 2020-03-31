@@ -1,31 +1,31 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-**Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
-- [开发指南](#%E5%BC%80%E5%8F%91%E6%8C%87%E5%8D%97)
-  - [开发代码](#%E5%BC%80%E5%8F%91%E4%BB%A3%E7%A0%81)
-  - [构建镜像](#%E6%9E%84%E5%BB%BA%E9%95%9C%E5%83%8F)
-  - [e2e 测试](#e2e-%E6%B5%8B%E8%AF%95)
+
+- [Developer Guide](#developer-guide)
+  - [Process](#process)
+  - [Build Image](#build-image)
+  - [E2E Test](#e2e-test)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-# 开发指南
+# Developer Guide
 
-## 开发代码
-开发代码首先在 Issue 中提出议题，然后按照 Issue 来开发代码，通过给 https://github.com/yunify/qingcloud-csi 仓库提交 Pull Request 来将代码合并至主仓库。开发和提交代码使用 [Github 工作流](https://github.com/kubernetes/community/blob/master/contributors/guide/github-workflow.md)。
+## Process
+We use [Github workflow](https://github.com/kubernetes/community/blob/master/contributors/guide/github-workflow.md) to develop and submit code.
 
-## 构建镜像
-构建 Docker 镜像是使用 [Multi-stage](https://docs.docker.com/develop/develop-images/multistage-build/) 方式构建，用户应使用 Docker 17.05+ 版本。
+## Build Image
+[Multi-stage](https://docs.docker.com/develop/develop-images/multistage-build/) is used to build Docker images in Docker v17.05+.
 
-1. 示例环境
+1. Example Environment
   - Ubuntu 16.04/CentOS 7.5
   - Docker 18.09.8
-2. 下载代码
+2. Download Repo
 ```cassandraql
 root@dev:~# git clone https://github.com/yunify/qingcloud-csi.git
 root@dev:~# cd qingcloud-csi
 ```
-3. 构建镜像
+3. Build
 ```cassandraql
 root@dev:~/qingcloud-csi# make disk-container
 docker build -t csiplugin/csi-qingcloud:v1.1.0-rc.4 -f deploy/disk/docker/Dockerfile  .
@@ -66,16 +66,16 @@ Successfully built 3e8a3a1f45c5
 Successfully tagged csiplugin/csi-qingcloud:canary
 ```
 
-## e2e 测试
+## E2E Test
 
-1. 编译 csi-test 可执行文件
+1. Compile
 ```cassandraql
 # git clone https://github.com/kubernetes-csi/csi-test.git
 # cd kubernetes-csi/csi-test/cmd/csi-sanity/dist/csi-sanity
 # make linux_amd64_dist
 ```
 
-2. 编辑 StorageClass 参数文件
+2. Edit Storage Class Parameters
 ```cassandraql
 # cat parameters.yaml
 type: "200"
@@ -83,7 +83,7 @@ tags: ""
 fstype: "ext4"
 ```
 
-3. 执行测试文件
+3. Test
 ```cassandraql
 # ./csi-sanity -csi.endpoint /var/lib/kubelet/plugins/disk.csi.qingcloud.com/csi.sock -csi.testvolumeparameters parameters.yaml -csi.testvolumeexpandsize 10737418240
 ```
