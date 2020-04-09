@@ -34,14 +34,14 @@ After plugin installation completes, user can create volumes based on several ty
 | |Kubernetes v1.10-v1.13|Kubernetes v1.14-1.15|
 |:---:|:---:|:---:|
 |QingCloud CSI v0.2.x|✓|-|
-|QingCloud CSI v1.1.0|-|✓|
+|QingCloud CSI v1.1.x|-|✓|
 
 ### Feature Matrix
 
 | | Volume Management* | Volume Expansion | Volume Monitor | Volume Cloning| Snapshot Management**| Topology Awareness|
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 |QingCloud CSI v0.2.x |✓|-|-|-|-|-|
-|QingCloud CSI v1.1.0 |✓|✓|✓|✓|✓|✓|
+|QingCloud CSI v1.1.x |✓|✓|✓|✓|✓|✓|
 
 Notes:
 - `*`: Volume Management including creating/deleting volume and mounting/unmount volume on Pod.
@@ -57,7 +57,7 @@ This guide will install CSI plugin in the *kube-system* namespace of Kubernetes 
   - Enable `--read-only-port=10255` on kubelet
 - Download installation file 
 ```
-$ wget https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/disk/kubernetes/releases/qingcloud-csi-disk-v1.1.0.yaml
+$ wget https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/disk/kubernetes/releases/qingcloud-csi-disk-v1.1.1.yaml
 ```
 - Add QingCloud platform parameter on ConfigMap
 QingCloud CSI plugin manipulates cloud resource by QingCloud platform API. User must test the connection between QingCloud platform API and user's own instance by and check QingCloud platform configuration by [QingCloud CLI](https://docs.qingcloud.com/product/cli/).
@@ -83,7 +83,7 @@ QingCloud CSI plugin manipulates cloud resource by QingCloud platform API. User 
 > IMPORTANT: If kubelet, a component of Kubernetes, set the `--root-dir` option (default: *"/var/lib/kubelet"*), please replace *"/var/lib/kubelet"* with the value of `--root-dir` at the CSI [DaemonSet](deploy/disk/kubernetes/csi-node-ds.yaml) YAML file's `spec.template.spec.containers[name=csi-qingcloud].volumeMounts[name=mount-dir].mountPath` and `spec.template.spec.volumes[name=mount-dir].hostPath.path` fields. For instance, in Kubernetes cluster based on QingCloud AppCenter, you should replace *"/var/lib/kubelet"* with *"/data/var/lib/kubelet"* in the CSI [DaemonSet](deploy/disk/kubernetes/csi-node-ds.yaml) YAML file.
 
 ```
-$ kubectl apply -f qingcloud-csi-disk-v1.1.0.yaml
+$ kubectl apply -f qingcloud-csi-disk-v1.1.1.yaml
 ```
 
 - Check CSI plugin
@@ -99,7 +99,7 @@ $ kubectl get pods -n kube-system --selector=app=csi-qingcloud
 
 ### Uninstall
 ```
-$ kubectl delete -f qingcloud-csi-disk-v1.1.0.yaml
+$ kubectl delete -f qingcloud-csi-disk-v1.1.1.yaml
 ```
 
 ### StorageClass Parameters

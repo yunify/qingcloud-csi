@@ -96,7 +96,7 @@ volumeBindingMode: Immediate
 |容量型|2|5000|100|50|
 |超高性能型|3|2000|10|10|
 | NeonSAN|5|50000|100|100|
-|NeonSAN HDD|5|50000|100|100|
+|NeonSAN HDD|6|50000|100|100|
 | 基础型|100|2000|10|10|
 | SSD 企业型|2000| 2000|10|10|
 
@@ -276,7 +276,7 @@ Filesystem      Size  Used Avail Use% Mounted on
 ### 存储卷克隆准备环境
 - Kubernetes 1.15+ 集群
 - Kubernetes 组件的 `feature-gate` 增加 `VolumePVCDataSource=true`
-- 安装 QingCloud CSI v1.1.0
+- 安装 QingCloud CSI 存储插件
 - 配置 QingCloud CSI 存储类型
 - 创建一个存储卷，参考存储卷管理
 
@@ -307,7 +307,7 @@ pvc-clone   Bound    pvc-529d2502-02bd-442b-a69f-d3eff28316a8   20Gi       RWO  
 ### 快照管理准备环境
 - Kubernetes 1.14+ 集群
 - 在 kube-apiserver, kube-controller-manager 的 `feature-gate` 增加 `VolumeSnapshotDataSource=true`
-- 安装 QingCloud CSI v1.1.0
+- 安装 QingCloud CSI 存储插件
 - 配置 QingCloud CSI 存储类型
 - 创建一个带数据的存储卷
 
@@ -422,7 +422,7 @@ volumesnapshot.snapshot.storage.k8s.io "snap-1" deleted
 ### 拓扑感知准备环境
 - Kubernetes 1.14+ 集群
 - 在 Kubernetes 控制平面和 Kubelet 的 `feature-gate` 增加 `CSINodeInfo=true`，默认为 `true`
-- 安装 QingCloud CSI v1.1.0 存储插件，`external-provisioner` 边车容器的 `feature-gate` 增加 `Topology=true`，默认为 `true`
+- 安装 QingCloud CSI 存储插件，`external-provisioner` 边车容器的 `feature-gate` 增加 `Topology=true`，默认为 `true`
 - 配置 QingCloud CSI 存储类型
 
 #### 拓扑感知 Kubernetes 集群
