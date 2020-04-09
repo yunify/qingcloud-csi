@@ -30,33 +30,47 @@ After plugin installation completes, user can create volumes based on several ty
 
 ### Kubernetes Compatibility Matrix
 
-| |Kubernetes v1.10-v1.13|Kubernetes v1.14-1.15|
-|:---:|:---:|:---:|
-|QingCloud CSI v0.2.x|✓|-|
-|QingCloud CSI v1.1.0|-|✓|
+|QingCloud CSI|Kubernetes v1.10-v1.13|Kubernetes v1.14-1.15|Kubernetes v1.16|Kubernetes v1.17|
+|:---:|:---:|:---:|:---:|:---:|
+|v0.2.x|✓|-|-|-|
+|v1.1.0|-|✓|-|-|
+|v1.2.0|-|-|✓|✓|
 
 ### Feature Matrix
 
-| | Volume Management* | Volume Expansion | Volume Monitor | Volume Cloning| Snapshot Management**| Topology Awareness|
+|QingCloud CSI | Volume Management* | Volume Expansion | Volume Monitor | Volume Cloning| Snapshot Management**| Topology Awareness|
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-|QingCloud CSI v0.2.x |✓|-|-|-|-|-|
-|QingCloud CSI v1.1.0 |✓|✓|✓|✓|✓|✓|
+|v0.2.x |✓|-|-|-|-|-|
+|v1.1.0 |✓|✓|✓|✓|✓|✓|
+|v1.2.0*** |✓|✓|✓|✓|✓|✓|
 
 Notes:
 - `*`: Volume Management including creating/deleting volume and mounting/unmount volume on Pod.
 - `**`: Snapshot management including creating/deleting snapshot and restoring volume from snapshot.
+- `***`: On Kubernetes v1.16, QingCloud CSI v1.2.0 only supports volume management.
 
 ### Installation
 This guide will install CSI plugin in the *kube-system* namespace of Kubernetes v1.14+. You can also deploy the plugin in other namespace. 
 
 - Set Kubernetes Parameters
-  - Enable `--allow-privileged=true` on kube-apiserver, kube-controller-manager, kube-scheduler, kubelet
-  - Enable (Default enabled) [Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) feature gate。
-  - Enable `--feature-gates=CSINodeInfo=true,CSIDriverRegistry=true,KubeletPluginsWatcher=true,VolumeSnapshotDataSource=true,ExpandCSIVolumes=true,VolumePVCDataSource=true（Only for Kubernetes v1.15）` option on kube-apiserver, kube-controller-manager, kube-scheduler, kubelet
-  - Enable `--read-only-port=10255` on kubelet
-- Download installation file 
+  - For Kubernetes v1.16
+    - Enable `--allow-privileged=true` on kube-apiserver, kube-controller-manager, kube-scheduler, kubelet.
+    - Enable (Default enabled) [Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) feature gate。
+    - Enable (Default enabled) `--feature-gates=CSINodeInfo=true,CSIDriverRegistry=true,KubeletPluginsWatcher=true` option on kube-apiserver, kube-controller-manager, kube-scheduler, kubelet
+    - Enable `--read-only-port=10255` on kubelet
+  - For Kubernetes v1.17
+    - Enable `--allow-privileged=true` on kube-apiserver, kube-controller-manager, kube-scheduler, kubelet.
+    - Enable (Default enabled) [Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) feature gate。
+    - Enable (Default enabled) `--feature-gates=CSINodeInfo=true,CSIDriverRegistry=true,KubeletPluginsWatcher=true,ExpandCSIVolumes=true,VolumePVCDataSource=true` option on kube-apiserver, kube-controller-manager, kube-scheduler, kubelet
+    - Enable `--read-only-port=10255` on kubelet
+- Download installation file
+  - For Kubernetes v1.16
 ```
-$ wget https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/disk/kubernetes/releases/qingcloud-csi-disk-v1.1.0.yaml
+$ wget https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/disk/kubernetes/releases/qingcloud-csi-disk-v1.16.yaml
+```
+  - For Kubernetes v1.17
+```
+$ wget https://raw.githubusercontent.com/yunify/qingcloud-csi/master/deploy/disk/kubernetes/releases/qingcloud-csi-disk-v1.17.yaml
 ```
 - Add QingCloud platform parameter on ConfigMap
 QingCloud CSI plugin manipulates cloud resource by QingCloud platform API. User must test the connection between QingCloud platform API and user's own instance by and check QingCloud platform configuration by [QingCloud CLI](https://docs.qingcloud.com/product/cli/).
@@ -82,7 +96,7 @@ QingCloud CSI plugin manipulates cloud resource by QingCloud platform API. User 
 > IMPORTANT: If kubelet, a component of Kubernetes, set the `--root-dir` option (default: *"/var/lib/kubelet"*), please replace *"/var/lib/kubelet"* with the value of `--root-dir` at the CSI [DaemonSet](deploy/disk/kubernetes/csi-node-ds.yaml) YAML file's `spec.template.spec.containers[name=csi-qingcloud].volumeMounts[name=mount-dir].mountPath` and `spec.template.spec.volumes[name=mount-dir].hostPath.path` fields. For instance, in Kubernetes cluster based on QingCloud AppCenter, you should replace *"/var/lib/kubelet"* with *"/data/var/lib/kubelet"* in the CSI [DaemonSet](deploy/disk/kubernetes/csi-node-ds.yaml) YAML file.
 
 ```
-$ kubectl apply -f qingcloud-csi-disk-v1.1.0.yaml
+$ kubectl apply -f qingcloud-csi-disk-v1.x.yaml
 ```
 
 - Check CSI plugin
@@ -98,7 +112,7 @@ $ kubectl get pods -n kube-system --selector=app=csi-qingcloud
 
 ### Uninstall
 ```
-$ kubectl delete -f qingcloud-csi-disk-v1.1.0.yaml
+$ kubectl delete -f qingcloud-csi-disk-v1.x.yaml
 ```
 
 ### Document
