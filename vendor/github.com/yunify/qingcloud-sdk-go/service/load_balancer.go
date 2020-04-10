@@ -347,19 +347,44 @@ func (s *LoadBalancerService) CreateLoadBalancer(i *CreateLoadBalancerInput) (*C
 }
 
 type CreateLoadBalancerInput struct {
+
+	// ClusterMode's available values: 0, 1
+	ClusterMode      *int      `json:"cluster_mode" name:"cluster_mode" default:"0" location:"params"`
 	EIPs             []*string `json:"eips" name:"eips" location:"params"`
 	HTTPHeaderSize   *int      `json:"http_header_size" name:"http_header_size" location:"params"`
 	LoadBalancerName *string   `json:"loadbalancer_name" name:"loadbalancer_name" location:"params"`
 	// LoadBalancerType's available values: 0, 1, 2, 3, 4, 5
-	LoadBalancerType *int    `json:"loadbalancer_type" name:"loadbalancer_type" default:"0" location:"params"`
-	NodeCount        *int    `json:"node_count" name:"node_count" location:"params"`
-	PrivateIP        *string `json:"private_ip" name:"private_ip" location:"params"`
-	ProjectID        *string `json:"project_id" name:"project_id" location:"params"`
-	SecurityGroup    *string `json:"security_group" name:"security_group" location:"params"`
-	VxNet            *string `json:"vxnet" name:"vxnet" location:"params"`
+	LoadBalancerType *int `json:"loadbalancer_type" name:"loadbalancer_type" default:"0" location:"params"`
+	// Mode's available values: 0, 1
+	Mode          *int    `json:"mode" name:"mode" default:"0" location:"params"`
+	NodeCount     *int    `json:"node_count" name:"node_count" location:"params"`
+	PrivateIP     *string `json:"private_ip" name:"private_ip" location:"params"`
+	ProjectID     *string `json:"project_id" name:"project_id" location:"params"`
+	SecurityGroup *string `json:"security_group" name:"security_group" location:"params"`
+	VxNet         *string `json:"vxnet" name:"vxnet" location:"params"`
 }
 
 func (v *CreateLoadBalancerInput) Validate() error {
+
+	if v.ClusterMode != nil {
+		clusterModeValidValues := []string{"0", "1"}
+		clusterModeParameterValue := fmt.Sprint(*v.ClusterMode)
+
+		clusterModeIsValid := false
+		for _, value := range clusterModeValidValues {
+			if value == clusterModeParameterValue {
+				clusterModeIsValid = true
+			}
+		}
+
+		if !clusterModeIsValid {
+			return errors.ParameterValueNotAllowedError{
+				ParameterName:  "ClusterMode",
+				ParameterValue: clusterModeParameterValue,
+				AllowedValues:  clusterModeValidValues,
+			}
+		}
+	}
 
 	if v.LoadBalancerType != nil {
 		loadBalancerTypeValidValues := []string{"0", "1", "2", "3", "4", "5"}
@@ -377,6 +402,26 @@ func (v *CreateLoadBalancerInput) Validate() error {
 				ParameterName:  "LoadBalancerType",
 				ParameterValue: loadBalancerTypeParameterValue,
 				AllowedValues:  loadBalancerTypeValidValues,
+			}
+		}
+	}
+
+	if v.Mode != nil {
+		modeValidValues := []string{"0", "1"}
+		modeParameterValue := fmt.Sprint(*v.Mode)
+
+		modeIsValid := false
+		for _, value := range modeValidValues {
+			if value == modeParameterValue {
+				modeIsValid = true
+			}
+		}
+
+		if !modeIsValid {
+			return errors.ParameterValueNotAllowedError{
+				ParameterName:  "Mode",
+				ParameterValue: modeParameterValue,
+				AllowedValues:  modeValidValues,
 			}
 		}
 	}

@@ -13,7 +13,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/prometheus/client_golang v1.1.0 // indirect
 	github.com/stretchr/testify v1.4.0 // indirect
-	github.com/yunify/qingcloud-sdk-go v0.0.0-20190806070725-5b519baeba90
+	github.com/yunify/qingcloud-sdk-go v2.0.0-alpha.37+incompatible
 	golang.org/x/net v0.0.0-20190812203447-cdfb69ac37fc
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45 // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
