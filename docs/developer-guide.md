@@ -87,3 +87,14 @@ fstype: "ext4"
 ```cassandraql
 # ./csi-sanity -csi.endpoint /var/lib/kubelet/plugins/disk.csi.qingcloud.com/csi.sock -csi.testvolumeparameters parameters.yaml -csi.testvolumeexpandsize 10737418240
 ```
+
+## Sidecar Container
+
+|QingCloud CSI|v1.2.0 for Kubernetes v1.16|v1.2.0 for Kubernetes v1.17+|
+|:---:|:---:|:---:|
+|External Provisioner|v1.6.0|v1.6.0|
+|External Attacher|v2.1.1|v2.1.1|
+|External Snapshotter|-|v2.1.1|
+|External Resizer|-|v0.5.0|
+|Node Driver Registrar|v1.3.0|v1.3.0|
+|Snapshot Controller|-|v2.1.1|

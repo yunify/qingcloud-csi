@@ -1,0 +1,347 @@
+root@i-t7kkn6xm:~# ./csi-sanity -csi.endpoint /var/lib/kubelet/plugins/disk.csi.qingcloud.com/csi.sock -csi.testvolumeparameters parameters.yaml -csi.testvolumeexpandsize 10737418240
+Running Suite: CSI Driver Test Suite
+====================================
+Random Seed: 1589165621
+Will run 73 of 74 specs
+
+••
+------------------------------
+• [SLOW TEST:50.498 seconds]
+ExpandVolume [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  should work
+  /root/vgo/csi-test/pkg/sanity/controller.go:1832
+------------------------------
+•••••
+------------------------------
+• [SLOW TEST:120.121 seconds]
+CreateSnapshot [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  should not fail when requesting to create a snapshot with already existing name and same SourceVolumeId.
+  /root/vgo/csi-test/pkg/sanity/controller.go:1680
+------------------------------
+• [SLOW TEST:174.297 seconds]
+CreateSnapshot [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  should fail when requesting to create a snapshot with already existing name and different SourceVolumeId.
+  /root/vgo/csi-test/pkg/sanity/controller.go:1710
+------------------------------
+• [SLOW TEST:204.283 seconds]
+CreateSnapshot [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  should not fail when creating snapshot with maximum-length name
+  /root/vgo/csi-test/pkg/sanity/controller.go:1745
+------------------------------
+••••••••••
+------------------------------
+• [SLOW TEST:51.509 seconds]
+Node Service
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  NodeStageVolume
+  /root/vgo/csi-test/pkg/sanity/node.go:439
+    should fail when no volume capability is provided
+    /root/vgo/csi-test/pkg/sanity/node.go:490
+------------------------------
+•••••
+------------------------------
+• [SLOW TEST:61.159 seconds]
+Node Service
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  NodeGetVolumeStats
+  /root/vgo/csi-test/pkg/sanity/node.go:587
+    should fail when volume does not exist on the specified path
+    /root/vgo/csi-test/pkg/sanity/node.go:637
+------------------------------
+• [SLOW TEST:60.375 seconds]
+Node Service
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  should work
+  /root/vgo/csi-test/pkg/sanity/node.go:794
+------------------------------
+• [SLOW TEST:90.726 seconds]
+Node Service
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  should be idempotent
+  /root/vgo/csi-test/pkg/sanity/node.go:801
+------------------------------
+••
+------------------------------
+• [SLOW TEST:217.196 seconds]
+DeleteSnapshot [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  should return appropriate values (no optional values added)
+  /root/vgo/csi-test/pkg/sanity/controller.go:1606
+------------------------------
+•
+------------------------------
+S [SKIPPING] in Spec Setup (BeforeEach) [0.102 seconds]
+Controller Service [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  GetCapacity
+  /root/vgo/csi-test/pkg/sanity/controller.go:159
+    should return capacity (no optional values added) [BeforeEach]
+    /root/vgo/csi-test/pkg/sanity/controller.go:166
+
+    GetCapacity not supported
+
+    /root/vgo/csi-test/pkg/sanity/controller.go:162
+------------------------------
+S [SKIPPING] in Spec Setup (BeforeEach) [0.198 seconds]
+Controller Service [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  ListVolumes
+  /root/vgo/csi-test/pkg/sanity/controller.go:176
+    should return appropriate values (no optional values added) [BeforeEach]
+    /root/vgo/csi-test/pkg/sanity/controller.go:183
+
+    ListVolumes not supported
+
+    /root/vgo/csi-test/pkg/sanity/controller.go:179
+------------------------------
+S [SKIPPING] in Spec Setup (BeforeEach) [0.101 seconds]
+Controller Service [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  ListVolumes
+  /root/vgo/csi-test/pkg/sanity/controller.go:176
+    should fail when an invalid starting_token is passed [BeforeEach]
+    /root/vgo/csi-test/pkg/sanity/controller.go:195
+
+    ListVolumes not supported
+
+    /root/vgo/csi-test/pkg/sanity/controller.go:179
+------------------------------
+S [SKIPPING] in Spec Setup (BeforeEach) [0.102 seconds]
+Controller Service [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  ListVolumes
+  /root/vgo/csi-test/pkg/sanity/controller.go:176
+    check the presence of new volumes and absence of deleted ones in the volume list [BeforeEach]
+    /root/vgo/csi-test/pkg/sanity/controller.go:210
+
+    ListVolumes not supported
+
+    /root/vgo/csi-test/pkg/sanity/controller.go:179
+------------------------------
+P [PENDING]
+Controller Service [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  ListVolumes
+  /root/vgo/csi-test/pkg/sanity/controller.go:176
+    pagination should detect volumes added between pages and accept tokens when the last volume from a page is deleted
+    /root/vgo/csi-test/pkg/sanity/controller.go:272
+------------------------------
+••
+------------------------------
+• [SLOW TEST:51.156 seconds]
+Controller Service [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  CreateVolume
+  /root/vgo/csi-test/pkg/sanity/controller.go:378
+    should return appropriate values SingleNodeWriter NoCapacity Type:Mount
+    /root/vgo/csi-test/pkg/sanity/controller.go:419
+------------------------------
+• [SLOW TEST:50.998 seconds]
+Controller Service [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  CreateVolume
+  /root/vgo/csi-test/pkg/sanity/controller.go:378
+    should return appropriate values SingleNodeWriter WithCapacity 1Gi Type:Mount
+    /root/vgo/csi-test/pkg/sanity/controller.go:457
+------------------------------
+• [SLOW TEST:44.649 seconds]
+Controller Service [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  CreateVolume
+  /root/vgo/csi-test/pkg/sanity/controller.go:378
+    should not fail when requesting to create a volume with already existing name and same capacity.
+    /root/vgo/csi-test/pkg/sanity/controller.go:499
+------------------------------
+• [SLOW TEST:51.361 seconds]
+Controller Service [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  CreateVolume
+  /root/vgo/csi-test/pkg/sanity/controller.go:378
+    should fail when requesting to create a volume with already existing name and different capacity.
+    /root/vgo/csi-test/pkg/sanity/controller.go:559
+------------------------------
+• [SLOW TEST:50.695 seconds]
+Controller Service [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  CreateVolume
+  /root/vgo/csi-test/pkg/sanity/controller.go:378
+    should not fail when creating volume with maximum-length name
+    /root/vgo/csi-test/pkg/sanity/controller.go:620
+------------------------------
+• [SLOW TEST:168.781 seconds]
+Controller Service [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  CreateVolume
+  /root/vgo/csi-test/pkg/sanity/controller.go:378
+    should create volume from an existing source snapshot
+    /root/vgo/csi-test/pkg/sanity/controller.go:664
+------------------------------
+•
+------------------------------
+• [SLOW TEST:77.922 seconds]
+Controller Service [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  CreateVolume
+  /root/vgo/csi-test/pkg/sanity/controller.go:378
+    should create volume from an existing source volume
+    /root/vgo/csi-test/pkg/sanity/controller.go:734
+------------------------------
+•••
+------------------------------
+• [SLOW TEST:50.854 seconds]
+Controller Service [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  DeleteVolume
+  /root/vgo/csi-test/pkg/sanity/controller.go:792
+    should return appropriate values (no optional values added)
+    /root/vgo/csi-test/pkg/sanity/controller.go:826
+------------------------------
+•
+------------------------------
+• [SLOW TEST:50.910 seconds]
+Controller Service [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  ValidateVolumeCapabilities
+  /root/vgo/csi-test/pkg/sanity/controller.go:867
+    should fail when no volume capabilities are provided
+    /root/vgo/csi-test/pkg/sanity/controller.go:882
+------------------------------
+• [SLOW TEST:51.583 seconds]
+Controller Service [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  ValidateVolumeCapabilities
+  /root/vgo/csi-test/pkg/sanity/controller.go:867
+    should return appropriate values (no optional values added)
+    /root/vgo/csi-test/pkg/sanity/controller.go:934
+------------------------------
+••••
+------------------------------
+S [SKIPPING] [0.098 seconds]
+Controller Service [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  ControllerPublishVolume
+  /root/vgo/csi-test/pkg/sanity/controller.go:1013
+    should fail when publishing more volumes than the node max attach limit [It]
+    /root/vgo/csi-test/pkg/sanity/controller.go:1068
+
+    testnodevolumeattachlimit not enabled
+
+    /root/vgo/csi-test/pkg/sanity/controller.go:1070
+------------------------------
+•
+------------------------------
+• [SLOW TEST:43.825 seconds]
+Controller Service [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  ControllerPublishVolume
+  /root/vgo/csi-test/pkg/sanity/controller.go:1013
+    should fail when the node does not exist
+    /root/vgo/csi-test/pkg/sanity/controller.go:1132
+------------------------------
+S [SKIPPING] [0.258 seconds]
+Controller Service [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  ControllerPublishVolume
+  /root/vgo/csi-test/pkg/sanity/controller.go:1013
+    should fail when the volume is already published but is incompatible [It]
+    /root/vgo/csi-test/pkg/sanity/controller.go:1188
+
+    ControllerPublishVolume.readonly field not supported
+
+    /root/vgo/csi-test/pkg/sanity/controller.go:1190
+------------------------------
+• [SLOW TEST:51.805 seconds]
+Controller Service [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  volume lifecycle
+  /root/vgo/csi-test/pkg/sanity/controller.go:1277
+    should work
+    /root/vgo/csi-test/pkg/sanity/controller.go:1284
+------------------------------
+• [SLOW TEST:72.153 seconds]
+Controller Service [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  volume lifecycle
+  /root/vgo/csi-test/pkg/sanity/controller.go:1277
+    should be idempotent
+    /root/vgo/csi-test/pkg/sanity/controller.go:1288
+------------------------------
+•
+------------------------------
+S [SKIPPING] in Spec Setup (BeforeEach) [0.101 seconds]
+ListSnapshots [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  should return appropriate values (no optional values added) [BeforeEach]
+  /root/vgo/csi-test/pkg/sanity/controller.go:1330
+
+  ListSnapshots not supported
+
+  /root/vgo/csi-test/pkg/sanity/controller.go:1326
+------------------------------
+S [SKIPPING] in Spec Setup (BeforeEach) [0.098 seconds]
+ListSnapshots [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  should return snapshots that match the specified snapshot id [BeforeEach]
+  /root/vgo/csi-test/pkg/sanity/controller.go:1342
+
+  ListSnapshots not supported
+
+  /root/vgo/csi-test/pkg/sanity/controller.go:1326
+------------------------------
+S [SKIPPING] in Spec Setup (BeforeEach) [0.005 seconds]
+ListSnapshots [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  should return empty when the specified snapshot id does not exist [BeforeEach]
+  /root/vgo/csi-test/pkg/sanity/controller.go:1374
+
+  ListSnapshots not supported
+
+  /root/vgo/csi-test/pkg/sanity/controller.go:1326
+------------------------------
+S [SKIPPING] in Spec Setup (BeforeEach) [0.295 seconds]
+ListSnapshots [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  should return snapshots that match the specified source volume id) [BeforeEach]
+  /root/vgo/csi-test/pkg/sanity/controller.go:1384
+
+  ListSnapshots not supported
+
+  /root/vgo/csi-test/pkg/sanity/controller.go:1326
+------------------------------
+S [SKIPPING] in Spec Setup (BeforeEach) [0.099 seconds]
+ListSnapshots [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  should return empty when the specified source volume id does not exist [BeforeEach]
+  /root/vgo/csi-test/pkg/sanity/controller.go:1417
+
+  ListSnapshots not supported
+
+  /root/vgo/csi-test/pkg/sanity/controller.go:1326
+------------------------------
+S [SKIPPING] in Spec Setup (BeforeEach) [0.006 seconds]
+ListSnapshots [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  check the presence of new snapshots in the snapshot list [BeforeEach]
+  /root/vgo/csi-test/pkg/sanity/controller.go:1427
+
+  ListSnapshots not supported
+
+  /root/vgo/csi-test/pkg/sanity/controller.go:1326
+------------------------------
+S [SKIPPING] in Spec Setup (BeforeEach) [0.194 seconds]
+ListSnapshots [Controller Server]
+/root/vgo/csi-test/pkg/sanity/tests.go:44
+  should return next token when a limited number of entries are requested [BeforeEach]
+  /root/vgo/csi-test/pkg/sanity/controller.go:1475
+
+  ListSnapshots not supported
+
+  /root/vgo/csi-test/pkg/sanity/controller.go:1326
+------------------------------
+
+Ran 60 of 74 Specs in 1866.046 seconds
+SUCCESS! -- 60 Passed | 0 Failed | 1 Pending | 13 Skipped

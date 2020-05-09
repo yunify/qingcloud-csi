@@ -1,6 +1,8 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 - [User Guide](#user-guide)
+
+- [User Guide](#user-guide)
   - [Set Storage Class](#set-storage-class)
     - [An Example of Storage Class](#an-example-of-storage-class)
     - [Parameters in Storage Class](#parameters-in-storage-class)
@@ -15,6 +17,10 @@
     - [Disk Type Matrix](#disk-type-matrix)
     - [Instance Type Matrix](#instance-type-matrix)
     - [Disk Compatiblity Matrix](#disk-compatiblity-matrix)
+  - [Set Snapshot Class](#set-snapshot-class)
+    - [An Example of Snapshot Class](#an-example-of-snapshot-class)
+    - [Parameters in Storage Class](#parameters-in-storage-class-1)
+      - [tags](#tags-1)
   - [Volume Management](#volume-management)
     - [Prerequisite](#prerequisite)
       - [Create Storage Class](#create-storage-class)
@@ -103,7 +109,7 @@ Support `ext3`, `ext4`, `xfs`. Default is `ext4`.
 `1` represents single duplication disk，`2` represents multiple duplication disk. Default is `2`.
 
 #### tags
-The ID of QingCloud Tag resource, split by a single comma. Disks and snapshots created by this plugin will be attached with the specified tags.
+The ID of QingCloud Tag resource, split by a single comma. Disks created by this plugin will be attached with the specified tags.
 
 ### Other Parameters
 
@@ -153,11 +159,29 @@ We can set `Immediate` or `WaitForFirstConsumer` as the value of `.volumeBinding
 |Enterprise2 Instance| -       | ✓                | ✓               |✓  |✓ |-  |✓  |
 |Premium Instance| -       | ✓                | ✓               |✓  |✓ |-  |✓  |
 
+## Set Snapshot Class
+### An Example of Snapshot Class
+
+```
+apiVersion: snapshot.storage.k8s.io/v1beta1
+kind: VolumeSnapshotClass
+metadata:
+  name: csi-qingcloud
+driver: disk.csi.qingcloud.com
+parameters:
+  tags: "tag-y7uu1q2a"
+deletionPolicy: Delete
+```
+
+### Parameters in Storage Class
+#### tags
+The ID of QingCloud Tag resource, split by a single comma. Snapshots created by this plugin will be attached with the specified tags.
+
 ## Volume Management
 Volume management including dynamical provisioning/deleting volume, attaching/detaching volume. Please reference [Example YAML Files](https://github.com/yunify/qingcloud-csi/tree/master/deploy/disk/example/volume)。
 
 ### Prerequisite
-- Kubernetes 1.14+ Cluster
+- Kubernetes 1.16+ Cluster
 - Installed QingCloud CSI plugin
 - Created QingCloud CSI storage class
 
@@ -169,8 +193,8 @@ $ kubectl create -f sc.yaml
 - Check
 ```console
 $ kubectl get sc
-NAME            PROVISIONER              AGE
-csi-qingcloud   disk.csi.qingcloud.com   14m
+NAME            PROVISIONER              RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
+csi-qingcloud   disk.csi.qingcloud.com   Delete          Immediate           true                   40h
 ```
 
 ### Create Volume
@@ -227,8 +251,8 @@ This feature could expand the capacity of volume. This plugin only supports offl
 Please reference [Example YAML files](https://github.com/yunify/qingcloud-csi/tree/master/deploy/disk/volume)。
 
 ### Prerequisite
-- Kubernetes 1.14+ cluster
-- Add `ExpandCSIVolumes=true` in `feature-gate` 
+- Kubernetes 1.17+ cluster
+- Enable (Default enabled) `ExpandCSIVolumes=true` in `feature-gates`
 - Set `allowVolumeExpansion` as `true` in storage class
 - Create a Pod mounting a volume
 
@@ -273,8 +297,8 @@ Filesystem      Size  Used Avail Use% Mounted on
 A Clone is defined as a duplicate of an existing Kubernetes Volume. Please reference [Example YAML files](https://github.com/yunify/qingcloud-csi/tree/master/deploy/disk/example/volume/pvc-clone.yaml).
 
 ### Prerequisite
-- Kubernetes 1.15+ cluster
-- Enable `VolumePVCDataSource=true` feature gate
+- Kubernetes 1.16+ cluster
+- Enable (Default enabled) `VolumePVCDataSource=true` feature gate
 - Install QingCloud CSI plugin
 - Create QingCloud CSI storage class
 - Create a volume
@@ -304,8 +328,8 @@ pvc-clone   Bound    pvc-529d2502-02bd-442b-a69f-d3eff28316a8   20Gi       RWO  
 Snapshot management contains creating/deleting snapshot and restoring volume from snapshpot. Please reference [Example YAML files](https://github.com/yunify/qingcloud-csi/tree/master/deploy/disk/example/snapshot).
 
 ### Prerequisite
-- Kubernetes 1.14+ cluster
-- Enable `VolumeSnapshotDataSource=true` feature gate at kube-apiserver and kube-controller-manager
+- Kubernetes 1.17+ cluster
+- Enable (Default enabled) `VolumeSnapshotDataSource=true` feature gate at kube-apiserver and kube-controller-manager
 - Install QingCloud CSI plugin
 - Create QingCloud CSI storage class
 - Create a volume
@@ -418,7 +442,7 @@ volumesnapshot.snapshot.storage.k8s.io "snap-1" deleted
 Topology awareness is used at Kubernetes clusters whose nodes across different available zones or having different types of instance.  Please reference [Example YAML files](https://github.com/yunify/qingcloud-csi/tree/master/deploy/disk/example/topology).
 
 ### Prerequisite
-- Kubernetes 1.14+ cluster
+- Kubernetes 1.16+ cluster
 - Enable `CSINodeInfo=true` feature gate at Kubernetes control plane and Kubelet
 - Install QingCloud CSI plugin and enable `Topology=true` feature gate at `external-provisioner` sidecar container
 - Set QingCloud CSI storage class

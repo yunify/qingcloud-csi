@@ -19,3 +19,4 @@ metadata:
 driver: disk.csi.qingcloud.com
 parameters:
   tags: "tag-y7uu1q2a"
+deletionPolicy: Delete

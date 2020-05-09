@@ -32,17 +32,6 @@ metadata:
   namespace: kube-system
 rules:
 - apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - get
-  - watch
-  - list
-  - delete
-  - update
-  - create
-- apiGroups:
   - coordination.k8s.io
   resources:
   - leases
@@ -342,31 +331,6 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - persistentvolumes
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - persistentvolumeclaims
-  verbs:
-  - get
-  - list
-  - watch
-  - update
-- apiGroups:
-  - storage.k8s.io
-  resources:
-  - storageclasses
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
   - events
   verbs:
   - list
@@ -374,13 +338,6 @@ rules:
   - create
   - update
   - patch
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - get
-  - list
 - apiGroups:
   - snapshot.storage.k8s.io
   resources:
@@ -403,28 +360,8 @@ rules:
 - apiGroups:
   - snapshot.storage.k8s.io
   resources:
-  - volumesnapshots
+  - volumesnapshotcontents/status
   verbs:
-  - get
-  - list
-  - watch
-  - update
-- apiGroups:
-  - snapshot.storage.k8s.io
-  resources:
-  - volumesnapshots/status
-  verbs:
-  - update
-- apiGroups:
-  - apiextensions.k8s.io
-  resources:
-  - customresourcedefinitions
-  verbs:
-  - create
-  - list
-  - watch
-  - delete
-  - get
   - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -614,7 +551,7 @@ spec:
         env:
         - name: ADDRESS
           value: /csi/csi.sock
-        image: quay.io/k8scsi/csi-provisioner:v1.5.0
+        image: quay.io/k8scsi/csi-provisioner:v1.6.0
         imagePullPolicy: IfNotPresent
         name: csi-provisioner
         resources:
@@ -642,7 +579,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        image: quay.io/k8scsi/csi-attacher:v2.1.1
+        image: quay.io/k8scsi/csi-attacher:v2.2.0
         imagePullPolicy: IfNotPresent
         name: csi-attacher
         resources:
@@ -656,7 +593,7 @@ spec:
         - mountPath: /csi
           name: socket-dir
       - args:
-        - --connection-timeout=90s
+        - --timeout=90s
         - --csi-address=$(ADDRESS)
         - --leader-election=false
         - --snapshot-name-prefix=snapshot
@@ -664,7 +601,7 @@ spec:
         env:
         - name: ADDRESS
           value: /csi/csi.sock
-        image: quay.io/k8scsi/csi-snapshotter:v2.0.1
+        image: quay.io/k8scsi/csi-snapshotter:v2.1.1
         imagePullPolicy: IfNotPresent
         name: csi-snapshotter
         resources:
@@ -684,7 +621,7 @@ spec:
         env:
         - name: ADDRESS
           value: /csi/csi.sock
-        image: quay.io/k8scsi/csi-resizer:v0.4.0
+        image: quay.io/k8scsi/csi-resizer:v0.5.0
         imagePullPolicy: IfNotPresent
         name: csi-resizer
         resources:
@@ -711,8 +648,8 @@ spec:
               fieldPath: spec.nodeName
         - name: CSI_ENDPOINT
           value: unix://csi/csi.sock
-        image: csidriver/csi-qingcloud:canary
-        imagePullPolicy: IfNotPresent
+        image: csiplugin/csi-qingcloud:v1.2.0-rc.1
+        imagePullPolicy: Always
         name: csi-qingcloud
         resources:
           limits:
@@ -767,7 +704,7 @@ spec:
         env:
         - name: ADDRESS
           value: /csi/csi.sock
-        image: quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
+        image: quay.io/k8scsi/csi-node-driver-registrar:v1.3.0
         lifecycle:
           preStop:
             exec:
@@ -802,8 +739,8 @@ spec:
               fieldPath: spec.nodeName
         - name: CSI_ENDPOINT
           value: unix://csi/csi.sock
-        image: csidriver/csi-qingcloud:canary
-        imagePullPolicy: IfNotPresent
+        image: csiplugin/csi-qingcloud:v1.2.0-rc.1
+        imagePullPolicy: Always
         name: csi-qingcloud
         resources:
           limits:
@@ -866,7 +803,7 @@ spec:
           name: csi-qingcloud
         name: server-config
 ---
-apiVersion: storage.k8s.io/v1
+apiVersion: storage.k8s.io/v1beta1
 kind: CSIDriver
 metadata:
   labels:

@@ -220,6 +220,7 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 			if snapInfo == nil {
 				return nil, status.Errorf(codes.NotFound, "cannot find content source snapshot id [%s]", snapId)
 			}
+			klog.V(4).Infof("Snapshot info %v", snapInfo)
 			// Compare snapshot required volume size
 			requiredRestoreVolumeSizeInBytes := int64(*snapInfo.SnapshotResource.Size) * common.Gib
 			if !common.IsValidCapacityBytes(requiredRestoreVolumeSizeInBytes, req.GetCapacityRange()) {
