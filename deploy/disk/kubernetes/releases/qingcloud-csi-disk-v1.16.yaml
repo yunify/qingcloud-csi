@@ -32,17 +32,6 @@ metadata:
   namespace: kube-system
 rules:
   - apiGroups:
-      - ""
-    resources:
-      - configmaps
-    verbs:
-      - get
-      - watch
-      - list
-      - delete
-      - update
-      - create
-  - apiGroups:
       - coordination.k8s.io
     resources:
       - leases
@@ -63,6 +52,29 @@ metadata:
     role: controller
     ver: v1.2.0
   name: csi-qingcloud-provisioner
+  namespace: kube-system
+rules:
+  - apiGroups:
+      - coordination.k8s.io
+    resources:
+      - leases
+    verbs:
+      - get
+      - watch
+      - list
+      - delete
+      - update
+      - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app: csi-qingcloud
+    owner: yunify
+    role: controller
+    ver: v1.2.0
+  name: csi-qingcloud-resizer
   namespace: kube-system
 rules:
   - apiGroups:
@@ -238,6 +250,52 @@ rules:
       - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app: csi-qingcloud
+    owner: yunify
+    role: controller
+    ver: v1.2.0
+  name: csi-qingcloud-resizer
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - persistentvolumes
+    verbs:
+      - get
+      - list
+      - watch
+      - update
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - persistentvolumeclaims
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - persistentvolumeclaims/status
+    verbs:
+      - update
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - list
+      - watch
+      - create
+      - update
+      - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   labels:
@@ -273,6 +331,25 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: csi-qingcloud-controller
+    namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app: csi-qingcloud
+    owner: yunify
+    role: controller
+    ver: v1.2.0
+  name: csi-qingcloud-resizer
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: csi-qingcloud-resizer
+subjects:
+  - kind: ServiceAccount
+    name: csi-resizer
     namespace: kube-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -385,7 +462,7 @@ spec:
           env:
             - name: ADDRESS
               value: /csi/csi.sock
-          image: quay.io/k8scsi/csi-provisioner:v1.5.0
+          image: quay.io/k8scsi/csi-provisioner:v1.6.0
           imagePullPolicy: IfNotPresent
           name: csi-provisioner
           resources:
@@ -413,7 +490,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-          image: quay.io/k8scsi/csi-attacher:v2.1.1
+          image: quay.io/k8scsi/csi-attacher:v2.2.0
           imagePullPolicy: IfNotPresent
           name: csi-attacher
           resources:
@@ -423,6 +500,26 @@ spec:
             requests:
               cpu: 80m
               memory: 80Mi
+          volumeMounts:
+            - mountPath: /csi
+              name: socket-dir
+        - args:
+            - --csi-address=$(ADDRESS)
+            - --leader-election
+            - --v=5
+          env:
+            - name: ADDRESS
+              value: /csi/csi.sock
+          image: quay.io/k8scsi/csi-resizer:v0.5.0
+          imagePullPolicy: IfNotPresent
+          name: csi-resizer
+          resources:
+            limits:
+              cpu: 20m
+              memory: 20Mi
+            requests:
+              cpu: 20m
+              memory: 20Mi
           volumeMounts:
             - mountPath: /csi
               name: socket-dir
@@ -440,8 +537,8 @@ spec:
                   fieldPath: spec.nodeName
             - name: CSI_ENDPOINT
               value: unix://csi/csi.sock
-          image: csidriver/csi-qingcloud:canary
-          imagePullPolicy: IfNotPresent
+          image: csiplugin/csi-qingcloud:v1.2.0-rc.1
+          imagePullPolicy: Always
           name: csi-qingcloud
           resources:
             limits:
@@ -496,7 +593,7 @@ spec:
           env:
             - name: ADDRESS
               value: /csi/csi.sock
-          image: quay.io/k8scsi/csi-node-driver-registrar:v1.2.0
+          image: quay.io/k8scsi/csi-node-driver-registrar:v1.3.0
           lifecycle:
             preStop:
               exec:
@@ -531,8 +628,8 @@ spec:
                   fieldPath: spec.nodeName
             - name: CSI_ENDPOINT
               value: unix://csi/csi.sock
-          image: csidriver/csi-qingcloud:canary
-          imagePullPolicy: IfNotPresent
+          image: csiplugin/csi-qingcloud:v1.2.0-rc.1
+          imagePullPolicy: Always
           name: csi-qingcloud
           resources:
             limits:

@@ -8,4 +8,4 @@ before_install:
   - docker pull k8s.gcr.io/debian-base:v1.0.0
 
 script:
-  - make disk-container
+  - go build -o _output/main cmd/disk/main.go

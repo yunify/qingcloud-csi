@@ -1,11 +1,36 @@
-<!-- BEGIN MUNGE: GENERATED_TOC -->
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [v1.2.0](#v120)
+  - [Changelog since v1.1.0](#changelog-since-v110)
+    - [Features](#features)
+    - [Bug Fixed](#bug-fixed)
+- [v1.1.1](#v111)
+  - [Changelog since v1.1.0](#changelog-since-v110-1)
+    - [Features](#features-1)
 - [v1.1.0](#v110)
-    - [Changelog since v1.1.0](#changelog-since-v110)
-        - [Features](#features)
-        - [Bug Fixed](#bug-fixed)
-<!-- END MUNGE: GENERATED_TOC -->
+  - [Changelog since v0.2.1](#changelog-since-v021)
+    - [Features](#features-2)
+    - [Bug Fixed](#bug-fixed-1)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 <!-- NEW RELEASE NOTES ENTRY -->
+
+# v1.2.0
+## Changelog since v1.1.0
+### Features
+* Update CSI v1.2.0 and QingCloud SDK ([#164](https://github.com/yunify/qingcloud-csi/pull/164), [@wnxn](https://github.com/wnxn))
+* Add retry limiter when detach volume ([#160](https://github.com/yunify/qingcloud-csi/pull/160), [@wnxn](https://github.com/wnxn))
+* Support deploy on Kubernetes v1.16 ([#168](https://github.com/yunify/qingcloud-csi/pull/168), [@wnxn](https://github.com/wnxn))
+
+### Bug Fixed
+* Update snapshot content source ([#164](https://github.com/yunify/qingcloud-csi/pull/164), [@wnxn](https://github.com/wnxn))
+
+# v1.1.1
+## Changelog since v1.1.0
+### Features
+* Support more volume types ([#170](https://github.com/yunify/qingcloud-csi/pull/170), [@wnxn](https://github.com/wnxn))
 
 # v1.1.0
 ## Changelog since v0.2.1

@@ -42,27 +42,38 @@ After plugin installation completes, user can create volumes based on several ty
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 |v0.2.x |✓|-|-|-|-|-|
 |v1.1.0 |✓|✓|✓|✓|✓|✓|
-|v1.2.0*** |✓|✓|✓|✓|✓|✓|
+|v1.2.0 |✓|✓|✓|✓|✓***|✓|
 
 Notes:
 - `*`: Volume Management including creating/deleting volume and mounting/unmount volume on Pod.
 - `**`: Snapshot management including creating/deleting snapshot and restoring volume from snapshot.
-- `***`: On Kubernetes v1.16, QingCloud CSI v1.2.0 only supports volume management.
+- `***`: Only supports Snapshot Management on Kubernetes v1.17+ because snapshot features goes into Beta on this version.
 
 ### Installation
-This guide will install CSI plugin in the *kube-system* namespace of Kubernetes v1.14+. You can also deploy the plugin in other namespace. 
+This guide will install CSI plugin in the *kube-system* namespace of Kubernetes v1.16+. You can also deploy the plugin in other namespace. 
 
 - Set Kubernetes Parameters
   - For Kubernetes v1.16
     - Enable `--allow-privileged=true` on kube-apiserver, kube-controller-manager, kube-scheduler, kubelet.
     - Enable (Default enabled) [Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) feature gate。
-    - Enable (Default enabled) `--feature-gates=CSINodeInfo=true,CSIDriverRegistry=true,KubeletPluginsWatcher=true` option on kube-apiserver, kube-controller-manager, kube-scheduler, kubelet
+    - Enable (Default enabled) `--feature-gates=CSINodeInfo=true,CSIDriverRegistry=true,ExpandCSIVolumes=true` option on kube-apiserver, kube-controller-manager, kube-scheduler, kubelet
     - Enable `--read-only-port=10255` on kubelet
-  - For Kubernetes v1.17
+  - For Kubernetes v1.17+
     - Enable `--allow-privileged=true` on kube-apiserver, kube-controller-manager, kube-scheduler, kubelet.
     - Enable (Default enabled) [Mount Propagation](https://kubernetes.io/docs/concepts/storage/volumes/#mount-propagation) feature gate。
-    - Enable (Default enabled) `--feature-gates=CSINodeInfo=true,CSIDriverRegistry=true,KubeletPluginsWatcher=true,ExpandCSIVolumes=true,VolumePVCDataSource=true` option on kube-apiserver, kube-controller-manager, kube-scheduler, kubelet
+    - Enable (Default enabled) `--feature-gates=CSINodeInfo=true,CSIDriverRegistry=true,ExpandCSIVolumes=true,VolumePVCDataSource=true` option on kube-apiserver, kube-controller-manager, kube-scheduler, kubelet
     - Enable `--read-only-port=10255` on kubelet
+    - Install Snapshot CRD
+        ```
+        kubectl create -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v2.1.1/config/crd/snapshot.storage.k8s.io_volumesnapshotclasses.yaml
+        kubectl create -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v2.1.1/config/crd/snapshot.storage.k8s.io_volumesnapshotcontents.yaml
+        kubectl create -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v2.1.1/config/crd/snapshot.storage.k8s.io_volumesnapshots.yaml
+        ```
+    - Install Snapshot Controller
+        ```
+        kubectl create -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v2.1.1/deploy/kubernetes/snapshot-controller/rbac-snapshot-controller.yaml
+        kubectl create -f https://raw.githubusercontent.com/kubernetes-csi/external-snapshotter/v2.1.1/deploy/kubernetes/snapshot-controller/setup-snapshot-controller.yaml
+        ```
 - Download installation file
   - For Kubernetes v1.16
 ```
