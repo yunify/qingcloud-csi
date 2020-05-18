@@ -132,12 +132,9 @@ aggregationRule:
   clusterRoleSelectors:
     - matchLabels:
         app: csi-qingcloud
-    - matchLabels:
-        role: controller
-    - matchLabels:
-        csi: v1.2.0
-    - matchLabels:
         owner: yunify
+        role: controller
+        ver: v1.2.0
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -537,7 +534,7 @@ spec:
                   fieldPath: spec.nodeName
             - name: CSI_ENDPOINT
               value: unix://csi/csi.sock
-          image: csiplugin/csi-qingcloud:v1.2.0-rc.1
+          image: csiplugin/csi-qingcloud:v1.2.0-rc.2
           imagePullPolicy: Always
           name: csi-qingcloud
           resources:
@@ -628,7 +625,7 @@ spec:
                   fieldPath: spec.nodeName
             - name: CSI_ENDPOINT
               value: unix://csi/csi.sock
-          image: csiplugin/csi-qingcloud:v1.2.0-rc.1
+          image: csiplugin/csi-qingcloud:v1.2.0-rc.2
           imagePullPolicy: Always
           name: csi-qingcloud
           resources:
