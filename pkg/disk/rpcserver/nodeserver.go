@@ -99,11 +99,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	defer ns.locks.Release(volumeId)
 
 	// set fsType
-	qc, err := driver.NewQingStorageClassFromMap(req.GetVolumeContext())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	fsType := qc.GetFsType()
+	fsType := req.GetVolumeCapability().GetMount().GetFsType()
 
 	// Check volume exist
 	volInfo, err := ns.cloud.FindVolume(volumeId)
@@ -235,11 +231,7 @@ func (ns *NodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	}
 	defer ns.locks.Release(volumeId)
 	// set fsType
-	qc, err := driver.NewQingStorageClassFromMap(req.GetPublishContext())
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	fsType := qc.GetFsType()
+	fsType := req.GetVolumeCapability().GetMount().GetFsType()
 
 	// Check volume exist
 	volInfo, err := ns.cloud.FindVolume(volumeId)

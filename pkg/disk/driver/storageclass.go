@@ -122,10 +122,12 @@ func NewQingStorageClassFromMap(opt map[string]string) (*QingStorageClass, error
 			return nil, fmt.Errorf("unsupported volume type %d", volType)
 		}
 		sc := NewDefaultQingStorageClassFromType(t)
-		// For backward compatiblility, ignore error
-		sc.setTypeSize(maxSize, minSize, stepSize)
-		sc.setFsType(fsType)
-		sc.setReplica(replica)
+		// For backward compatibility, ignore error
+		if maxSize > 0 && minSize > 0 && stepSize > 0 {
+			_ = sc.setTypeSize(maxSize, minSize, stepSize)
+		}
+		_ = sc.setFsType(fsType)
+		_ = sc.setReplica(replica)
 		sc.setTags(tags)
 		return sc, nil
 	}
