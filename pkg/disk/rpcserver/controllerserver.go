@@ -220,7 +220,6 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 			if snapInfo == nil {
 				return nil, status.Errorf(codes.NotFound, "cannot find content source snapshot id [%s]", snapId)
 			}
-			klog.V(4).Infof("Snapshot info %v", snapInfo)
 			// Compare snapshot required volume size
 			requiredRestoreVolumeSizeInBytes := int64(*snapInfo.SnapshotResource.Size) * common.Gib
 			if !common.IsValidCapacityBytes(requiredRestoreVolumeSizeInBytes, req.GetCapacityRange()) {
@@ -271,10 +270,10 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 			}
 			return &csi.CreateVolumeResponse{
 				Volume: &csi.Volume{
-					VolumeId:           newVolId,
-					CapacityBytes:      actualRestoreVolumeSizeInBytes,
-					VolumeContext:      req.GetParameters(),
-					ContentSource:		&csi.VolumeContentSource{
+					VolumeId:      newVolId,
+					CapacityBytes: actualRestoreVolumeSizeInBytes,
+					VolumeContext: req.GetParameters(),
+					ContentSource: &csi.VolumeContentSource{
 						Type: &csi.VolumeContentSource_Snapshot{
 							Snapshot: &csi.VolumeContentSource_SnapshotSource{
 								SnapshotId: snapId,
@@ -333,10 +332,10 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 			}
 			return &csi.CreateVolumeResponse{
 				Volume: &csi.Volume{
-					VolumeId:           newVolId,
-					CapacityBytes:      common.GibToByte(*newVolInfo.Size),
-					VolumeContext:      req.GetParameters(),
-					ContentSource:		&csi.VolumeContentSource{
+					VolumeId:      newVolId,
+					CapacityBytes: common.GibToByte(*newVolInfo.Size),
+					VolumeContext: req.GetParameters(),
+					ContentSource: &csi.VolumeContentSource{
 						Type: &csi.VolumeContentSource_Volume{
 							Volume: &csi.VolumeContentSource_VolumeSource{
 								VolumeId: srcVolId,
