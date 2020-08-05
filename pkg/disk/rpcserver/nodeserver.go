@@ -487,31 +487,7 @@ func (ns *NodeServer) NodeGetVolumeStats(ctx context.Context,
 		return nil, status.Error(codes.InvalidArgument, "Volume path missing in request")
 	}
 
-	volumeId := req.GetVolumeId()
 	volumePath := req.GetVolumePath()
-
-	// Get volume info
-	klog.Infof("%s: Get volume %s info", hash, volumeId)
-	volInfo, err := ns.cloud.FindVolume(volumeId)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	if volInfo == nil || volInfo.Instance == nil || volInfo.Instance.Device == nil {
-		return nil, status.Errorf(codes.NotFound, "cannot find volume %s", volumeId)
-	}
-
-	// Checkout device
-	klog.Infof("%s: Get device name from mount point %s", hash, volumePath)
-	devicePath, _, err := mount.GetDeviceNameFromMount(ns.mounter, volumePath)
-	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "cannot get device name from mount point %s", volumePath)
-	}
-	klog.Infof("%s: Succeed to get device name %s", hash, devicePath)
-	if devicePath == "" || *volInfo.Instance.Device != devicePath {
-		return nil, status.Errorf(codes.NotFound, "device path mismatch, from mount point %s, "+
-			"from cloud provider %s", devicePath, *volInfo.Instance.Device)
-	}
-
 	// Get metrics
 	metricsStatFs := volume.NewMetricsStatFS(volumePath)
 	metrics, err := metricsStatFs.GetMetrics()
