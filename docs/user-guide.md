@@ -16,7 +16,7 @@
       - [Topology Awareness](#topology-awareness)
     - [Disk Type Matrix](#disk-type-matrix)
     - [Instance Type Matrix](#instance-type-matrix)
-    - [Disk Compatiblity Matrix](#disk-compatiblity-matrix)
+    - [Disk Compatibility Matrix](#disk-compatibility-matrix)
   - [Set Snapshot Class](#set-snapshot-class)
     - [An Example of Snapshot Class](#an-example-of-snapshot-class)
     - [Parameters in Storage Class](#parameters-in-storage-class-1)
@@ -48,7 +48,7 @@
     - [Delete Snapshot](#delete-snapshot)
   - [Topology Awareness](#topology-awareness-1)
     - [Prerequisite](#prerequisite-4)
-      - [Exmaple Kubernetes Cluster](#exmaple-kubernetes-cluster)
+      - [Example Kubernetes Cluster](#example-kubernetes-cluster)
       - [Create Storage Class](#create-storage-class-1)
     - [Create Volume](#create-volume-1)
     - [Create Workload](#create-workload)
@@ -76,9 +76,6 @@ metadata:
 provisioner: disk.csi.qingcloud.com
 parameters:
   type: "0"
-  maxSize: "500"
-  minSize: "10"
-  stepSize: "10"
   fsType: "ext4"
   replica: "2"
   tags: "tag-y7uu1q2a"
@@ -97,10 +94,10 @@ See details in [QingCloud docs](https://docs.qingcloud.com/product/api/action/vo
 |High Performance|0|2000|10|10|
 |High Capacity|2|5000|100|50|
 |Super High Performance|3|2000|10|10|
-| NeonSAN|5|50000|100|100|
-|NeonSAN HDD|5|50000|100|100|
-| Standard|100|2000|10|10|
-| SSD Enterprise|200| 2000|10|10|
+|NeonSAN|5|50000|100|100|
+|NeonSAN HDD|6|50000|100|100|
+|Standard|100|2000|10|10|
+|SSD Enterprise|200| 2000|10|10|
 
 #### fsType
 Support `ext3`, `ext4`, `xfs`. Default is `ext4`.
@@ -126,13 +123,13 @@ We can set `Immediate` or `WaitForFirstConsumer` as the value of `.volumeBinding
 
 |Disk|type|
 |:----:|:----:|
-| High Performance|0|
-| High Capacity|2|
+|High Performance|0|
+|High Capacity|2|
 |Super High Performance|3|
-| NeonSAN|5|
+|NeonSAN|5|
 |NeonSAN HDD|6|
-| Standard|100|
-| SSD Enterprise|200|
+|Standard|100|
+|SSD Enterprise|200|
 
 ### Instance Type Matrix
 |Instance|type|
@@ -146,7 +143,7 @@ We can set `Immediate` or `WaitForFirstConsumer` as the value of `.volumeBinding
 |Enterprise2|202|
 |Premium|301|
 
-### Disk Compatiblity Matrix
+### Disk Compatibility Matrix
 
  |          | High Performance Disk    | High Capacity Disk  | Super High Performance Disk | NeonSAN Disk | NeonSAN HDD Disk | Standard Disk| SSD Enterprise Disk|
 |-----------|------------------|------------------|-----------------|---------|----------|-------|-------|
@@ -447,7 +444,7 @@ Topology awareness is used at Kubernetes clusters whose nodes across different a
 - Install QingCloud CSI plugin and enable `Topology=true` feature gate at `external-provisioner` sidecar container
 - Set QingCloud CSI storage class
 
-#### Exmaple Kubernetes Cluster
+#### Example Kubernetes Cluster
 In QingCloud Pek3 zone, a Kubernetes v1.15 cluster with same types of instance is created and node1 and node2 running in Pek3c, node3 and node4 running in Pek3b, node5 and node6 running in Pek3d.
 
 #### Create Storage Class
@@ -466,10 +463,7 @@ metadata:
   name: csi-qingcloud
 parameters:
   fsType: ext4
-  maxSize: "5000"
-  minSize: "10"
   replica: "2"
-  stepSize: "10"
   type: "100"
 provisioner: disk.csi.qingcloud.com
 reclaimPolicy: Delete
@@ -545,9 +539,6 @@ metadata:
   uid: 43f25337-991f-11e8-b5aa-525445c0b555
 parameters:
   fsType: ext4
-  maxSize: "500"
-  minSize: "10"
-  stepSize: "10"
   type: "0"
 provisioner: csi-qingcloud
 reclaimPolicy: Delete
@@ -578,9 +569,6 @@ spec:
     fsType: ext4
     volumeAttributes:
       fsType: ext4
-      maxSize: "500"
-      minSize: "10"
-      stepSize: "10"
       type: "0"
     volumeHandle: vol-jjtedp2i
 ```

@@ -19,11 +19,8 @@ metadata:
 provisioner: disk.csi.qingcloud.com
 parameters:
   type: "200"
-  maxSize: "5000"
-  minSize: "10"
-  stepSize: "10"
   fsType: "ext4"
   replica: "2"
-  tags: "tag-y7uu1q2a"
+#  tags: "tag-y7uu1q2a"
 reclaimPolicy: Delete
 allowVolumeExpansion: true
