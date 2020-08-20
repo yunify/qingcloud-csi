@@ -17,6 +17,6 @@ kind: VolumeSnapshotClass
 metadata:
   name: csi-qingcloud
 driver: disk.csi.qingcloud.com
-parameters:
-  tags: "tag-y7uu1q2a"
+# parameters:
+#  tags: "tag-y7uu1q2a"
 deletionPolicy: Delete
