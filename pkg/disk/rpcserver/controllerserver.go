@@ -18,6 +18,8 @@ package rpcserver
 
 import (
 	"fmt"
+	"reflect"
+
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
@@ -31,7 +33,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 	"k8s.io/klog"
-	"reflect"
 )
 
 type ControllerServer struct {
@@ -106,7 +107,7 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 	}
 	klog.Infof("%s: Picked topology is %v", hash, top)
 	// create StorageClass object
-	sc, err := driver.NewQingStorageClassFromMap(req.GetParameters())
+	sc, err := driver.NewQingStorageClassFromMap(req.GetParameters(), top)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
