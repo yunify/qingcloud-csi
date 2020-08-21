@@ -67,7 +67,6 @@ var DefaultPluginCapability = []*csi.PluginCapability{
 }
 
 const (
-	DefaultVolumeType              VolumeType = StandardVolumeType
 	HighPerformanceVolumeType      VolumeType = 0
 	HighCapacityVolumeType         VolumeType = 2
 	SuperHighPerformanceVolumeType VolumeType = 3
@@ -75,6 +74,7 @@ const (
 	NeonSANHDDVolumeType           VolumeType = 6
 	StandardVolumeType             VolumeType = 100
 	SSDEnterpriseVolumeType        VolumeType = 200
+	DefaultVolumeType                         = StandardVolumeType
 )
 
 type VolumeType int
@@ -107,53 +107,43 @@ func (v VolumeType) IsValid() bool {
 // convert volume type to string
 // https://docs.qingcloud.com/product/api/action/volume/create_volumes.html
 var VolumeTypeName = map[VolumeType]string{
-	0:   "HighPerformance",
-	2:   "HighCapacity",
-	3:   "SuperHighPerformance",
-	5:   "NeonSAN",
-	6:   "NeonSANHDD",
-	100: "Standard",
-	200: "SSDEnterprise",
-}
-
-var VolumeTypeValue = map[string]VolumeType{
-	"HighPerformance":      0,
-	"HighCapacity":         2,
-	"SuperHighPerformance": 3,
-	"NeonSAN":              5,
-	"NeonSANHDD":           6,
-	"Standard":             100,
-	"SSDEnterprise":        200,
+	HighPerformanceVolumeType:      "HighPerformance",
+	HighCapacityVolumeType:         "HighCapacity",
+	SuperHighPerformanceVolumeType: "SuperHighPerformance",
+	NeonSANVolumeType:              "NeonSAN",
+	NeonSANHDDVolumeType:           "NeonSANHDD",
+	StandardVolumeType:             "Standard",
+	SSDEnterpriseVolumeType:        "SSDEnterprise",
 }
 
 var VolumeTypeToStepSize = map[VolumeType]int{
-	0:   10,
-	2:   50,
-	3:   10,
-	5:   100,
-	6:   100,
-	100: 10,
-	200: 10,
+	HighPerformanceVolumeType:      10,
+	HighCapacityVolumeType:         50,
+	SuperHighPerformanceVolumeType: 10,
+	NeonSANVolumeType:              100,
+	NeonSANHDDVolumeType:           100,
+	StandardVolumeType:             10,
+	SSDEnterpriseVolumeType:        10,
 }
 
 var VolumeTypeToMinSize = map[VolumeType]int{
-	0:   10,
-	2:   100,
-	3:   10,
-	5:   100,
-	6:   100,
-	100: 10,
-	200: 10,
+	HighPerformanceVolumeType:      10,
+	HighCapacityVolumeType:         100,
+	SuperHighPerformanceVolumeType: 10,
+	NeonSANVolumeType:              100,
+	NeonSANHDDVolumeType:           100,
+	StandardVolumeType:             10,
+	SSDEnterpriseVolumeType:        10,
 }
 
 var VolumeTypeToMaxSize = map[VolumeType]int{
-	0:   2000,
-	2:   5000,
-	3:   2000,
-	5:   50000,
-	6:   50000,
-	100: 2000,
-	200: 2000,
+	HighPerformanceVolumeType:      2000,
+	HighCapacityVolumeType:         5000,
+	SuperHighPerformanceVolumeType: 2000,
+	NeonSANVolumeType:              50000,
+	NeonSANHDDVolumeType:           50000,
+	StandardVolumeType:             2000,
+	SSDEnterpriseVolumeType:        2000,
 }
 
 type InstanceType int
@@ -201,6 +191,17 @@ var InstanceTypeValue = map[string]InstanceType{
 	"Enterprise1":             201,
 	"Enterprise2":             202,
 	"Premium":                 301,
+}
+
+var InstanceTypeAttachPreferred = map[InstanceType]VolumeType{
+	HighPerformanceInstanceType:         HighPerformanceVolumeType,
+	SuperHighPerformanceInstanceType:    SuperHighPerformanceVolumeType,
+	SuperHighPreformanceSANInstanceType: NeonSANVolumeType,
+	HighPerformanceSANInstanceType:      NeonSANVolumeType,
+	StandardInstanceType:                StandardVolumeType,
+	Enterprise1InstanceType:             SSDEnterpriseVolumeType,
+	Enterprise2InstanceType:             SSDEnterpriseVolumeType,
+	PremiumInstanceType:                 SSDEnterpriseVolumeType,
 }
 
 var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{

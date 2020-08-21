@@ -18,10 +18,12 @@ package driver
 
 import (
 	"fmt"
-	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/yunify/qingcloud-csi/pkg/common"
 	"strconv"
 	"strings"
+
+	"github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/yunify/qingcloud-csi/pkg/common"
+	"k8s.io/klog"
 )
 
 const (
@@ -60,7 +62,7 @@ func NewDefaultQingStorageClassFromType(diskType VolumeType) *QingStorageClass {
 }
 
 // NewQingStorageClassFromMap create qingStorageClass object from map
-func NewQingStorageClassFromMap(opt map[string]string) (*QingStorageClass, error) {
+func NewQingStorageClassFromMap(opt map[string]string, topology *Topology) (*QingStorageClass, error) {
 	volType := -1
 	maxSize, minSize, stepSize := -1, -1, -1
 	fsType := ""
@@ -114,23 +116,34 @@ func NewQingStorageClassFromMap(opt map[string]string) (*QingStorageClass, error
 		}
 	}
 
+	var t VolumeType
 	if volType == -1 {
-		return NewDefaultQingStorageClassFromType(DefaultVolumeType), nil
+		t = DefaultVolumeType
+		if topology != nil {
+			preferredVolumeType, ok := InstanceTypeAttachPreferred[topology.GetInstanceType()]
+			if ok {
+				t = preferredVolumeType
+			} else {
+				klog.Infof("failed to get instance type %d preferred volume type, fallback to use %s",
+					topology.GetInstanceType(), DefaultVolumeType)
+			}
+		}
 	} else {
-		t := VolumeType(volType)
-		if !t.IsValid() {
-			return nil, fmt.Errorf("unsupported volume type %d", volType)
-		}
-		sc := NewDefaultQingStorageClassFromType(t)
-		// For backward compatibility, ignore error
-		if maxSize > 0 && minSize > 0 && stepSize > 0 {
-			_ = sc.setTypeSize(maxSize, minSize, stepSize)
-		}
-		_ = sc.setFsType(fsType)
-		_ = sc.setReplica(replica)
-		sc.setTags(tags)
-		return sc, nil
+		t = VolumeType(volType)
 	}
+
+	if !t.IsValid() {
+		return nil, fmt.Errorf("unsupported volume type %d", volType)
+	}
+	sc := NewDefaultQingStorageClassFromType(t)
+	// For backward compatibility, ignore error
+	if maxSize > 0 && minSize > 0 && stepSize > 0 {
+		_ = sc.setTypeSize(maxSize, minSize, stepSize)
+	}
+	_ = sc.setFsType(fsType)
+	_ = sc.setReplica(replica)
+	sc.setTags(tags)
+	return sc, nil
 }
 
 func (sc QingStorageClass) GetDiskType() VolumeType {

@@ -17,11 +17,12 @@ limitations under the License.
 package driver
 
 import (
-	"github.com/container-storage-interface/spec/lib/go/csi"
-	"github.com/yunify/qingcloud-csi/pkg/common"
 	"reflect"
 	"strconv"
 	"testing"
+
+	"github.com/container-storage-interface/spec/lib/go/csi"
+	"github.com/yunify/qingcloud-csi/pkg/common"
 )
 
 func TestNewDefaultQingStorageClassFromType(t *testing.T) {
@@ -70,10 +71,11 @@ func TestNewDefaultQingStorageClassFromType(t *testing.T) {
 
 func TestNewQingStorageClassFromMap(t *testing.T) {
 	tests := []struct {
-		name    string
-		opt     map[string]string
-		sc      *QingStorageClass
-		isError bool
+		name     string
+		opt      map[string]string
+		sc       *QingStorageClass
+		topology *Topology
+		isError  bool
 	}{
 		{
 			name: "normal",
@@ -227,14 +229,67 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 			},
 			isError: false,
 		},
+		{
+			name: "without type, without topology, fallback to default",
+			opt: map[string]string{
+				StorageClassFsTypeName: common.FileSystemExt3,
+			},
+			sc: &QingStorageClass{
+				diskType: DefaultVolumeType,
+				maxSize:  VolumeTypeToMaxSize[DefaultVolumeType],
+				minSize:  VolumeTypeToMinSize[DefaultVolumeType],
+				stepSize: VolumeTypeToStepSize[DefaultVolumeType],
+				fsType:   common.FileSystemExt3,
+				replica:  DiskMultiReplicaType,
+			},
+			isError: false,
+		},
+		{
+			name: "without type, with topology",
+			opt: map[string]string{
+				StorageClassMaxSizeName:  strconv.Itoa(VolumeTypeToMaxSize[DefaultVolumeType]),
+				StorageClassMinSizeName:  strconv.Itoa(VolumeTypeToMinSize[DefaultVolumeType]),
+				StorageClassStepSizeName: strconv.Itoa(VolumeTypeToStepSize[DefaultVolumeType]),
+				StorageClassFsTypeName:   common.FileSystemExt3,
+			},
+			sc: &QingStorageClass{
+				diskType: NeonSANVolumeType,
+				maxSize:  VolumeTypeToMaxSize[DefaultVolumeType],
+				minSize:  VolumeTypeToMinSize[DefaultVolumeType],
+				stepSize: VolumeTypeToStepSize[DefaultVolumeType],
+				fsType:   common.FileSystemExt3,
+				replica:  DiskMultiReplicaType,
+			},
+			topology: NewTopology("", SuperHighPreformanceSANInstanceType),
+			isError:  false,
+		},
+		{
+			name: "without type, wrong instance type, fallback to default volume type",
+			opt: map[string]string{
+				StorageClassMaxSizeName:  strconv.Itoa(VolumeTypeToMaxSize[DefaultVolumeType]),
+				StorageClassMinSizeName:  strconv.Itoa(VolumeTypeToMinSize[DefaultVolumeType]),
+				StorageClassStepSizeName: strconv.Itoa(VolumeTypeToStepSize[DefaultVolumeType]),
+				StorageClassFsTypeName:   common.FileSystemExt3,
+			},
+			sc: &QingStorageClass{
+				diskType: DefaultVolumeType,
+				maxSize:  VolumeTypeToMaxSize[DefaultVolumeType],
+				minSize:  VolumeTypeToMinSize[DefaultVolumeType],
+				stepSize: VolumeTypeToStepSize[DefaultVolumeType],
+				fsType:   common.FileSystemExt3,
+				replica:  DiskMultiReplicaType,
+			},
+			topology: NewTopology("", InstanceType(999)),
+			isError:  false,
+		},
 	}
 	for _, test := range tests {
-		res, err := NewQingStorageClassFromMap(test.opt)
+		res, err := NewQingStorageClassFromMap(test.opt, test.topology)
 		if (err != nil) != test.isError {
 			t.Errorf("name %s: expect %t, but actually %t", test.name, test.isError, err != nil)
 		}
 		if !reflect.DeepEqual(test.sc, res) {
-			t.Errorf("name %s: expect %v, but actually %v", test.name, test.sc, res)
+			t.Errorf("name %s: expect %+v, but actually %+v", test.name, test.sc, res)
 		}
 	}
 }
