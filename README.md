@@ -51,6 +51,17 @@ Notes:
 ### Installation 
 From v1.2.0, QingCloud-CSI will be installed by helm. See [Helm Charts](https://github.com/kubesphere/helm-charts/tree/master/src/test/csi-qingcloud) for details.
 
+### Upgrade from v1.x
+If old versions before v1.2.0 installed, you should uninstall the old versions. After that, v1.2.0+ can be installed by helm chart.
+#### Uninstall Old Version
+```bash
+git checkout v1.1.1
+kubectl delete -f deploy/disk/kubernetes/releases/qingcloud-csi-disk-v1.1.1.yaml
+kubectl delete sc csi-qingcloud
+```
+#### Install New Version
+install by [Helm Charts](https://github.com/kubesphere/helm-charts/tree/master/src/test/csi-qingcloud)
+
 ### Document
 - [User Guide](docs/user-guide.md)
 - [Developer Guide](docs/developer-guide.md)
