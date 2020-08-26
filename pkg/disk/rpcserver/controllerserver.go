@@ -146,6 +146,7 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 					VolumeId:           *exVol.VolumeID,
 					CapacityBytes:      exVolSizeByte,
 					VolumeContext:      req.GetParameters(),
+					ContentSource:      req.GetVolumeContentSource(),
 					AccessibleTopology: cs.GetVolumeTopology(exVol),
 				},
 			}, nil
@@ -418,7 +419,7 @@ func (cs *ControllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 //										volume capability 	+ Required
 //										readonly			+ Required (This field is NOT provided when requesting in Kubernetes)
 func (cs *ControllerServer) ControllerPublishVolume(ctx context.Context, req *csi.ControllerPublishVolumeRequest) (*csi.
-	ControllerPublishVolumeResponse, error) {
+ControllerPublishVolumeResponse, error) {
 	funcName := "ControllerPublishVolume"
 	info, hash := common.EntryFunction(funcName)
 	klog.Info(info)
@@ -536,7 +537,7 @@ func (cs *ControllerServer) ControllerPublishVolume(ctx context.Context, req *cs
 // This operation MUST be idempotent
 // csi.ControllerUnpublishVolumeRequest: 	volume id	+Required
 func (cs *ControllerServer) ControllerUnpublishVolume(ctx context.Context, req *csi.ControllerUnpublishVolumeRequest) (*csi.
-	ControllerUnpublishVolumeResponse, error) {
+ControllerUnpublishVolumeResponse, error) {
 	funcName := "ControllerUnpublishVolume"
 	info, hash := common.EntryFunction(funcName)
 	klog.Info(info)
@@ -606,7 +607,7 @@ func (cs *ControllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 // csi.ValidateVolumeCapabilitiesRequest: 	volume id 			+ Required
 // 											volume capability 	+ Required
 func (cs *ControllerServer) ValidateVolumeCapabilities(ctx context.Context, req *csi.ValidateVolumeCapabilitiesRequest) (*csi.
-	ValidateVolumeCapabilitiesResponse, error) {
+ValidateVolumeCapabilitiesResponse, error) {
 	funcName := "ValidateVolumeCapabilities"
 	info, hash := common.EntryFunction(funcName)
 	klog.Info(info)
@@ -754,7 +755,7 @@ func (cs *ControllerServer) GetCapacity(ctx context.Context, req *csi.GetCapacit
 // Source volume id is REQUIRED
 // Snapshot name is REQUIRED
 func (cs *ControllerServer) CreateSnapshot(ctx context.Context, req *csi.CreateSnapshotRequest) (*csi.
-	CreateSnapshotResponse, error) {
+CreateSnapshotResponse, error) {
 	funcName := "CreateSnapshot"
 	info, hash := common.EntryFunction(funcName)
 	klog.Info(info)
