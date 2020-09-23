@@ -73,7 +73,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 		return nil, status.Error(codes.InvalidArgument, "Volume id missing in request")
 	}
 	// check target path
-	if len(req.GetStagingTargetPath()) == 0 {
+	if len(req.GetTargetPath()) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "Target path missing in request")
 	}
 	// Check volume capability
