@@ -89,7 +89,7 @@ volumeBindingMode: Immediate
 #### type, maxSize, minSize, stepSize
 See details in [QingCloud docs](https://docs.qingcloud.com/product/api/action/volume/create_volumes.html)。
 
-|Disk|type|maxSize|minSize|stepSize|
+|Disk|type|maxSize(GB)|minSize(GB)|stepSize(GB)|
 |:---:|:---:|:---:|:---:|:---:|
 |High Performance|0|2000|10|10|
 |High Capacity|2|5000|100|50|
