@@ -19,10 +19,11 @@ package common
 import (
 	"fmt"
 	"hash/fnv"
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/util/retry"
 	"sync"
 	"time"
+
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
 )
 
 // EntryFunction print timestamps
@@ -84,7 +85,7 @@ func (r *retryLimiter) Add(id string) {
 func (r *retryLimiter) Try(id string) bool {
 	r.mux.RLock()
 	defer r.mux.RUnlock()
-	return r.record[id] <= r.maxRetry
+	return r.maxRetry == 0 || r.record[id] <= r.maxRetry
 }
 
 func (r *retryLimiter) GetMaxRetryTimes() int {

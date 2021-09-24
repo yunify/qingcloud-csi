@@ -108,3 +108,18 @@ func TestRetryLimiter(t *testing.T) {
 		t.Errorf("expect false but actually true")
 	}
 }
+
+func TestUnlimitedRetryLimiter(t *testing.T) {
+	r := NewRetryLimiter(0)
+	key := "key"
+	for i := 1; i <= 5; i++ {
+		r.Add(key)
+		current := r.GetCurrentRetryTimes(key)
+		if current != i {
+			t.Errorf("expect %d but actually %d", i, current)
+		}
+		if r.Try(key) != true {
+			t.Errorf("expect true but actually false")
+		}
+	}
+}
