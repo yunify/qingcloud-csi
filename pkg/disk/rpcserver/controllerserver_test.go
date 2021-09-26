@@ -17,11 +17,12 @@ limitations under the License.
 package rpcserver
 
 import (
+	"reflect"
+	"testing"
+
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/yunify/qingcloud-csi/pkg/disk/driver"
 	"github.com/yunify/qingcloud-sdk-go/service"
-	"reflect"
-	"testing"
 )
 
 func getFakeVolume() *service.Volume {
@@ -51,7 +52,7 @@ func getMockControllerServer() *ControllerServer {
 			MaxVolume: 10,
 		},
 	)
-	return NewControllerServer(d, nil, DefaultBackOff, 5)
+	return NewControllerServer(d, nil, 5)
 }
 
 func TestDiskControllerServer_PickTopology(t *testing.T) {
