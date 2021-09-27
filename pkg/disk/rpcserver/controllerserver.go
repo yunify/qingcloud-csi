@@ -30,7 +30,6 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 	"k8s.io/klog"
 )
@@ -39,18 +38,16 @@ type ControllerServer struct {
 	driver        *driver.DiskDriver
 	cloud         cloud.CloudManager
 	locks         *common.ResourceLocks
-	retryTime     wait.Backoff
 	detachLimiter common.RetryLimiter
 }
 
 // NewControllerServer
 // Create controller server
-func NewControllerServer(d *driver.DiskDriver, c cloud.CloudManager, rt wait.Backoff, maxRetry int) *ControllerServer {
+func NewControllerServer(d *driver.DiskDriver, c cloud.CloudManager, maxRetry int) *ControllerServer {
 	return &ControllerServer{
 		driver:        d,
 		cloud:         c,
 		locks:         common.NewResourceLocks(),
-		retryTime:     rt,
 		detachLimiter: common.NewRetryLimiter(maxRetry),
 	}
 }
@@ -229,23 +226,15 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 					hash, requiredRestoreVolumeSizeInBytes)
 				return nil, status.Error(codes.OutOfRange, "unsupported capacity range")
 			}
-			// Retry to restore volume from snapshot
-			var newVolId string
-			err = retry.OnError(cs.retryTime, cloud.IsSnapshotNotAvailable, func() error {
-				klog.Infof("%s: Restore volume name [%s] from snapshot id [%s] in zone [%s].", hash, volName,
-					snapId, top.GetZone())
-				newVolId, err = cs.cloud.CreateVolumeFromSnapshot(volName, snapId, top.GetZone())
-				if err != nil {
-					klog.Errorf("%s: Failed to restore volume %s from snapshot %s, error: %v", hash, volName, snapId, err)
-					return err
-				} else {
-					klog.Infof("%s: Succeed to restore volume %s/%s from snapshot %s", hash, volName, newVolId, snapId)
-					return nil
-				}
-			})
+			// Restore volume from snapshot
+			klog.Infof("%s: Restore volume name [%s] from snapshot id [%s] in zone [%s].", hash, volName,
+				snapId, top.GetZone())
+			newVolId, err := cs.cloud.CreateVolumeFromSnapshot(volName, snapId, top.GetZone())
 			if err != nil {
+				klog.Errorf("%s: Failed to restore volume %s from snapshot %s, error: %v", hash, volName, snapId, err)
 				return nil, status.Error(codes.Internal, err.Error())
 			}
+			klog.Infof("%s: Succeed to restore volume %s/%s from snapshot %s", hash, volName, newVolId, snapId)
 			// Find volume
 			newVolInfo, err := cs.cloud.FindVolume(newVolId)
 			if err != nil {
@@ -397,21 +386,12 @@ func (cs *ControllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 	}
 	// Do delete volume
 	klog.Infof("Deleting volume %s status %s in zone %s...", volumeId, *volInfo.Status, cs.cloud.GetZone())
-	err = retry.OnError(cs.retryTime, cloud.IsTryLater, func() error {
-		klog.Infof("Try to delete volume %s", volumeId)
-		if err = cs.cloud.DeleteVolume(volumeId); err != nil {
-			klog.Errorf("Failed to delete volume %s, error: %v", volumeId, err)
-			return err
-		} else {
-			klog.Infof("Succeed to delete volume %s", volumeId)
-			return nil
-		}
-	})
-	if err != nil {
-		return nil, status.Error(codes.Internal, "Exceed retry times: "+err.Error())
-	} else {
-		return &csi.DeleteVolumeResponse{}, nil
+	if err = cs.cloud.DeleteVolume(volumeId); err != nil {
+		klog.Errorf("Failed to delete volume %s, error: %v", volumeId, err)
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
+	klog.Infof("Succeed to delete volume %s", volumeId)
+	return &csi.DeleteVolumeResponse{}, nil
 }
 
 // csi.ControllerPublishVolumeRequest: 	volume id 			+ Required
@@ -712,30 +692,22 @@ func (cs *ControllerServer) ControllerExpandVolume(ctx context.Context, req *csi
 			"volume %s currently published on a node but plugin only support OFFLINE expansion", volumeId)
 	}
 
-	// 3. Retry to expand volume
+	// 3. Try to expand volume
 	if requiredSizeBytes%common.Gib != 0 {
 		return nil, status.Errorf(codes.OutOfRange, "required size bytes %d cannot be divided into Gib %d",
 			requiredSizeBytes, common.Gib)
 	}
 	requiredSizeGib := int(requiredSizeBytes / common.Gib)
-	err = retry.OnError(cs.retryTime, cloud.IsTryLater, func() error {
-		klog.Infof("Try to expand volume %s", volumeId)
-		if err := cs.cloud.ResizeVolume(volumeId, requiredSizeGib); err != nil {
-			klog.Errorf("Failed to resize volume %s, error: %v", volumeId, err)
-			return err
-		} else {
-			klog.Infof("Succeed to resize volume %s", volumeId)
-			return nil
-		}
-	})
-	if err != nil {
+	klog.Infof("Try to expand volume %s", volumeId)
+	if err := cs.cloud.ResizeVolume(volumeId, requiredSizeGib); err != nil {
+		klog.Errorf("Failed to resize volume %s, error: %v", volumeId, err)
 		return nil, status.Error(codes.Internal, err.Error())
-	} else {
-		return &csi.ControllerExpandVolumeResponse{
-			CapacityBytes:         requiredSizeBytes,
-			NodeExpansionRequired: true,
-		}, nil
 	}
+	klog.Infof("Succeed to resize volume %s", volumeId)
+	return &csi.ControllerExpandVolumeResponse{
+		CapacityBytes:         requiredSizeBytes,
+		NodeExpansionRequired: true,
+	}, nil
 }
 
 func (cs *ControllerServer) ListVolumes(ctx context.Context, req *csi.ListVolumesRequest) (*csi.ListVolumesResponse, error) {
@@ -917,23 +889,14 @@ func (cs *ControllerServer) DeleteSnapshot(ctx context.Context, req *csi.DeleteS
 		klog.Infof("Cannot find snapshot id [%s].", snapId)
 		return &csi.DeleteSnapshotResponse{}, nil
 	}
-	// 2. Retry to delete snapshot
+	// 2. Try to delete snapshot
 	klog.Infof("Deleting snapshot id [%s] in zone [%s]...", snapId, cs.cloud.GetZone())
-	err = retry.OnError(cs.retryTime, cloud.IsTryLater, func() error {
-		klog.Infof("Try to delete snapshot %s", snapId)
-		if err = cs.cloud.DeleteSnapshot(snapId); err != nil {
-			klog.Errorf("Failed to delete snapshot %s, error: %v", snapId, err)
-			return err
-		} else {
-			klog.Infof("Succeed to delete snapshot %s", snapId)
-			return nil
-		}
-	})
-	if err != nil {
-		return nil, status.Error(codes.Internal, "Exceed retry times: "+err.Error())
-	} else {
-		return &csi.DeleteSnapshotResponse{}, nil
+	if err = cs.cloud.DeleteSnapshot(snapId); err != nil {
+		klog.Errorf("Failed to delete snapshot %s, error: %v", snapId, err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
+	klog.Infof("Succeed to delete snapshot %s", snapId)
+	return &csi.DeleteSnapshotResponse{}, nil
 }
 
 func (cs *ControllerServer) ListSnapshots(ctx context.Context, req *csi.ListSnapshotsRequest) (*csi.ListSnapshotsResponse, error) {

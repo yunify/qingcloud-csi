@@ -17,12 +17,13 @@ limitations under the License.
 package rpcserver
 
 import (
+	"time"
+
 	"github.com/yunify/qingcloud-csi/pkg/cloud"
 	"github.com/yunify/qingcloud-csi/pkg/common"
 	"github.com/yunify/qingcloud-csi/pkg/disk/driver"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/kubernetes/pkg/util/mount"
-	"time"
 )
 
 var DefaultBackOff = wait.Backoff{
@@ -35,10 +36,10 @@ var DefaultBackOff = wait.Backoff{
 // Run
 // Initial and start CSI driver
 func Run(driver *driver.DiskDriver, cloud cloud.CloudManager, mounter *mount.SafeFormatAndMount,
-	endpoint string, retryTime wait.Backoff, retryTimesMax int) {
+	endpoint string, retryTimesMax int) {
 	// Initialize default library driver
 	ids := NewIdentityServer(driver, cloud)
-	cs := NewControllerServer(driver, cloud, retryTime, retryTimesMax)
+	cs := NewControllerServer(driver, cloud, retryTimesMax)
 	ns := NewNodeServer(driver, cloud, mounter)
 
 	s := common.NewNonBlockingGRPCServer()

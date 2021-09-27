@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	version              = "v1.2.0"
+	version              = "v1.2.2"
 	defaultProvisionName = "disk.csi.qingcloud.com"
 	defaultConfigPath    = "/etc/config/config.yaml"
 )
@@ -41,7 +41,6 @@ var (
 	endpoint            = flag.String("endpoint", "unix://tmp/csi.sock", "CSI endpoint")
 	maxVolume           = flag.Int64("maxvolume", 10, "Maximum number of volumes that controller can publish to the node.")
 	nodeId              = flag.String("nodeid", "", "If driver cannot get instance ID from /etc/qingcloud/instance-id, we would use this flag.")
-	retryIntervalMax    = flag.Duration("retry-interval-max", 2*time.Minute, "Maximum retry interval of failed deletion.")
 	retryDetachTimesMax = flag.Int("retry-detach-times-max", 100, "Maximum retry times of failed detach volume. Set to 0 to disable the limit.")
 )
 
@@ -81,13 +80,9 @@ func handle() {
 		NodeCap:       driver.DefaultNodeServiceCapability,
 		PluginCap:     driver.DefaultPluginCapability,
 	}
-
-	// Set BackOff
-	rt := rpcserver.DefaultBackOff
-	rt.Cap = *retryIntervalMax
 	// For resize
 	mounter := common.NewSafeMounter()
 	driver := driver.GetDiskDriver()
 	driver.InitDiskDriver(diskDriverInput)
-	rpcserver.Run(driver, cloud, mounter, *endpoint, rt, *retryDetachTimesMax)
+	rpcserver.Run(driver, cloud, mounter, *endpoint, *retryDetachTimesMax)
 }
