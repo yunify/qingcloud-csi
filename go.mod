@@ -1,9 +1,9 @@
 module github.com/yunify/qingcloud-csi
 
-go 1.12
+go 1.16
 
 require (
-	github.com/container-storage-interface/spec v1.2.0
+	github.com/container-storage-interface/spec v1.5.0
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 // indirect
 	github.com/golang/protobuf v1.3.2
@@ -18,7 +18,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45 // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
 	google.golang.org/appengine v1.6.1 // indirect
-	google.golang.org/grpc v1.23.0
+	google.golang.org/grpc v1.26.0
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/apiextensions-apiserver v0.0.0-20190823014223-07b4561f8b0e // indirect
 	k8s.io/apimachinery v0.0.0-20190823012420-8ca64af22337
