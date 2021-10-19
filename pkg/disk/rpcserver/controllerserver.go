@@ -997,5 +997,40 @@ func (cs *ControllerServer) GetVolumeTopology(volume *service.Volume) []*csi.Top
 }
 
 func (cs *ControllerServer) ControllerGetVolume(ctx context.Context, req *csi.ControllerGetVolumeRequest) (*csi.ControllerGetVolumeResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "")
+	functionName := "ControllerGetVolume"
+	info, hash := common.EntryFunction(functionName)
+	defer klog.Info(common.ExitFunction(functionName, hash))
+	klog.Info(info)
+	// 0. check input args
+	// require volume id parameter
+	if len(req.GetVolumeId()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "No volume id is provided")
+	}
+
+	// 1. Check volume status
+	// does volume exist
+	volumeId := req.GetVolumeId()
+	// ensure one call in-flight
+	klog.Infof("Try to lock resource %s", volumeId)
+	if acquired := cs.locks.TryAcquire(volumeId); !acquired {
+		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, volumeId)
+	}
+	defer cs.locks.Release(volumeId)
+
+	klog.Infof("Find volume %s", volumeId)
+	volInfo, err := cs.cloud.FindVolume(volumeId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if volInfo == nil {
+		return nil, status.Errorf(codes.NotFound, "Volume: %s does not exist", volumeId)
+	}
+	vol := &csi.Volume{
+		CapacityBytes: int64(*volInfo.Size),
+		VolumeId:      volumeId,
+	}
+	resp := &csi.ControllerGetVolumeResponse{
+		Volume: vol,
+	}
+	return resp, nil
 }

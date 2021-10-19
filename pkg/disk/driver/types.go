@@ -34,6 +34,8 @@ var DefaultControllerServiceCapability = []csi.ControllerServiceCapability_RPC_T
 	csi.ControllerServiceCapability_RPC_CREATE_DELETE_SNAPSHOT,
 	csi.ControllerServiceCapability_RPC_EXPAND_VOLUME,
 	csi.ControllerServiceCapability_RPC_CLONE_VOLUME,
+	csi.ControllerServiceCapability_RPC_VOLUME_CONDITION,
+	csi.ControllerServiceCapability_RPC_GET_VOLUME,
 }
 
 var DefaultNodeServiceCapability = []csi.NodeServiceCapability_RPC_Type{
