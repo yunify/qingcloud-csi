@@ -260,7 +260,7 @@ func TestNewQingStorageClassFromMap(t *testing.T) {
 				fsType:   common.FileSystemExt3,
 				replica:  DiskMultiReplicaType,
 			},
-			topology: NewTopology("", SuperHighPreformanceSANInstanceType),
+			topology: NewTopology("", SuperHighPerformanceSANInstanceType),
 			isError:  false,
 		},
 		{
