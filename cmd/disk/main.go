@@ -30,7 +30,7 @@ import (
 )
 
 const (
-	version              = "v1.5.0"
+	version              = "unknown"
 	defaultProvisionName = "disk.csi.qingcloud.com"
 	defaultConfigPath    = "/etc/config/config.yaml"
 )
