@@ -18,6 +18,10 @@ package rpcserver
 
 import (
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
+
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/yunify/qingcloud-csi/pkg/cloud"
 	"github.com/yunify/qingcloud-csi/pkg/common"
@@ -29,9 +33,6 @@ import (
 	"k8s.io/kubernetes/pkg/util/mount"
 	"k8s.io/kubernetes/pkg/util/resizefs"
 	"k8s.io/kubernetes/pkg/volume"
-	"os"
-	"strconv"
-	"strings"
 )
 
 type NodeServer struct {
@@ -91,17 +92,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 	stagePath := req.GetStagingTargetPath()
 	volumeId := req.GetVolumeId()
 
-	// ensure one call in-flight
-	klog.Infof("Try to lock resource %s", volumeId)
-	if acquired := ns.locks.TryAcquire(volumeId); !acquired {
-		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, volumeId)
-	}
-	defer ns.locks.Release(volumeId)
-
-	// set fsType
-	fsType := req.GetVolumeCapability().GetMount().GetFsType()
-
-	// Check volume exist
+	// check if volume exists
 	volInfo, err := ns.cloud.FindVolume(volumeId)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -110,28 +101,35 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 		return nil, status.Errorf(codes.NotFound, "Volume %s does not exist", volumeId)
 	}
 
-	// 1. Mount
-	// Make dir if dir not presents
-	_, err = os.Stat(targetPath)
-	if os.IsNotExist(err) {
-		if err = os.MkdirAll(targetPath, 0750); err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
+	// ensure one call in-flight
+	klog.Infof("Try to lock resource %s", volumeId)
+	if acquired := ns.locks.TryAcquire(volumeId); !acquired {
+		return nil, status.Errorf(codes.Aborted, common.OperationPendingFmt, volumeId)
+	}
+	defer ns.locks.Release(volumeId)
+
+	// determine if volume is in block mode
+	isBlockMode := req.GetVolumeCapability().GetBlock() != nil
+
+	// if volume is in block mode, the source path of mount is the attached device path
+	// rather than the staging path
+	if isBlockMode {
+		stagePath = *volInfo.Instance.Device
 	}
 
-	// check targetPath is mounted
+	// get fsType of volume
+	// in block mode, this is a nil, which will also work as expected in following mounting
+	fsType := req.GetVolumeCapability().GetMount().GetFsType()
+
+	// according to the CSI spec, CO is only responsible for ensuring the existence of the parent dir of the target path
+	if err := ns.createTargetMountPathIfNotExists(targetPath, isBlockMode); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	// check wether targetPath is mounted
 	notMnt, err := ns.mounter.IsNotMountPoint(targetPath)
 	if err != nil {
-		if os.IsNotExist(err) {
-			klog.Infof("Cannot find target path %s and create it.", targetPath)
-			if err = os.MkdirAll(targetPath, 0750); err != nil {
-				return nil, status.Error(codes.Internal, err.Error())
-			}
-			klog.Infof("Succeed to create target path %s", targetPath)
-			notMnt = true
-		} else {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	// For idempotent:
 	// If the volume corresponding to the volume id has already been published at the specified target path,
@@ -142,10 +140,10 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 
 	// set bind mount options
 	options := []string{"bind"}
-	if req.GetReadonly() == true {
+	if req.GetReadonly() {
 		options = append(options, "ro")
 	}
-	klog.Infof("Bind mount %s at %s, fsType %s, options %v ...", stagePath, targetPath, fsType, options)
+	klog.Infof("Bind mount %s at %s, isBlockMode: %t, fsType %s, options %v ...", stagePath, targetPath, isBlockMode, fsType, options)
 	if err := ns.mounter.Mount(stagePath, targetPath, fsType, options); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -207,7 +205,7 @@ func (ns *NodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	info, hash := common.EntryFunction(funcName)
 	defer klog.Info(common.ExitFunction(funcName, hash))
 	klog.Info(info)
-	if flag := ns.driver.ValidateNodeServiceRequest(csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME); flag == false {
+	if flag := ns.driver.ValidateNodeServiceRequest(csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME); !flag {
 		return nil, status.Error(codes.Unimplemented, "Node has not stage capability")
 	}
 	// 0. Preflight
@@ -224,6 +222,13 @@ func (ns *NodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	// set parameter
 	volumeId := req.GetVolumeId()
 	targetPath := req.GetStagingTargetPath()
+
+	// skip staging if volume is in block mode
+	if req.GetVolumeCapability().GetBlock() != nil {
+		klog.Infof("Skipping staging of volume %s on path %s since it's in block mode", volumeId, targetPath)
+		return &csi.NodeStageVolumeResponse{}, nil
+	}
+
 	// ensure one call in-flight
 	klog.Infof("Try to lock resource %s", volumeId)
 	if acquired := ns.locks.TryAcquire(volumeId); !acquired {
@@ -279,13 +284,15 @@ func (ns *NodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 // This operation MUST be idempotent
 // csi.NodeUnstageVolumeRequest:	volume id	+ Required
 //									target path	+ Required
+// In block volume mode, the target path is never mounted to
+// so this call will be a no-op
 func (ns *NodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.
 	NodeUnstageVolumeResponse, error) {
 	funcName := "NodeUnstageVolume"
 	info, hash := common.EntryFunction(funcName)
 	defer klog.Info(common.ExitFunction(funcName, hash))
 	klog.Info(info)
-	if flag := ns.driver.ValidateNodeServiceRequest(csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME); flag == false {
+	if flag := ns.driver.ValidateNodeServiceRequest(csi.NodeServiceCapability_RPC_STAGE_UNSTAGE_VOLUME); !flag {
 		return nil, status.Error(codes.Unimplemented, "Node has not unstage capability")
 	}
 	// 0. Preflight
@@ -444,7 +451,7 @@ func (ns *NodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandV
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	if ok != true {
+	if !ok {
 		return nil, status.Error(codes.Internal, "failed to expand volume filesystem")
 	}
 	klog.Info("Succeed to resize file system")
@@ -488,7 +495,29 @@ func (ns *NodeServer) NodeGetVolumeStats(ctx context.Context,
 	}
 
 	volumePath := req.GetVolumePath()
+	// block mode volume's stats can't be retrieved like those filesystem volumes
+	pathType, err := ns.mounter.GetFileType(volumePath)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to determine volume %s 's mode: %v", volumePath, err)
+	}
+	isBlockMode := pathType == mount.FileTypeBlockDev
+
 	// Get metrics
+	if isBlockMode {
+		blockSize, err := ns.getBlockSizeBytes(volumePath)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to get block capacity on path %s: %v", volumePath, err)
+		}
+		return &csi.NodeGetVolumeStatsResponse{
+			Usage: []*csi.VolumeUsage{
+				{
+					Unit:  csi.VolumeUsage_BYTES,
+					Total: blockSize,
+				},
+			},
+		}, nil
+	}
+
 	metricsStatFs := volume.NewMetricsStatFS(volumePath)
 	metrics, err := metricsStatFs.GetMetrics()
 	if err != nil {
@@ -524,4 +553,34 @@ func (ns *NodeServer) getBlockSizeBytes(devicePath string) (int64, error) {
 		return -1, fmt.Errorf("failed to parse size %s into int a size", strOut)
 	}
 	return gotSizeBytes, nil
+}
+
+// createTargetMountPathIfNotExists creates the mountPath if it doesn't exist
+// if in block volume mode, a file will be created
+// otherwise a directory will be created
+func (ns *NodeServer) createTargetMountPathIfNotExists(mountPath string, isBlockMode bool) error {
+	exists, err := ns.mounter.ExistsPath(mountPath)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return nil
+	}
+
+	if isBlockMode {
+		pathFile, err := os.OpenFile(mountPath, os.O_CREATE|os.O_RDWR, 0750)
+		if err != nil {
+			return err
+		}
+		if err = pathFile.Close(); err != nil {
+			return err
+		}
+	} else {
+		// Create a directory
+		if err := os.MkdirAll(mountPath, 0750); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
