@@ -676,13 +676,17 @@ func (cs *ControllerServer) ControllerExpandVolume(ctx context.Context, req *csi
 	if err != nil {
 		return nil, status.Errorf(codes.OutOfRange, err.Error())
 	}
+
+	// If volume is in block mode, it doesn't need NodeExpandVolume operation
+	nodeExpansionRequired := req.GetVolumeCapability().GetBlock() != nil
+
 	// For idempotent
 	volSizeBytes := common.GibToByte(*volInfo.Size)
 	if volSizeBytes >= requiredSizeBytes {
 		klog.Infof("%s: Volume %s size %d >= request expand size %d", hash, volumeId, volSizeBytes, requiredSizeBytes)
 		return &csi.ControllerExpandVolumeResponse{
 			CapacityBytes:         volSizeBytes,
-			NodeExpansionRequired: true,
+			NodeExpansionRequired: nodeExpansionRequired,
 		}, nil
 	}
 
@@ -706,7 +710,7 @@ func (cs *ControllerServer) ControllerExpandVolume(ctx context.Context, req *csi
 	klog.Infof("Succeed to resize volume %s", volumeId)
 	return &csi.ControllerExpandVolumeResponse{
 		CapacityBytes:         requiredSizeBytes,
-		NodeExpansionRequired: true,
+		NodeExpansionRequired: nodeExpansionRequired,
 	}, nil
 }
 
