@@ -1,0 +1,6 @@
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: csi-qingcloud-{commit_tag}
+driver: {commit_tag}.disk.csi.qingcloud.com
+deletionPolicy: Delete
