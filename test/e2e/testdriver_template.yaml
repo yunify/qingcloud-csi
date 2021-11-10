@@ -1,0 +1,27 @@
+StorageClass:
+  FromExistingClassName: csi-qingcloud-{commit_tag}
+SnapshotClass:
+  FromExistingClassName: csi-qingcloud-{commit_tag}
+DriverInfo:
+  Name: {commit_tag}.disk.csi.qingcloud.com
+  Capabilities:
+    persistence: true
+    block: true
+    fsGroup: false
+    exec: true
+    snapshotDataSource: true
+    pvcDataSource: true
+    multipods: true
+    RWX: false
+    controllerExpansion: true
+    nodeExpansion: true
+    onlineExpansion: false
+    volumeLimits: true
+    singleNodeVolume: {single_node}
+    topology: true
+  TopologyKeys:
+    - "topology.{commit_tag}.disk.csi.qingcloud.com/instance-type"
+    - "topology.{commit_tag}.disk.csi.qingcloud.com/zone"
+  SupportedSizeRange:
+    Min: 10Gi
+    Max: 2000Gi
