@@ -678,7 +678,7 @@ func (cs *ControllerServer) ControllerExpandVolume(ctx context.Context, req *csi
 	}
 
 	// If volume is in block mode, it doesn't need NodeExpandVolume operation
-	nodeExpansionRequired := req.GetVolumeCapability().GetBlock() != nil
+	nodeExpansionRequired := req.GetVolumeCapability().GetBlock() == nil
 
 	// For idempotent
 	volSizeBytes := common.GibToByte(*volInfo.Size)
