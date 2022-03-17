@@ -6,13 +6,17 @@
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-- [Description](#description)
-- [Disk Plugin](#disk-plugin)
-  - [Kubernetes Compatibility Matrix](#kubernetes-compatibility-matrix)
-  - [Feature Matrix](#feature-matrix)
-  - [Installation](#installation)
-  - [Document](#document)
-- [Support](#support)
+- [QingCloud-CSI](#qingcloud-csi)
+  - [Description](#description)
+  - [Disk Plugin](#disk-plugin)
+    - [Kubernetes Compatibility Matrix](#kubernetes-compatibility-matrix)
+    - [Feature Matrix](#feature-matrix)
+    - [Installation](#installation)
+    - [Upgrade from v1.x](#upgrade-from-v1x)
+      - [Uninstall Old Version](#uninstall-old-version)
+      - [Install New Version](#install-new-version)
+    - [Document](#document)
+  - [Support](#support)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -29,11 +33,11 @@ After plugin installation completes, user can create volumes based on several ty
 
 ### Kubernetes Compatibility Matrix
 
-|QingCloud CSI|Kubernetes v1.10-v1.13|Kubernetes v1.14-1.15|Kubernetes v1.16|Kubernetes v1.17|
-|:---:|:---:|:---:|:---:|:---:|
-|v0.2.x|✓|-|-|-|
-|v1.1.0|-|✓|-|-|
-|v1.2.0|-|-|✓|✓|
+|QingCloud CSI|Kubernetes v1.10-v1.13|Kubernetes v1.14-1.15|Kubernetes v1.16+|
+|:---:|:---:|:---:|:---:|
+|v0.2.x|✓|-|-|
+|v1.1.0|-|✓|-|
+|v1.2.0+|-|-|✓|
 
 ### Feature Matrix
 
@@ -41,7 +45,7 @@ After plugin installation completes, user can create volumes based on several ty
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 |v0.2.x |✓|-|-|-|-|-|
 |v1.1.0 |✓|✓|✓|✓|✓|✓|
-|v1.2.0 |✓|✓|✓|✓|✓***|✓|
+|v1.2.0+ |✓|✓|✓|✓|✓***|✓|
 
 Notes:
 - `*`: Volume Management including creating/deleting volume and mounting/unmount volume on Pod.
