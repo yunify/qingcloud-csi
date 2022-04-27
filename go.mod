@@ -4,13 +4,11 @@ go 1.16
 
 require (
 	github.com/container-storage-interface/spec v1.5.0
-	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 // indirect
 	github.com/golang/protobuf v1.3.2
 	github.com/googleapis/gnostic v0.3.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
-	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/prometheus/client_golang v1.1.0 // indirect
 	github.com/stretchr/testify v1.4.0 // indirect
 	github.com/yunify/qingcloud-sdk-go v2.0.0-alpha.37+incompatible
@@ -24,7 +22,7 @@ require (
 	k8s.io/apimachinery v0.0.0-20190823012420-8ca64af22337
 	k8s.io/apiserver v0.0.0-20190823053033-1316076af51c // indirect
 	k8s.io/client-go v0.0.0-20190823012814-cdbd92c111cf
-	k8s.io/cloud-provider v0.0.0-20190717025205-585d8110a88f // indirect
+	k8s.io/cloud-provider v0.0.0-20191212015549-86a326830157 // indirect
 	k8s.io/klog v0.4.0
 	k8s.io/kube-openapi v0.0.0-20190718094010-3cf2ea392886 // indirect
 	k8s.io/kubernetes v1.14.1

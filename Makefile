@@ -17,7 +17,7 @@
 .PHONY: all disk
 
 DISK_IMAGE_NAME=csiplugin/csi-qingcloud
-DISK_VERSION=v1.2.0-rc.4
+DISK_VERSION=v1.3.2
 ROOT_PATH=$(pwd)
 PACKAGE_LIST=./cmd/... ./pkg/...
 

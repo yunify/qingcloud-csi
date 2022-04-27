@@ -3,8 +3,6 @@
 github.com/container-storage-interface/spec/lib/go/csi
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
-# github.com/docker/distribution v2.7.1+incompatible
-## explicit
 # github.com/gogo/protobuf v1.2.2-0.20190723190241-65acae22fc9d
 github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/sortkeys
@@ -49,8 +47,6 @@ github.com/kubernetes-csi/csi-lib-utils/protosanitizer
 github.com/modern-go/concurrent
 # github.com/modern-go/reflect2 v1.0.1
 github.com/modern-go/reflect2
-# github.com/opencontainers/go-digest v1.0.0-rc1
-## explicit
 # github.com/prometheus/client_golang v1.1.0
 ## explicit
 # github.com/sirupsen/logrus v1.4.2
@@ -381,7 +377,7 @@ k8s.io/client-go/util/connrotation
 k8s.io/client-go/util/flowcontrol
 k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/retry
-# k8s.io/cloud-provider v0.0.0-20190717025205-585d8110a88f
+# k8s.io/cloud-provider v0.0.0-20191212015549-86a326830157
 ## explicit
 k8s.io/cloud-provider
 # k8s.io/klog v0.4.0
