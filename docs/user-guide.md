@@ -91,13 +91,13 @@ See details in [QingCloud docs](https://docs.qingcloud.com/product/api/action/vo
 
 |Disk|type|maxSize(GB)|minSize(GB)|stepSize(GB)|
 |:---:|:---:|:---:|:---:|:---:|
-|High Performance|0|2000|10|10|
-|High Capacity|2|5000|100|50|
-|Super High Performance|3|2000|10|10|
-|NeonSAN|5|50000|100|100|
-|NeonSAN HDD|6|50000|100|100|
+|High Performance|0|2000|20|10|
+|High Capacity|2|5000|20|10|
+|Super High Performance|3|2000|20|10|
+|NeonSAN|5|24000|20|10|
+|NeonSAN HDD|6|32000|20|10|
 |Standard|100|2000|10|10|
-|SSD Enterprise|200| 2000|10|10|
+|SSD Enterprise|200|2000|20|10|
 
 #### fsType
 Support `ext3`, `ext4`, `xfs`. Default is `ext4`.

@@ -118,30 +118,30 @@ var VolumeTypeName = map[VolumeType]string{
 
 var VolumeTypeToStepSize = map[VolumeType]int{
 	HighPerformanceVolumeType:      10,
-	HighCapacityVolumeType:         50,
+	HighCapacityVolumeType:         10,
 	SuperHighPerformanceVolumeType: 10,
-	NeonSANVolumeType:              100,
-	NeonSANHDDVolumeType:           100,
+	NeonSANVolumeType:              10,
+	NeonSANHDDVolumeType:           10,
 	StandardVolumeType:             10,
 	SSDEnterpriseVolumeType:        10,
 }
 
 var VolumeTypeToMinSize = map[VolumeType]int{
-	HighPerformanceVolumeType:      10,
-	HighCapacityVolumeType:         100,
-	SuperHighPerformanceVolumeType: 10,
-	NeonSANVolumeType:              100,
-	NeonSANHDDVolumeType:           100,
+	HighPerformanceVolumeType:      20,
+	HighCapacityVolumeType:         20,
+	SuperHighPerformanceVolumeType: 20,
+	NeonSANVolumeType:              20,
+	NeonSANHDDVolumeType:           20,
 	StandardVolumeType:             10,
-	SSDEnterpriseVolumeType:        10,
+	SSDEnterpriseVolumeType:        20,
 }
 
 var VolumeTypeToMaxSize = map[VolumeType]int{
 	HighPerformanceVolumeType:      2000,
 	HighCapacityVolumeType:         5000,
 	SuperHighPerformanceVolumeType: 2000,
-	NeonSANVolumeType:              50000,
-	NeonSANHDDVolumeType:           50000,
+	NeonSANVolumeType:              24000,
+	NeonSANHDDVolumeType:           32000,
 	StandardVolumeType:             2000,
 	SSDEnterpriseVolumeType:        2000,
 }
