@@ -163,6 +163,7 @@ func (i InstanceType) IsValid() bool {
 const (
 	HighPerformanceInstanceType         InstanceType = 0
 	SuperHighPerformanceInstanceType    InstanceType = 1
+	SANInstanceType                     InstanceType = 3
 	SuperHighPerformanceSANInstanceType InstanceType = 6
 	HighPerformanceSANInstanceType      InstanceType = 7
 	StandardInstanceType                InstanceType = 101
@@ -175,6 +176,7 @@ const (
 var InstanceTypeName = map[InstanceType]string{
 	0:   "HighPerformance",
 	1:   "SuperHighPerformance",
+	3:   "SAN",
 	6:   "SuperHighPerformanceSAN",
 	7:   "HighPerformanceSAN",
 	101: "Standard",
@@ -187,6 +189,7 @@ var InstanceTypeName = map[InstanceType]string{
 var InstanceTypeValue = map[string]InstanceType{
 	"HighPerformance":         0,
 	"SuperHighPerformance":    1,
+	"SAN":                     3,
 	"SuperHighPerformanceSAN": 6,
 	"HighPerformanceSAN":      7,
 	"Standard":                101,
@@ -199,6 +202,7 @@ var InstanceTypeValue = map[string]InstanceType{
 var InstanceTypeAttachPreferred = map[InstanceType]VolumeType{
 	HighPerformanceInstanceType:         HighPerformanceVolumeType,
 	SuperHighPerformanceInstanceType:    SuperHighPerformanceVolumeType,
+	SANInstanceType:                     NeonSANVolumeType,
 	SuperHighPerformanceSANInstanceType: NeonSANVolumeType,
 	HighPerformanceSANInstanceType:      NeonSANVolumeType,
 	StandardInstanceType:                StandardVolumeType,
@@ -232,6 +236,7 @@ var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
 	NeonSANVolumeType: {
 		HighPerformanceInstanceType,
 		SuperHighPerformanceInstanceType,
+		SANInstanceType,
 		SuperHighPerformanceSANInstanceType,
 		StandardInstanceType,
 		Enterprise1InstanceType,
@@ -242,6 +247,7 @@ var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
 	NeonSANHDDVolumeType: {
 		HighPerformanceInstanceType,
 		SuperHighPerformanceInstanceType,
+		SANInstanceType,
 		HighPerformanceSANInstanceType,
 		StandardInstanceType,
 		Enterprise1InstanceType,
