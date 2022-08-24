@@ -171,19 +171,21 @@ const (
 	Enterprise2InstanceType             InstanceType = 202
 	EnterpriseCompute3InstanceType      InstanceType = 203
 	PremiumInstanceType                 InstanceType = 301
+	NvidiaAmpereG3InstanceType          InstanceType = 1003
 )
 
 var InstanceTypeName = map[InstanceType]string{
-	0:   "HighPerformance",
-	1:   "SuperHighPerformance",
-	3:   "SAN",
-	6:   "SuperHighPerformanceSAN",
-	7:   "HighPerformanceSAN",
-	101: "Standard",
-	201: "Enterprise1",
-	202: "Enterprise2",
-	203: "EnterpriseCompute3",
-	301: "Premium",
+	0:    "HighPerformance",
+	1:    "SuperHighPerformance",
+	3:    "SAN",
+	6:    "SuperHighPerformanceSAN",
+	7:    "HighPerformanceSAN",
+	101:  "Standard",
+	201:  "Enterprise1",
+	202:  "Enterprise2",
+	203:  "EnterpriseCompute3",
+	301:  "Premium",
+	1003: "NvidiaAmpereG3",
 }
 
 var InstanceTypeValue = map[string]InstanceType{
@@ -197,6 +199,7 @@ var InstanceTypeValue = map[string]InstanceType{
 	"Enterprise2":             202,
 	"EnterpriseCompute3":      203,
 	"Premium":                 301,
+	"NvidiaAmpereG3":          1003,
 }
 
 var InstanceTypeAttachPreferred = map[InstanceType]VolumeType{
@@ -210,6 +213,7 @@ var InstanceTypeAttachPreferred = map[InstanceType]VolumeType{
 	Enterprise2InstanceType:             SSDEnterpriseVolumeType,
 	EnterpriseCompute3InstanceType:      SSDEnterpriseVolumeType,
 	PremiumInstanceType:                 SSDEnterpriseVolumeType,
+	NvidiaAmpereG3InstanceType:          NeonSANHDDVolumeType,
 }
 
 var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
@@ -225,6 +229,7 @@ var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
 		Enterprise2InstanceType,
 		EnterpriseCompute3InstanceType,
 		PremiumInstanceType,
+		NvidiaAmpereG3InstanceType,
 	},
 	SuperHighPerformanceVolumeType: {
 		SuperHighPerformanceInstanceType,
@@ -243,6 +248,7 @@ var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
 		Enterprise2InstanceType,
 		EnterpriseCompute3InstanceType,
 		PremiumInstanceType,
+		NvidiaAmpereG3InstanceType,
 	},
 	NeonSANHDDVolumeType: {
 		HighPerformanceInstanceType,
@@ -254,6 +260,7 @@ var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
 		Enterprise2InstanceType,
 		EnterpriseCompute3InstanceType,
 		PremiumInstanceType,
+		NvidiaAmpereG3InstanceType,
 	},
 	StandardVolumeType: {
 		HighPerformanceInstanceType,
