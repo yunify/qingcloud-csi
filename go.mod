@@ -10,8 +10,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/kubernetes-csi/csi-lib-utils v0.6.1
 	github.com/prometheus/client_golang v1.1.0 // indirect
-	github.com/stretchr/testify v1.4.0 // indirect
-	github.com/yunify/qingcloud-sdk-go v2.0.0-alpha.37+incompatible
+	github.com/yunify/qingcloud-sdk-go v0.0.0-20220914070741-d2213d9caf7a
 	golang.org/x/net v0.0.0-20190812203447-cdfb69ac37fc
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45 // indirect
 	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect

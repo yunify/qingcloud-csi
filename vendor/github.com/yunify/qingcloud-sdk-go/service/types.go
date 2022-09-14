@@ -1202,6 +1202,7 @@ func (v *InstanceVxNet) Validate() error {
 
 type Job struct {
 	CreateTime  *time.Time `json:"create_time" name:"create_time" format:"ISO 8601"`
+	Directive   *string    `json:"directive" name:"directive"`
 	JobAction   *string    `json:"job_action" name:"job_action"`
 	JobID       *string    `json:"job_id" name:"job_id"`
 	Owner       *string    `json:"owner" name:"owner"`
@@ -3260,8 +3261,9 @@ type VxNet struct {
 	VpcRouterID      *string    `json:"vpc_router_id" name:"vpc_router_id"`
 	VxNetID          *string    `json:"vxnet_id" name:"vxnet_id"`
 	VxNetName        *string    `json:"vxnet_name" name:"vxnet_name"`
-	// VxNetType's available values: 0, 1
-	VxNetType *int `json:"vxnet_type" name:"vxnet_type"`
+	// VxNetType's available values: 0, 1, 2
+	VxNetType *int    `json:"vxnet_type" name:"vxnet_type"`
+	ZoneID    *string `json:"zone_id" name:"zone_id"`
 }
 
 func (v *VxNet) Validate() error {
@@ -3281,7 +3283,7 @@ func (v *VxNet) Validate() error {
 	}
 
 	if v.VxNetType != nil {
-		vxnetTypeValidValues := []string{"0", "1"}
+		vxnetTypeValidValues := []string{"0", "1", "2"}
 		vxnetTypeParameterValue := fmt.Sprint(*v.VxNetType)
 
 		vxnetTypeIsValid := false

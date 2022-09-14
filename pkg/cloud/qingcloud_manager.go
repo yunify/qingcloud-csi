@@ -19,6 +19,7 @@ package cloud
 import (
 	"errors"
 	"fmt"
+
 	qcclient "github.com/yunify/qingcloud-sdk-go/client"
 	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
@@ -305,16 +306,17 @@ func (qm *qingCloudManager) CreateVolume(volName string, requestSize int, replic
 	replStr := DiskReplicaTypeName[replicas]
 	// set input value
 	input := &qcservice.CreateVolumesInput{
-		Count:      &count,
-		Repl:       &replStr,
-		Size:       &requestSize,
-		VolumeName: &volName,
-		VolumeType: &volType,
-		Zone:       &zone,
+		Count:        &count,
+		Repl:         &replStr,
+		ReplicaCount: &replicas,
+		Size:         &requestSize,
+		VolumeName:   &volName,
+		VolumeType:   &volType,
+		Zone:         &zone,
 	}
 	// 1. Create volume
-	klog.Infof("Call IaaS CreateVolume request name: %s, size: %d GB, type: %d, zone: %s, count: %d, replica: %s",
-		*input.VolumeName, *input.Size, *input.VolumeType, *input.Zone, *input.Count, *input.Repl)
+	klog.Infof("Call IaaS CreateVolume request name: %s, size: %d GB, type: %d, zone: %s, count: %d, replica: %s, replica_count: %d",
+		*input.VolumeName, *input.Size, *input.VolumeType, *input.Zone, *input.Count, *input.Repl, *input.ReplicaCount)
 	output, err := qm.volumeService.CreateVolumes(input)
 	if err != nil {
 		return "", err

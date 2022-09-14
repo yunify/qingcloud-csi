@@ -19,6 +19,7 @@ package request
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"reflect"
 	"time"
@@ -36,6 +37,29 @@ type Request struct {
 
 	HTTPRequest  *http.Request
 	HTTPResponse *http.Response
+}
+
+// DefaultCredentialProxyHost is default credential proxy host
+const DefaultCredentialProxyHost = "169.254.169.254"
+
+// DefaultCredentialProxyPort is default credential proxy port
+const DefaultCredentialProxyPort = 80
+
+// DefaultCredentialProxyProtocol is default credential proxy protocol
+const DefaultCredentialProxyProtocol = "http"
+
+// DefaultCredentialProxyURI is default credential proxy URI
+const DefaultCredentialProxyURI = "/latest/meta-data/security-credentials"
+
+// TokenOutput is the structure of token when retrieving it
+type TokenOutput struct {
+	Jti          string `json:"jti"`
+	Token        string `json:"id_token"`
+	AccessKey    string `json:"access_key"`
+	SecretAccess string `json:"secret_key"`
+	Expiration   int64  `json:"expiration"`
+	Action       string `json:"action,omitempty"`
+	RetCode      string `json:"ret_code"`
 }
 
 // New create a Request from given Operation, Input and Output.
@@ -89,6 +113,20 @@ func (r *Request) Send() error {
 }
 
 func (r *Request) check() error {
+	if r.Operation.Config.AccessKeyID == "" && r.Operation.Config.SecretAccessKey == "" || r.Operation.Config.URI == "/iam" && r.isTokenExpired() {
+		t := TokenOutput{}
+		err := t.GetToken(r.getCredentialProxyURL())
+
+		if err != nil {
+			return err
+		}
+		r.Operation.Config.AccessKeyID = t.AccessKey
+		r.Operation.Config.SecretAccessKey = t.SecretAccess
+		r.Operation.Config.URI = "/iam"
+		r.Operation.Config.Token = t.Token
+		r.Operation.Config.Expiration = t.Expiration
+	}
+
 	if r.Operation.Config.AccessKeyID == "" {
 		return errors.New("access key not provided")
 	}
@@ -168,4 +206,67 @@ func (r *Request) unpack() error {
 	}
 
 	return nil
+}
+
+// GetToken is used to get token from credential proxy server
+func (t *TokenOutput) GetToken(credentialProxyURL string) error {
+	response, err := http.Get(credentialProxyURL)
+	if err != nil {
+		return err
+	}
+
+	content, err := ioutil.ReadAll(response.Body)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = utils.JSONDecode(content, t)
+
+	return err
+}
+
+func (r *Request) isTokenExpired() bool {
+	if r.Operation.Config.Token == "" {
+		return true
+	}
+
+	now := time.Now().UTC().Unix()
+
+	return now >= r.Operation.Config.Expiration
+}
+
+func (r *Request) getCredentialProxyURL() string {
+	var credentialProxyProtocol string
+	var credentialProxyHost string
+	var credentialProxyPort int
+	var credentialProxyURI string
+
+	if r.Operation.Config.CredentialProxyProtocol != "" {
+		credentialProxyProtocol = r.Operation.Config.CredentialProxyProtocol
+	} else {
+		credentialProxyProtocol = DefaultCredentialProxyProtocol
+	}
+
+	if r.Operation.Config.CredentialProxyHost != "" {
+		credentialProxyHost = r.Operation.Config.CredentialProxyHost
+	} else {
+		credentialProxyHost = DefaultCredentialProxyHost
+	}
+
+	if r.Operation.Config.CredentialProxyPort != 0 {
+		credentialProxyPort = r.Operation.Config.CredentialProxyPort
+	} else {
+		credentialProxyPort = DefaultCredentialProxyPort
+	}
+
+	if r.Operation.Config.CredentialProxyURI != "" {
+		credentialProxyURI = r.Operation.Config.CredentialProxyURI
+	} else {
+		credentialProxyURI = DefaultCredentialProxyURI
+	}
+
+	credentialProxyURL := fmt.Sprintf("%s://%s:%d%s", credentialProxyProtocol, credentialProxyHost, credentialProxyPort, credentialProxyURI)
+
+	return credentialProxyURL
 }

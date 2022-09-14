@@ -259,9 +259,10 @@ type DescribeVxNetsInput struct {
 	Tags       []*string `json:"tags" name:"tags" location:"params"`
 	// Verbose's available values: 0, 1
 	Verbose *int `json:"verbose" name:"verbose" default:"0" location:"params"`
-	// VxNetType's available values: 0, 1
+	// VxNetType's available values: 0, 1, 2
 	VxNetType *int      `json:"vxnet_type" name:"vxnet_type" location:"params"`
 	VxNets    []*string `json:"vxnets" name:"vxnets" location:"params"`
+	Zone      *string   `json:"zone" name:"zone" location:"params"`
 }
 
 func (v *DescribeVxNetsInput) Validate() error {
@@ -287,7 +288,7 @@ func (v *DescribeVxNetsInput) Validate() error {
 	}
 
 	if v.VxNetType != nil {
-		vxnetTypeValidValues := []string{"0", "1"}
+		vxnetTypeValidValues := []string{"0", "1", "2"}
 		vxnetTypeParameterValue := fmt.Sprint(*v.VxNetType)
 
 		vxnetTypeIsValid := false
