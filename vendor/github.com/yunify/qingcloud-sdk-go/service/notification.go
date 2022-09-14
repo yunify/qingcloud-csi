@@ -76,7 +76,7 @@ type DescribeNotificationListsInput struct {
 	Limit             *int      `json:"limit" name:"limit" default:"10" location:"params"`
 	NotificationLists []*string `json:"notification_lists" name:"notification_lists" location:"params"` // Required
 	Offset            *int      `json:"offset" name:"offset" default:"0" location:"params"`
-	Owner             *string   `json:"owner" name:"owner" location:"params"` // Required
+	Owner             *string   `json:"owner" name:"owner" location:"params"`
 }
 
 func (v *DescribeNotificationListsInput) Validate() error {
@@ -84,13 +84,6 @@ func (v *DescribeNotificationListsInput) Validate() error {
 	if len(v.NotificationLists) == 0 {
 		return errors.ParameterRequiredError{
 			ParameterName: "NotificationLists",
-			ParentName:    "DescribeNotificationListsInput",
-		}
-	}
-
-	if v.Owner == nil {
-		return errors.ParameterRequiredError{
-			ParameterName: "Owner",
 			ParentName:    "DescribeNotificationListsInput",
 		}
 	}

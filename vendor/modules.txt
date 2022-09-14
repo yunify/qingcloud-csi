@@ -38,7 +38,7 @@ github.com/hashicorp/golang-lru
 github.com/hashicorp/golang-lru/simplelru
 # github.com/json-iterator/go v1.1.7
 github.com/json-iterator/go
-# github.com/konsorten/go-windows-terminal-sequences v1.0.1
+# github.com/konsorten/go-windows-terminal-sequences v1.0.3
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/kubernetes-csi/csi-lib-utils v0.6.1
 ## explicit
@@ -49,11 +49,9 @@ github.com/modern-go/concurrent
 github.com/modern-go/reflect2
 # github.com/prometheus/client_golang v1.1.0
 ## explicit
-# github.com/sirupsen/logrus v1.4.2
+# github.com/sirupsen/logrus v1.6.0
 github.com/sirupsen/logrus
-# github.com/stretchr/testify v1.4.0
-## explicit
-# github.com/yunify/qingcloud-sdk-go v2.0.0-alpha.37+incompatible
+# github.com/yunify/qingcloud-sdk-go v0.0.0-20220914070741-d2213d9caf7a
 ## explicit
 github.com/yunify/qingcloud-sdk-go/client
 github.com/yunify/qingcloud-sdk-go/config
@@ -142,7 +140,7 @@ google.golang.org/grpc/tap
 # gopkg.in/inf.v0 v0.9.1
 ## explicit
 gopkg.in/inf.v0
-# gopkg.in/yaml.v2 v2.2.2
+# gopkg.in/yaml.v2 v2.3.0
 gopkg.in/yaml.v2
 # k8s.io/api v0.0.0-20190820101039-d651a1528133
 k8s.io/api/admissionregistration/v1

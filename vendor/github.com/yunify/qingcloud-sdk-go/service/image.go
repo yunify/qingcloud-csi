@@ -238,6 +238,7 @@ type DescribeImagesInput struct {
 	Provider   *string   `json:"provider" name:"provider" location:"params"`
 	SearchWord *string   `json:"search_word" name:"search_word" location:"params"`
 	Status     []*string `json:"status" name:"status" location:"params"`
+	Tags       []*string `json:"tags" name:"tags" location:"params"`
 	// Verbose's available values: 0
 	Verbose *int `json:"verbose" name:"verbose" default:"0" location:"params"`
 	// Visibility's available values: public, private

@@ -130,6 +130,10 @@ func (b *Builder) parseRequestParams() error {
 
 	requestParams["action"] = b.operation.APIName
 
+	if b.operation.Config.URI == "/iam" {
+		requestParams["token"] = b.operation.Config.Token
+	}
+
 	if !b.input.Elem().IsValid() {
 		return nil
 	}
