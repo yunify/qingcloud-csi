@@ -72,6 +72,8 @@ const (
 	SuperHighPerformanceVolumeType VolumeType = 3
 	NeonSANVolumeType              VolumeType = 5
 	NeonSANHDDVolumeType           VolumeType = 6
+	NeonSANRDMAVolumeType          VolumeType = 7
+	ThirdPartyStorageType          VolumeType = 20
 	StandardVolumeType             VolumeType = 100
 	SSDEnterpriseVolumeType        VolumeType = 200
 	DefaultVolumeType                         = StandardVolumeType
@@ -112,6 +114,8 @@ var VolumeTypeName = map[VolumeType]string{
 	SuperHighPerformanceVolumeType: "SuperHighPerformance",
 	NeonSANVolumeType:              "NeonSAN",
 	NeonSANHDDVolumeType:           "NeonSANHDD",
+	NeonSANRDMAVolumeType:          "NeonSANRDMA",
+	ThirdPartyStorageType:          "ThirdPartyStorage",
 	StandardVolumeType:             "Standard",
 	SSDEnterpriseVolumeType:        "SSDEnterprise",
 }
@@ -122,6 +126,8 @@ var VolumeTypeToStepSize = map[VolumeType]int{
 	SuperHighPerformanceVolumeType: 10,
 	NeonSANVolumeType:              10,
 	NeonSANHDDVolumeType:           10,
+	NeonSANRDMAVolumeType:          10,
+	ThirdPartyStorageType:          10,
 	StandardVolumeType:             10,
 	SSDEnterpriseVolumeType:        10,
 }
@@ -132,6 +138,8 @@ var VolumeTypeToMinSize = map[VolumeType]int{
 	SuperHighPerformanceVolumeType: 20,
 	NeonSANVolumeType:              20,
 	NeonSANHDDVolumeType:           20,
+	NeonSANRDMAVolumeType:          450,
+	ThirdPartyStorageType:          10,
 	StandardVolumeType:             10,
 	SSDEnterpriseVolumeType:        20,
 }
@@ -142,6 +150,8 @@ var VolumeTypeToMaxSize = map[VolumeType]int{
 	SuperHighPerformanceVolumeType: 2000,
 	NeonSANVolumeType:              24000,
 	NeonSANHDDVolumeType:           32000,
+	NeonSANRDMAVolumeType:          32000,
+	ThirdPartyStorageType:          200,
 	StandardVolumeType:             2000,
 	SSDEnterpriseVolumeType:        2000,
 }
@@ -207,7 +217,7 @@ var InstanceTypeAttachPreferred = map[InstanceType]VolumeType{
 	SuperHighPerformanceInstanceType:    SuperHighPerformanceVolumeType,
 	SANInstanceType:                     NeonSANVolumeType,
 	SuperHighPerformanceSANInstanceType: NeonSANVolumeType,
-	HighPerformanceSANInstanceType:      NeonSANVolumeType,
+	HighPerformanceSANInstanceType:      NeonSANRDMAVolumeType,
 	StandardInstanceType:                StandardVolumeType,
 	Enterprise1InstanceType:             SSDEnterpriseVolumeType,
 	Enterprise2InstanceType:             SSDEnterpriseVolumeType,
@@ -227,7 +237,6 @@ var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
 		StandardInstanceType,
 		Enterprise1InstanceType,
 		Enterprise2InstanceType,
-		EnterpriseCompute3InstanceType,
 		PremiumInstanceType,
 		NvidiaAmpereG3InstanceType,
 	},
@@ -235,7 +244,6 @@ var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
 		SuperHighPerformanceInstanceType,
 		Enterprise1InstanceType,
 		Enterprise2InstanceType,
-		EnterpriseCompute3InstanceType,
 		PremiumInstanceType,
 	},
 	NeonSANVolumeType: {
@@ -261,6 +269,21 @@ var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
 		EnterpriseCompute3InstanceType,
 		PremiumInstanceType,
 		NvidiaAmpereG3InstanceType,
+	},
+	NeonSANRDMAVolumeType: {
+		HighPerformanceInstanceType,
+		SuperHighPerformanceInstanceType,
+		SANInstanceType,
+		HighPerformanceSANInstanceType,
+		StandardInstanceType,
+		Enterprise1InstanceType,
+		Enterprise2InstanceType,
+		EnterpriseCompute3InstanceType,
+		PremiumInstanceType,
+		NvidiaAmpereG3InstanceType,
+	},
+	ThirdPartyStorageType: {
+		StandardInstanceType,
 	},
 	StandardVolumeType: {
 		HighPerformanceInstanceType,

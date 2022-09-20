@@ -121,40 +121,46 @@ We can set `Immediate` or `WaitForFirstConsumer` as the value of `.volumeBinding
 
 ### Disk Type Matrix
 
-|Disk|type|
-|:----:|:----:|
-|High Performance|0|
-|High Capacity|2|
-|Super High Performance|3|
-|NeonSAN|5|
-|NeonSAN HDD|6|
-|Standard|100|
-|SSD Enterprise|200|
+|          Disk          | type |
+|:----------------------:|:----:|
+|    High Performance    |  0   |
+|     High Capacity      |  2   |
+| Super High Performance |  3   |
+|        NeonSAN         |  5   |
+|      NeonSAN HDD       |  6   |
+|      NeonSAN RDMA      |  7   |
+|  Third Party Storage   |  20  |
+|        Standard        | 100  |
+|     SSD Enterprise     | 200  |
 
 ### Instance Type Matrix
-|Instance|type|
-|:----:|:----:|
-|High Performance|0|
-|Super High Performance|1|
-|Super High Performance SAN|6|
-|High Performance SAN|7|
-|Standard|101|
-|Enterprise1|201|
-|Enterprise2|202|
-|Premium|301|
+|             Instance             | type |
+|:--------------------------------:|:----:|
+|         High Performance         |  0   |
+|      Super High Performance      |  1   |
+|    Super High Performance SAN    |  6   |
+|       High Performance SAN       |  7   |
+|             Standard             | 101  |
+|           Enterprise1            | 201  |
+|           Enterprise2            | 202  |
+|           Enterprise3            | 203  |
+|             Premium              | 301  |
+|          NvidiaAmpereG3          | 1003 |
 
 ### Disk Compatibility Matrix
 
- |          | High Performance Disk    | High Capacity Disk  | Super High Performance Disk | NeonSAN Disk | NeonSAN HDD Disk | Standard Disk| SSD Enterprise Disk|
-|-----------|------------------|------------------|-----------------|---------|----------|-------|-------|
-|High Performance Instance| ✓        | ✓                | -               | ✓      |  ✓      | ✓     | -     |
-|Super High Performance Instance| -       | ✓                | ✓               |✓      |✓     |-  |✓  |
-|Super High Performance SAN Instance| -       | -                | -              |✓      |-     |-  |-  |
-|High Performance SAN Instance| -       | -                | -               |-     |✓     |-  |-  |
-|Standard Instance| ✓        | ✓                | -               |✓  |✓ |✓ |-  |
-|Enterprise1 Instance| -       | ✓                | ✓               |✓  |✓ |-  |✓  |
-|Enterprise2 Instance| -       | ✓                | ✓               |✓  |✓ |-  |✓  |
-|Premium Instance| -       | ✓                | ✓               |✓  |✓ |-  |✓  |
+ |                                        | [0]High Performance Disk | [2]High Capacity Disk | [3]Super High Performance Disk | [5]NeonSAN Disk | [6]NeonSAN HDD Disk | [7]NeonSAN RDMA Disk | [20]Third Party Storage Disk | [100]Standard Disk | [200]SSD Enterprise Disk |
+|----------------------------------------|--------------------------|-----------------------|--------------------------------|-----------------|---------------------|---------------------|------------------------------|--------------------|--------------------------|
+| [0]High Performance Instance           | ✓                        | ✓                     | -                              | ✓               | ✓                   | ✓                   | -                            | ✓                  | -                        |
+| [1]Super High Performance Instance     | -                        | ✓                     | ✓                              | ✓               | ✓                   | ✓                   | -                            | -                  | ✓                        |
+| [6]Super High Performance SAN Instance | -                        | -                     | -                              | ✓               | -                   | -                   | -                            | -                  | -                        |
+| [7]High Performance SAN Instance       | -                        | -                     | -                              | -               | ✓                   | ✓                   | -                            | -                  | -                        |
+| [101]Standard Instance                 | ✓                        | ✓                     | -                              | ✓               | ✓                   | ✓                   | ✓                            | ✓                  | -                        |
+| [201]Enterprise1 Instance              | -                        | ✓                     | ✓                              | ✓               | ✓                   | ✓                   | -                            | -                  | ✓                        |
+| [202]Enterprise2 Instance              | -                        | ✓                     | ✓                              | ✓               | ✓                   | ✓                   | -                            | -                  | ✓                        |
+ | [203]Enterprise3 Instance              | -                        | -                     | -                              | ✓               | ✓                   | ✓                   | -                            | -                  | ✓                        |
+| [301]Premium Instance                  | -                        | ✓                     | ✓                              | ✓               | ✓                   | ✓                   | -                            | -                  | ✓                        |
+ | [1003]NvidiaAmpereG3 Instance          | -                        | ✓                     | -                              | ✓               | ✓                   | ✓                   | -                            | -                  | -                        |
 
 ## Set Snapshot Class
 ### An Example of Snapshot Class
