@@ -464,7 +464,7 @@ func (cm *qingCloudManager) DetachVolume(volumeId string, instanceId string) err
 	return nil
 }
 
-// ResizeVolume can expand the size of a volume offline
+// ResizeVolume can expand the size of a volume online
 // requestSize: GB
 func (cm *qingCloudManager) ResizeVolume(volumeId string, requestSize int) error {
 	// resize
