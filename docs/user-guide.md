@@ -30,8 +30,8 @@
     - [Delete Volume](#delete-volume)
   - [Expand Volume](#expand-volume-1)
     - [Prerequisite](#prerequisite-1)
-    - [Unmount Volume](#unmount-volume-1)
-    - [Expand Volume](#expand-volume-2)
+    - [Expand Volume Online](#expand-volume-online)
+    - [Expand Volume Offline](#expand-volume-offline)
     - [Check](#check)
   - [Clone Volume](#clone-volume)
     - [Prerequisite](#prerequisite-2)
@@ -247,11 +247,7 @@ Error from server (NotFound): persistentvolumeclaims "pvc-example" not found
 ```
 
 ## Expand Volume
-This feature could expand the capacity of volume. This plugin only supports offline volume expansion. The procedure of offline volume expansion is shown as follows. 
-1. Ensure volume in unmounted status
-2. Edit the capacity of PVC
-3. Mount volume on workload
-Please reference [Example YAML files](https://github.com/yunify/qingcloud-csi/tree/master/deploy/disk/volume)。
+This feature could expand the capacity of volume.
 
 ### Prerequisite
 - Kubernetes 1.17+ cluster
@@ -259,12 +255,40 @@ Please reference [Example YAML files](https://github.com/yunify/qingcloud-csi/tr
 - Set `allowVolumeExpansion` as `true` in storage class
 - Create a Pod mounting a volume
 
-### Unmount Volume
+### Expand Volume Online
+csi-qingcloud support online volume expansion from v1.3.6.
+- Change volume capacity
+```console
+$ kubectl patch pvc pvc-example -p '{"spec":{"resources":{"requests":{"storage": "40Gi"}}}}'
+persistentvolumeclaim/pvc-example patched
+```
+- Check volume capacity
+```console
+$ kubectl get pvc pvc-example
+NAME          STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS    AGE
+pvc-example   Bound    pvc-906f5760-a935-11e9-9a6a-5254ef68c8c1   40Gi       RWO            csi-qingcloud   6m7s
+$ kubectl get po
+NAME                            READY   STATUS    RESTARTS   AGE
+deploy-nginx-6c444c9b7f-d6n29   1/1     Running   0          3m38s
+```
+- check
+```console
+$ kubectl exec -ti deploy-nginx-84474cf674-zfhbs /bin/bash
+# df -hl | grep /mnt
+/dev/vdg         40G   48M   40G   1% /mnt
+```
+### Expand Volume Offline
+For previous versions, csi-qingcloud only supports offline volume expansion. The procedure of offline volume expansion is shown as follows. 
+1. Ensure volume in unmounted status
+2. Edit the capacity of PVC
+3. Mount volume on workload. Reference [Example YAML files](https://github.com/yunify/qingcloud-csi/tree/master/deploy/disk/volume)
+
+#### Unmount Volume
 ```console
 $ kubectl scale deploy deploy-nginx --replicas=0
 ```
 
-### Expand Volume
+#### Expand Volume
 - Change volume capacity
 ```console
 $ kubectl patch pvc pvc-example -p '{"spec":{"resources":{"requests":{"storage": "40Gi"}}}}'
@@ -284,7 +308,7 @@ NAME                            READY   STATUS    RESTARTS   AGE
 deploy-nginx-6c444c9b7f-d6n29   1/1     Running   0          3m38s
 ```
 
-### Check
+#### Check
 ```console
 $ kubectl exec -ti deploy-nginx-6c444c9b7f-d6n29 /bin/bash
 root@deploy-nginx-6c444c9b7f-d6n29:/# s

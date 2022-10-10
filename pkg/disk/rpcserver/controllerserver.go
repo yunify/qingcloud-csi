@@ -690,12 +690,6 @@ func (cs *ControllerServer) ControllerExpandVolume(ctx context.Context, req *csi
 		}, nil
 	}
 
-	// volume in use
-	if *volInfo.Status == cloud.DiskStatusInuse {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"volume %s currently published on a node but plugin only support OFFLINE expansion", volumeId)
-	}
-
 	// 3. Try to expand volume
 	if requiredSizeBytes%common.Gib != 0 {
 		return nil, status.Errorf(codes.OutOfRange, "required size bytes %d cannot be divided into Gib %d",
