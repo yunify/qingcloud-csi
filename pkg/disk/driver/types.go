@@ -304,5 +304,6 @@ var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
 const (
 	DiskSingleReplicaType  int = 1
 	DiskMultiReplicaType   int = 2
+	DiskThreeReplicaType   int = 3
 	DefaultDiskReplicaType int = DiskMultiReplicaType
 )

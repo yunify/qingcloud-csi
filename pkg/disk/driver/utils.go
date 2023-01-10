@@ -17,17 +17,20 @@ limitations under the License.
 package driver
 
 import (
+	"io/ioutil"
+	"strings"
+
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"github.com/yunify/qingcloud-csi/pkg/common"
-	"io/ioutil"
 	"k8s.io/klog"
-	"strings"
 )
 
 // Check replica
 // Support: 2 MultiReplicas, 1 SingleReplica
 func IsValidReplica(replica int) bool {
 	switch replica {
+	case DiskThreeReplicaType:
+		return true
 	case DiskMultiReplicaType:
 		return true
 	case DiskSingleReplicaType:
