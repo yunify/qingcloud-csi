@@ -59,9 +59,10 @@ func NewNodeServer(d *driver.DiskDriver, c cloud.CloudManager, mnt *mount.SafeFo
 // If the volume corresponding to the volume id has already been published at the specified target path,
 // and is compatible with the specified volume capability and readonly flag, the plugin MUST reply 0 OK.
 // csi.NodePublishVolumeRequest:	volume id			+ Required
-//									target path			+ Required
-//									volume capability	+ Required
-//									read only			+ Required (This field is NOT provided when requesting in Kubernetes)
+//
+//	target path			+ Required
+//	volume capability	+ Required
+//	read only			+ Required (This field is NOT provided when requesting in Kubernetes)
 func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.
 	NodePublishVolumeResponse, error) {
 	funcName := "NodePublishVolume"
@@ -152,7 +153,8 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 }
 
 // csi.NodeUnpublishVolumeRequest:	volume id	+ Required
-//									target path	+ Required
+//
+//	target path	+ Required
 func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.
 	NodeUnpublishVolumeResponse, error) {
 	funcName := "NodeUnpublishVolume"
@@ -197,8 +199,9 @@ func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 
 // This operation MUST be idempotent
 // csi.NodeStageVolumeRequest: 	volume id			+ Required
-//								stage target path	+ Required
-//								volume capability	+ Required
+//
+//	stage target path	+ Required
+//	volume capability	+ Required
 func (ns *NodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRequest) (*csi.NodeStageVolumeResponse,
 	error) {
 	funcName := "NodeStageVolume"
@@ -266,12 +269,15 @@ func (ns *NodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 
 	// get device path
 	devicePath := ""
+	devicePrefix := "/dev/disk/by-id/virtio-"
 	if volInfo.Instance != nil && volInfo.Instance.Device != nil && *volInfo.Instance.Device != "" {
-		devicePath = *volInfo.Instance.Device
+		// devicePath = *volInfo.Instance.Device
+		devicePath = devicePrefix + volumeId
 		klog.Infof("Find volume %s's device path is %s", volumeId, devicePath)
 	} else {
 		return nil, status.Errorf(codes.Internal, "Cannot find device path of volume %s", volumeId)
 	}
+
 	// do mount
 	klog.Infof("Mounting %s to %s format %s...", volumeId, targetPath, fsType)
 	if err := ns.mounter.FormatAndMount(devicePath, targetPath, fsType, []string{}); err != nil {
@@ -283,7 +289,9 @@ func (ns *NodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 
 // This operation MUST be idempotent
 // csi.NodeUnstageVolumeRequest:	volume id	+ Required
-//									target path	+ Required
+//
+//	target path	+ Required
+//
 // In block volume mode, the target path is never mounted to
 // so this call will be a no-op
 func (ns *NodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.
@@ -397,8 +405,9 @@ func (ns *NodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoReque
 
 // NodeExpandVolume will expand filesystem of volume.
 // Input Parameters:
-//  volume id: REQUIRED
-//  volume path: REQUIRED
+//
+//	volume id: REQUIRED
+//	volume path: REQUIRED
 func (ns *NodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandVolumeRequest) (
 	*csi.NodeExpandVolumeResponse, error) {
 	funcName := "NodeExpandVolume"
@@ -476,8 +485,9 @@ func (ns *NodeServer) NodeExpandVolume(ctx context.Context, req *csi.NodeExpandV
 
 // NodeGetVolumeStats
 // Input Arguments:
-//  volume id: REQUIRED
-//  volume path: REQUIRED
+//
+//	volume id: REQUIRED
+//	volume path: REQUIRED
 func (ns *NodeServer) NodeGetVolumeStats(ctx context.Context,
 	req *csi.NodeGetVolumeStatsRequest) (*csi.NodeGetVolumeStatsResponse, error) {
 	funcName := "NodeGetVolumeStats"
