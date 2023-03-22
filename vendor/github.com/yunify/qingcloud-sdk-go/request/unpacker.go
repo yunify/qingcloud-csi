@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strings"
 
 	"github.com/yunify/qingcloud-sdk-go/logger"
 	"github.com/yunify/qingcloud-sdk-go/request/data"
@@ -57,7 +58,14 @@ func (u *Unpacker) UnpackHTTPRequest(o *data.Operation, r *http.Response, x *ref
 
 func (u *Unpacker) parseResponse() error {
 	if u.httpResponse.StatusCode == 200 {
-		if u.httpResponse.Header.Get("Content-Type") == "application/json" {
+		var resp = u.httpResponse
+		if resp == nil {
+			return fmt.Errorf("http response is nil point")
+		}
+
+		var contentType = resp.Header.Get("Content-Type")
+
+		if strings.HasPrefix(contentType, "application/json") {
 			buffer := &bytes.Buffer{}
 			buffer.ReadFrom(u.httpResponse.Body)
 			u.httpResponse.Body.Close()

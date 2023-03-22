@@ -17,7 +17,7 @@
 .PHONY: all disk
 
 DISK_IMAGE_NAME=csiplugin/csi-qingcloud
-DISK_VERSION=v1.3.7
+DISK_VERSION=v1.3.8
 ROOT_PATH=$(pwd)
 PACKAGE_LIST=./cmd/... ./pkg/...
 
@@ -55,3 +55,6 @@ sanity-test:
 clean:
 	go clean -r -x ./...
 	rm -rf ./_output
+
+push:
+	docker buildx build -t ${DISK_IMAGE_NAME}:${DISK_VERSION}   --platform=linux/amd64,linux/arm64 -f deploy/disk/docker/Dockerfile . --push

@@ -76,8 +76,9 @@ func NewQingCloudManagerFromFile(filePath string) (*qingCloudManager, error) {
 
 // Find snapshot by snapshot id
 // Return: 	nil,	nil: 	not found snapshot
-//			snapshot, nil: 	found snapshot
-//			nil, 	error:	internal error
+//
+//	snapshot, nil: 	found snapshot
+//	nil, 	error:	internal error
 func (cm *qingCloudManager) FindSnapshot(id string) (snapshot *qcservice.Snapshot, err error) {
 	verboseMode := EnableDescribeSnapshotVerboseMode
 	// Set DescribeSnapshot input
@@ -121,8 +122,9 @@ func (cm *qingCloudManager) FindSnapshot(id string) (snapshot *qcservice.Snapsho
 // In Kubernetes, the CO will set a unique PV name.
 // CSI driver take the PV name as a snapshot name.
 // Return: 	nil, 		nil: 	not found snapshots
-//			snapshots,	nil:	found snapshot
-//			nil,		error:	internal error
+//
+//	snapshots,	nil:	found snapshot
+//	nil,		error:	internal error
 func (cm *qingCloudManager) FindSnapshotByName(name string) (snapshot *qcservice.Snapshot, err error) {
 	if len(name) == 0 {
 		return nil, nil
@@ -130,8 +132,8 @@ func (cm *qingCloudManager) FindSnapshotByName(name string) (snapshot *qcservice
 	verboseMode := EnableDescribeSnapshotVerboseMode
 	// Set input arguments
 	input := &qcservice.DescribeSnapshotsInput{
-		SearchWord: &name,
-		Verbose:    &verboseMode,
+		SnapshotName: &name,
+		Verbose:      &verboseMode,
 	}
 	// Call DescribeSnapshot
 	output, err := cm.snapshotService.DescribeSnapshots(input)
@@ -215,8 +217,9 @@ func (sm *qingCloudManager) DeleteSnapshot(snapshotId string) error {
 
 // Find volume by volume ID
 // Return: 	nil,	nil: 	not found volumes
-//			volume, nil: 	found volume
-//			nil, 	error:	internal error
+//
+//	volume, nil: 	found volume
+//	nil, 	error:	internal error
 func (cm *qingCloudManager) FindVolume(id string) (volInfo *qcservice.Volume, err error) {
 	// Set DescribeVolumes input
 	input := &qcservice.DescribeVolumesInput{
@@ -259,8 +262,9 @@ func (cm *qingCloudManager) FindVolume(id string) (volInfo *qcservice.Volume, er
 // In Kubernetes, the CO will set a unique PV name.
 // CSI driver take the PV name as a volume name.
 // Return: 	nil, 		nil: 	not found volumes
-//			volumes,	nil:	found volume
-//			nil,		error:	internal error
+//
+//	volumes,	nil:	found volume
+//	nil,		error:	internal error
 func (cm *qingCloudManager) FindVolumeByName(name string) (volume *qcservice.Volume, err error) {
 	if len(name) == 0 {
 		return nil, nil
@@ -499,8 +503,9 @@ func (cm *qingCloudManager) ResizeVolume(volumeId string, requestSize int) error
 
 // CloneVolume clones a volume
 // Return:
-//   volume id, nil: succeed to clone volume and return volume id
-//   nil, error: failed to clone volume
+//
+//	volume id, nil: succeed to clone volume and return volume id
+//	nil, error: failed to clone volume
 func (qm *qingCloudManager) CloneVolume(volName string, volType int, srcVolId string, zone string) (newVolId string,
 	err error) {
 	// 0. Set CreateVolume args
@@ -536,8 +541,9 @@ func (qm *qingCloudManager) CloneVolume(volName string, volType int, srcVolId st
 
 // Find instance by instance ID
 // Return: 	nil,	nil: 	not found instance
-//			instance, nil: 	found instance
-//			nil, 	error:	internal error
+//
+//	instance, nil: 	found instance
+//	nil, 	error:	internal error
 func (cm *qingCloudManager) FindInstance(id string) (instance *qcservice.Instance, err error) {
 	seeAppCluster := EnableDescribeInstanceAppCluster
 	verboseMode := EnableDescribeInstanceVerboseMode
