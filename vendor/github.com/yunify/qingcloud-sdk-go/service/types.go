@@ -597,7 +597,7 @@ type ClusterNode struct {
     RootUserID                 *string     `json:"root_user_id" name:"root_user_id"`
     ScaleInService             interface{} `json:"scale_in_service" name:"scale_in_service"`
     ScaleOutService            interface{} `json:"scale_out_service" name:"scale_out_service"`
-    SecurityGroup              *string     `json:"security_group" name:"security_group"`
+    SecurityGroup              interface{} `json:"security_group" name:"security_group"`
     ServerID                   *int        `json:"server_id" name:"server_id"`
     ServerIDUpperBound         *int        `json:"server_id_upper_bound" name:"server_id_upper_bound"`
     SingleNodeRepl             *string     `json:"single_node_repl" name:"single_node_repl"`

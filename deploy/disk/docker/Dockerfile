@@ -14,7 +14,7 @@
 # | limitations under the License.
 # +-------------------------------------------------------------------------
 
-FROM golang:1.16.7-alpine as builder
+FROM golang:1.19-alpine as builder
 WORKDIR /qingcloud-csi
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -mod=vendor  -ldflags "-s -w" -o  _output/qingcloud-disk-csi-driver ./cmd/disk

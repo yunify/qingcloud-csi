@@ -51,7 +51,7 @@ github.com/modern-go/reflect2
 ## explicit
 # github.com/sirupsen/logrus v1.6.0
 github.com/sirupsen/logrus
-# github.com/yunify/qingcloud-sdk-go v0.0.0-20220919105434-86f5ff120dad
+# github.com/yunify/qingcloud-sdk-go v0.0.0-20230406022709-e32d107bcab7
 ## explicit
 github.com/yunify/qingcloud-sdk-go/client
 github.com/yunify/qingcloud-sdk-go/config

@@ -363,7 +363,8 @@ type DescribeSnapshotsInput struct {
 	Status       []*string `json:"status" name:"status" location:"params"`
 	Tags         []*string `json:"tags" name:"tags" location:"params"`
 	// Verbose's available values: 0, 1
-	Verbose *int `json:"verbose" name:"verbose" default:"0" location:"params"`
+	Verbose      *int    `json:"verbose" name:"verbose" default:"0" location:"params"`
+	SnapshotName *string `json:"snapshot_name" name:"snapshot_name" location:"params"`
 }
 
 func (v *DescribeSnapshotsInput) Validate() error {

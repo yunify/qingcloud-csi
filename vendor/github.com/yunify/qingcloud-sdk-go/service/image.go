@@ -268,7 +268,7 @@ func (v *DescribeImagesInput) Validate() error {
 	}
 
 	if v.Provider != nil {
-		providerValidValues := []string{"system", "self"}
+		providerValidValues := []string{"system", "self", "shared"}
 		providerParameterValue := fmt.Sprint(*v.Provider)
 
 		providerIsValid := false
