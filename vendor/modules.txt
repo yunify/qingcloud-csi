@@ -182,7 +182,7 @@ k8s.io/api/storage/v1alpha1
 k8s.io/api/storage/v1beta1
 # k8s.io/apiextensions-apiserver v0.0.0-20190823014223-07b4561f8b0e
 ## explicit
-# k8s.io/apimachinery v0.0.0-20190823012420-8ca64af22337
+# k8s.io/apimachinery v0.15.7
 ## explicit
 k8s.io/apimachinery/pkg/api/errors
 k8s.io/apimachinery/pkg/api/meta

@@ -18,7 +18,7 @@ require (
 	google.golang.org/grpc v1.26.0
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/apiextensions-apiserver v0.0.0-20190823014223-07b4561f8b0e // indirect
-	k8s.io/apimachinery v0.0.0-20190823012420-8ca64af22337
+	k8s.io/apimachinery v0.15.7
 	k8s.io/apiserver v0.0.0-20190823053033-1316076af51c // indirect
 	k8s.io/client-go v0.0.0-20190823012814-cdbd92c111cf
 	k8s.io/cloud-provider v0.0.0-20191212015549-86a326830157 // indirect
