@@ -74,6 +74,7 @@ func (c *Config) TransportConfig() (*transport.Config, error) {
 			CertData:   c.CertData,
 			KeyFile:    c.KeyFile,
 			KeyData:    c.KeyData,
+			NextProtos: c.NextProtos,
 		},
 		Username:        c.Username,
 		Password:        c.Password,
@@ -84,7 +85,8 @@ func (c *Config) TransportConfig() (*transport.Config, error) {
 			Groups:   c.Impersonate.Groups,
 			Extra:    c.Impersonate.Extra,
 		},
-		Dial: c.Dial,
+		Dial:  c.Dial,
+		Proxy: c.Proxy,
 	}
 
 	if c.ExecProvider != nil && c.AuthProvider != nil {
