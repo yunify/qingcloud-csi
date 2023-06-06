@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/yunify/qingcloud-csi/pkg/disk/driver"
 	qcclient "github.com/yunify/qingcloud-sdk-go/client"
 	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
@@ -301,7 +302,7 @@ func (cm *qingCloudManager) FindVolumeByName(name string) (volume *qcservice.Vol
 // 1. format volume size
 // 2. create volume
 // 3. wait job
-func (qm *qingCloudManager) CreateVolume(volName string, requestSize int, replicas int, volType int, zone string) (
+func (qm *qingCloudManager) CreateVolume(volName string, requestSize int, replicas int, volType int, zone string, containerConfID string) (
 	newVolId string, err error) {
 	// 0. Set CreateVolume args
 	// create volume count
@@ -318,9 +319,16 @@ func (qm *qingCloudManager) CreateVolume(volName string, requestSize int, replic
 		VolumeType:   &volType,
 		Zone:         &zone,
 	}
+	if volType == int(driver.ThirdPartyStorageType) {
+		input.ContainerConfID = &containerConfID
+		klog.Infof("Call IaaS CreateVolume request name: %s, size: %d GB, type: %d, zone: %s, count: %d, replica: %s, replica_count: %d, container_conf_id: %s",
+			*input.VolumeName, *input.Size, *input.VolumeType, *input.Zone, *input.Count, *input.Repl, *input.ReplicaCount, *input.ContainerConfID)
+	} else {
+		klog.Infof("Call IaaS CreateVolume request name: %s, size: %d GB, type: %d, zone: %s, count: %d, replica: %s, replica_count: %d",
+			*input.VolumeName, *input.Size, *input.VolumeType, *input.Zone, *input.Count, *input.Repl, *input.ReplicaCount)
+	}
+
 	// 1. Create volume
-	klog.Infof("Call IaaS CreateVolume request name: %s, size: %d GB, type: %d, zone: %s, count: %d, replica: %s, replica_count: %d",
-		*input.VolumeName, *input.Size, *input.VolumeType, *input.Zone, *input.Count, *input.Repl, *input.ReplicaCount)
 	output, err := qm.volumeService.CreateVolumes(input)
 	if err != nil {
 		return "", err

@@ -18,11 +18,12 @@ package mock
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/yunify/qingcloud-csi/pkg/cloud"
 	"github.com/yunify/qingcloud-csi/pkg/common"
 	qcconfig "github.com/yunify/qingcloud-sdk-go/config"
 	qcservice "github.com/yunify/qingcloud-sdk-go/service"
-	"time"
 )
 
 var _ cloud.CloudManager = &MockCloudManager{}
@@ -159,7 +160,7 @@ func (m *MockCloudManager) FindVolumeByName(volName string) (volInfo *qcservice.
 	return nil, nil
 }
 
-func (m *MockCloudManager) CreateVolume(volName string, requestSize int, replicas int, volType int, zone string) (
+func (m *MockCloudManager) CreateVolume(volName string, requestSize int, replicas int, volType int, zone string, containerConfID string) (
 	volId string, err error) {
 	exVol, err := m.FindVolumeByName(volName)
 	if err != nil {

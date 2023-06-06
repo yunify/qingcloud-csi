@@ -60,7 +60,8 @@ var _ csi.ControllerServer = &ControllerServer{}
 // 2. Restore volume from snapshot: CREATE_DELETE_VOLUME and CREATE_DELETE_SNAPSHOT
 // 3. Clone volume: CREATE_DELETE_VOLUME and CLONE_VOLUME
 // csi.CreateVolumeRequest: name 				+Required
-//							capability			+Required
+//
+//	capability			+Required
 func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse,
 	error) {
 	funcName := "CreateVolume"
@@ -161,7 +162,7 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		requiredSizeGib := common.ByteCeilToGib(requiredSizeByte)
 		klog.Infof("%s: Creating empty volume %s with %d Gib in zone %s...", hash, volName, requiredSizeGib,
 			top.GetZone())
-		newVolId, err := cs.cloud.CreateVolume(volName, requiredSizeGib, sc.GetReplica(), sc.GetDiskType().Int(), top.GetZone())
+		newVolId, err := cs.cloud.CreateVolume(volName, requiredSizeGib, sc.GetReplica(), sc.GetDiskType().Int(), top.GetZone(), sc.GetContainerConfID())
 		if err != nil {
 			klog.Errorf("%s: Failed to create volume %s, error: %v", hash, volName, err)
 			return nil, status.Error(codes.Internal, err.Error())
@@ -395,9 +396,10 @@ func (cs *ControllerServer) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 }
 
 // csi.ControllerPublishVolumeRequest: 	volume id 			+ Required
-//										node id				+ Required
-//										volume capability 	+ Required
-//										readonly			+ Required (This field is NOT provided when requesting in Kubernetes)
+//
+//	node id				+ Required
+//	volume capability 	+ Required
+//	readonly			+ Required (This field is NOT provided when requesting in Kubernetes)
 func (cs *ControllerServer) ControllerPublishVolume(ctx context.Context, req *csi.ControllerPublishVolumeRequest) (*csi.
 	ControllerPublishVolumeResponse, error) {
 	funcName := "ControllerPublishVolume"
@@ -585,7 +587,8 @@ func (cs *ControllerServer) ControllerUnpublishVolume(ctx context.Context, req *
 
 // This operation MUST be idempotent
 // csi.ValidateVolumeCapabilitiesRequest: 	volume id 			+ Required
-// 											volume capability 	+ Required
+//
+//	volume capability 	+ Required
 func (cs *ControllerServer) ValidateVolumeCapabilities(ctx context.Context, req *csi.ValidateVolumeCapabilitiesRequest) (*csi.
 	ValidateVolumeCapabilitiesResponse, error) {
 	funcName := "ValidateVolumeCapabilities"

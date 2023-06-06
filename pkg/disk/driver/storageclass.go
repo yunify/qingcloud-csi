@@ -27,23 +27,25 @@ import (
 )
 
 const (
-	StorageClassTypeName     = "type"
-	StorageClassMaxSizeName  = "maxSize"
-	StorageClassMinSizeName  = "minSize"
-	StorageClassStepSizeName = "stepSize"
-	StorageClassFsTypeName   = "fsType"
-	StorageClassReplicaName  = "replica"
-	StorageClassTagsName     = "tags"
+	StorageClassTypeName        = "type"
+	StorageClassMaxSizeName     = "maxSize"
+	StorageClassMinSizeName     = "minSize"
+	StorageClassStepSizeName    = "stepSize"
+	StorageClassFsTypeName      = "fsType"
+	StorageClassReplicaName     = "replica"
+	StorageClassTagsName        = "tags"
+	StorageClassContainerConfID = "containerConfID"
 )
 
 type QingStorageClass struct {
-	diskType VolumeType
-	maxSize  int
-	minSize  int
-	stepSize int
-	fsType   string
-	replica  int
-	tags     []string
+	diskType        VolumeType
+	maxSize         int
+	minSize         int
+	stepSize        int
+	fsType          string
+	replica         int
+	tags            []string
+	containerConfID string
 }
 
 // NewDefaultQingStorageClassFromType create default qingStorageClass by specified volume type
@@ -67,6 +69,7 @@ func NewQingStorageClassFromMap(opt map[string]string, topology *Topology) (*Qin
 	maxSize, minSize, stepSize := -1, -1, -1
 	fsType := ""
 	replica := -1
+	containerConfID := ""
 	var tags []string
 	for k, v := range opt {
 		switch strings.ToLower(k) {
@@ -113,6 +116,8 @@ func NewQingStorageClassFromMap(opt map[string]string, topology *Topology) (*Qin
 			if len(v) > 0 {
 				tags = strings.Split(strings.ReplaceAll(v, " ", ""), ",")
 			}
+		case strings.ToLower(StorageClassContainerConfID):
+			containerConfID = v
 		}
 	}
 
@@ -143,6 +148,7 @@ func NewQingStorageClassFromMap(opt map[string]string, topology *Topology) (*Qin
 	_ = sc.setFsType(fsType)
 	_ = sc.setReplica(replica)
 	sc.setTags(tags)
+	sc.setContainerConfID(containerConfID)
 	return sc, nil
 }
 
@@ -171,6 +177,10 @@ func (sc QingStorageClass) GetReplica() int {
 
 func (sc QingStorageClass) GetTags() []string {
 	return sc.tags
+}
+
+func (sc QingStorageClass) GetContainerConfID() string {
+	return sc.containerConfID
 }
 
 func (sc *QingStorageClass) setFsType(fs string) error {
@@ -203,6 +213,10 @@ func (sc *QingStorageClass) setTypeSize(maxSize, minSize, stepSize int) error {
 
 func (sc *QingStorageClass) setTags(tagsStr []string) {
 	sc.tags = tagsStr
+}
+
+func (sc *QingStorageClass) setContainerConfID(containerConfID string) {
+	sc.containerConfID = containerConfID
 }
 
 // FormatVolumeSize transfer to proper volume size
