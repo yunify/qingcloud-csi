@@ -17,13 +17,13 @@
 package service
 
 import (
-    "fmt"
-    "time"
+	"fmt"
+	"time"
 
-    "github.com/yunify/qingcloud-sdk-go/config"
-    "github.com/yunify/qingcloud-sdk-go/request"
-    "github.com/yunify/qingcloud-sdk-go/request/data"
-    "github.com/yunify/qingcloud-sdk-go/request/errors"
+	"github.com/yunify/qingcloud-sdk-go/config"
+	"github.com/yunify/qingcloud-sdk-go/request"
+	"github.com/yunify/qingcloud-sdk-go/request/data"
+	"github.com/yunify/qingcloud-sdk-go/request/errors"
 )
 
 var _ fmt.State
@@ -32,529 +32,530 @@ var _ time.Time
 var _volumeTypeValidValues = []string{"0", "1", "2", "3", "4", "5", "6", "7", "10", "20", "100", "200"}
 
 type VolumeService struct {
-    Config     *config.Config
-    Properties *VolumeServiceProperties
+	Config     *config.Config
+	Properties *VolumeServiceProperties
 }
 
 type VolumeServiceProperties struct {
-    // QingCloud Zone ID
-    Zone *string `json:"zone" name:"zone"` // Required
+	// QingCloud Zone ID
+	Zone *string `json:"zone" name:"zone"` // Required
 }
 
 func (s *QingCloudService) Volume(zone string) (*VolumeService, error) {
-    properties := &VolumeServiceProperties{
-        Zone: &zone,
-    }
+	properties := &VolumeServiceProperties{
+		Zone: &zone,
+	}
 
-    return &VolumeService{Config: s.Config, Properties: properties}, nil
+	return &VolumeService{Config: s.Config, Properties: properties}, nil
 }
 
 // Documentation URL: https://docs.qingcloud.com/api/volume/attach_volumes.html
 func (s *VolumeService) AttachVolumes(i *AttachVolumesInput) (*AttachVolumesOutput, error) {
-    if i == nil {
-        i = &AttachVolumesInput{}
-    }
-    o := &data.Operation{
-        Config:        s.Config,
-        Properties:    s.Properties,
-        APIName:       "AttachVolumes",
-        RequestMethod: "GET",
-    }
+	if i == nil {
+		i = &AttachVolumesInput{}
+	}
+	o := &data.Operation{
+		Config:        s.Config,
+		Properties:    s.Properties,
+		APIName:       "AttachVolumes",
+		RequestMethod: "GET",
+	}
 
-    x := &AttachVolumesOutput{}
-    r, err := request.New(o, i, x)
-    if err != nil {
-        return nil, err
-    }
+	x := &AttachVolumesOutput{}
+	r, err := request.New(o, i, x)
+	if err != nil {
+		return nil, err
+	}
 
-    err = r.Send()
-    if err != nil {
-        return nil, err
-    }
+	err = r.Send()
+	if err != nil {
+		return nil, err
+	}
 
-    return x, err
+	return x, err
 }
 
 type AttachVolumesInput struct {
-    Instance *string   `json:"instance" name:"instance" location:"params"` // Required
-    Volumes  []*string `json:"volumes" name:"volumes" location:"params"`   // Required
+	Instance *string   `json:"instance" name:"instance" location:"params"` // Required
+	Volumes  []*string `json:"volumes" name:"volumes" location:"params"`   // Required
 }
 
 func (v *AttachVolumesInput) Validate() error {
 
-    if v.Instance == nil {
-        return errors.ParameterRequiredError{
-            ParameterName: "Instance",
-            ParentName:    "AttachVolumesInput",
-        }
-    }
+	if v.Instance == nil {
+		return errors.ParameterRequiredError{
+			ParameterName: "Instance",
+			ParentName:    "AttachVolumesInput",
+		}
+	}
 
-    if len(v.Volumes) == 0 {
-        return errors.ParameterRequiredError{
-            ParameterName: "Volumes",
-            ParentName:    "AttachVolumesInput",
-        }
-    }
+	if len(v.Volumes) == 0 {
+		return errors.ParameterRequiredError{
+			ParameterName: "Volumes",
+			ParentName:    "AttachVolumesInput",
+		}
+	}
 
-    return nil
+	return nil
 }
 
 type AttachVolumesOutput struct {
-    Message *string `json:"message" name:"message"`
-    Action  *string `json:"action" name:"action" location:"elements"`
-    JobID   *string `json:"job_id" name:"job_id" location:"elements"`
-    RetCode *int    `json:"ret_code" name:"ret_code" location:"elements"`
+	Message *string `json:"message" name:"message"`
+	Action  *string `json:"action" name:"action" location:"elements"`
+	JobID   *string `json:"job_id" name:"job_id" location:"elements"`
+	RetCode *int    `json:"ret_code" name:"ret_code" location:"elements"`
 }
 
 // Documentation URL: https://docs.qingcloud.com
 func (s *VolumeService) CloneVolumes(i *CloneVolumesInput) (*CloneVolumesOutput, error) {
-    if i == nil {
-        i = &CloneVolumesInput{}
-    }
-    o := &data.Operation{
-        Config:        s.Config,
-        Properties:    s.Properties,
-        APIName:       "CloneVolumes",
-        RequestMethod: "GET",
-    }
+	if i == nil {
+		i = &CloneVolumesInput{}
+	}
+	o := &data.Operation{
+		Config:        s.Config,
+		Properties:    s.Properties,
+		APIName:       "CloneVolumes",
+		RequestMethod: "GET",
+	}
 
-    x := &CloneVolumesOutput{}
-    r, err := request.New(o, i, x)
-    if err != nil {
-        return nil, err
-    }
+	x := &CloneVolumesOutput{}
+	r, err := request.New(o, i, x)
+	if err != nil {
+		return nil, err
+	}
 
-    err = r.Send()
-    if err != nil {
-        return nil, err
-    }
+	err = r.Send()
+	if err != nil {
+		return nil, err
+	}
 
-    return x, err
+	return x, err
 }
 
 type CloneVolumesInput struct {
-    Count      *int    `json:"count" name:"count" default:"1" location:"params"`
-    SubZones   *string `json:"sub_zones" name:"sub_zones" location:"params"`
-    Volume     *string `json:"volume" name:"volume" location:"params"` // Required
-    VolumeName *string `json:"volume_name" name:"volume_name" location:"params"`
-    VolumeType *int    `json:"volume_type" name:"volume_type" default:"0" location:"params"`
-    Zone       *string `json:"zone" name:"zone" location:"params"`
+	Count      *int    `json:"count" name:"count" default:"1" location:"params"`
+	SubZones   *string `json:"sub_zones" name:"sub_zones" location:"params"`
+	Volume     *string `json:"volume" name:"volume" location:"params"` // Required
+	VolumeName *string `json:"volume_name" name:"volume_name" location:"params"`
+	VolumeType *int    `json:"volume_type" name:"volume_type" default:"0" location:"params"`
+	Zone       *string `json:"zone" name:"zone" location:"params"`
 }
 
 func (v *CloneVolumesInput) Validate() error {
 
-    if v.Volume == nil {
-        return errors.ParameterRequiredError{
-            ParameterName: "Volume",
-            ParentName:    "CloneVolumesInput",
-        }
-    }
+	if v.Volume == nil {
+		return errors.ParameterRequiredError{
+			ParameterName: "Volume",
+			ParentName:    "CloneVolumesInput",
+		}
+	}
 
-    if v.VolumeType != nil {
-        volumeTypeIsValid := false
-        volumeTypeParameterValue := fmt.Sprint(*v.VolumeType)
-        for _, value := range _volumeTypeValidValues {
-            if value == volumeTypeParameterValue {
-                volumeTypeIsValid = true
-            }
-        }
+	if v.VolumeType != nil {
+		volumeTypeIsValid := false
+		volumeTypeParameterValue := fmt.Sprint(*v.VolumeType)
+		for _, value := range _volumeTypeValidValues {
+			if value == volumeTypeParameterValue {
+				volumeTypeIsValid = true
+			}
+		}
 
-        if !volumeTypeIsValid {
-            return errors.ParameterValueNotAllowedError{
-                ParameterName:  "VolumeType",
-                ParameterValue: volumeTypeParameterValue,
-                AllowedValues:  _volumeTypeValidValues,
-            }
-        }
-    }
+		if !volumeTypeIsValid {
+			return errors.ParameterValueNotAllowedError{
+				ParameterName:  "VolumeType",
+				ParameterValue: volumeTypeParameterValue,
+				AllowedValues:  _volumeTypeValidValues,
+			}
+		}
+	}
 
-    return nil
+	return nil
 }
 
 type CloneVolumesOutput struct {
-    Message *string   `json:"message" name:"message"`
-    Action  *string   `json:"action" name:"action" location:"elements"`
-    JobID   *string   `json:"job_id" name:"job_id" location:"elements"`
-    RetCode *int      `json:"ret_code" name:"ret_code" location:"elements"`
-    Volumes []*string `json:"volumes" name:"volumes" location:"elements"`
+	Message *string   `json:"message" name:"message"`
+	Action  *string   `json:"action" name:"action" location:"elements"`
+	JobID   *string   `json:"job_id" name:"job_id" location:"elements"`
+	RetCode *int      `json:"ret_code" name:"ret_code" location:"elements"`
+	Volumes []*string `json:"volumes" name:"volumes" location:"elements"`
 }
 
 // Documentation URL: https://docs.qingcloud.com/api/volume/create_volumes.html
 func (s *VolumeService) CreateVolumes(i *CreateVolumesInput) (*CreateVolumesOutput, error) {
-    if i == nil {
-        i = &CreateVolumesInput{}
-    }
-    o := &data.Operation{
-        Config:        s.Config,
-        Properties:    s.Properties,
-        APIName:       "CreateVolumes",
-        RequestMethod: "GET",
-    }
+	if i == nil {
+		i = &CreateVolumesInput{}
+	}
+	o := &data.Operation{
+		Config:        s.Config,
+		Properties:    s.Properties,
+		APIName:       "CreateVolumes",
+		RequestMethod: "GET",
+	}
 
-    x := &CreateVolumesOutput{}
-    r, err := request.New(o, i, x)
-    if err != nil {
-        return nil, err
-    }
+	x := &CreateVolumesOutput{}
+	r, err := request.New(o, i, x)
+	if err != nil {
+		return nil, err
+	}
 
-    err = r.Send()
-    if err != nil {
-        return nil, err
-    }
+	err = r.Send()
+	if err != nil {
+		return nil, err
+	}
 
-    return x, err
+	return x, err
 }
 
 type CreateVolumesInput struct {
-    Count      *int    `json:"count" name:"count" default:"1" location:"params"`
-    Repl       *string `json:"repl" name:"repl" location:"params"`
-    Size       *int    `json:"size" name:"size" location:"params"` // Required
-    VolumeName *string `json:"volume_name" name:"volume_name" location:"params"`
-    VolumeType *int    `json:"volume_type" name:"volume_type" default:"0" location:"params"`
-    Zone       *string `json:"zone" name:"zone" location:"params"`
-    // For VolumeType=5/6/7 to set replica count
-    ReplicaCount *int `json:"replica_count" name:"replica_count" location:"params"`
+	Count      *int    `json:"count" name:"count" default:"1" location:"params"`
+	Repl       *string `json:"repl" name:"repl" location:"params"`
+	Size       *int    `json:"size" name:"size" location:"params"` // Required
+	VolumeName *string `json:"volume_name" name:"volume_name" location:"params"`
+	VolumeType *int    `json:"volume_type" name:"volume_type" default:"0" location:"params"`
+	Zone       *string `json:"zone" name:"zone" location:"params"`
+	// For VolumeType=5/6/7 to set replica count
+	ReplicaCount    *int    `json:"replica_count" name:"replica_count" location:"params"`
+	ContainerConfID *string `json:"container_conf_id" name:"container_conf_id" location:"params"`
 }
 
 func (v *CreateVolumesInput) Validate() error {
 
-    if v.Size == nil {
-        return errors.ParameterRequiredError{
-            ParameterName: "Size",
-            ParentName:    "CreateVolumesInput",
-        }
-    }
+	if v.Size == nil {
+		return errors.ParameterRequiredError{
+			ParameterName: "Size",
+			ParentName:    "CreateVolumesInput",
+		}
+	}
 
-    if v.VolumeType != nil {
-        volumeTypeIsValid := false
-        volumeTypeParameterValue := fmt.Sprint(*v.VolumeType)
-        for _, value := range _volumeTypeValidValues {
-            if value == volumeTypeParameterValue {
-                volumeTypeIsValid = true
-            }
-        }
+	if v.VolumeType != nil {
+		volumeTypeIsValid := false
+		volumeTypeParameterValue := fmt.Sprint(*v.VolumeType)
+		for _, value := range _volumeTypeValidValues {
+			if value == volumeTypeParameterValue {
+				volumeTypeIsValid = true
+			}
+		}
 
-        if !volumeTypeIsValid {
-            return errors.ParameterValueNotAllowedError{
-                ParameterName:  "VolumeType",
-                ParameterValue: volumeTypeParameterValue,
-                AllowedValues:  _volumeTypeValidValues,
-            }
-        }
-    }
+		if !volumeTypeIsValid {
+			return errors.ParameterValueNotAllowedError{
+				ParameterName:  "VolumeType",
+				ParameterValue: volumeTypeParameterValue,
+				AllowedValues:  _volumeTypeValidValues,
+			}
+		}
+	}
 
-    return nil
+	return nil
 }
 
 type CreateVolumesOutput struct {
-    Message *string   `json:"message" name:"message"`
-    Action  *string   `json:"action" name:"action" location:"elements"`
-    JobID   *string   `json:"job_id" name:"job_id" location:"elements"`
-    RetCode *int      `json:"ret_code" name:"ret_code" location:"elements"`
-    Volumes []*string `json:"volumes" name:"volumes" location:"elements"`
+	Message *string   `json:"message" name:"message"`
+	Action  *string   `json:"action" name:"action" location:"elements"`
+	JobID   *string   `json:"job_id" name:"job_id" location:"elements"`
+	RetCode *int      `json:"ret_code" name:"ret_code" location:"elements"`
+	Volumes []*string `json:"volumes" name:"volumes" location:"elements"`
 }
 
 // Documentation URL: https://docs.qingcloud.com/api/volume/delete_volumes.html
 func (s *VolumeService) DeleteVolumes(i *DeleteVolumesInput) (*DeleteVolumesOutput, error) {
-    if i == nil {
-        i = &DeleteVolumesInput{}
-    }
-    o := &data.Operation{
-        Config:        s.Config,
-        Properties:    s.Properties,
-        APIName:       "DeleteVolumes",
-        RequestMethod: "GET",
-    }
+	if i == nil {
+		i = &DeleteVolumesInput{}
+	}
+	o := &data.Operation{
+		Config:        s.Config,
+		Properties:    s.Properties,
+		APIName:       "DeleteVolumes",
+		RequestMethod: "GET",
+	}
 
-    x := &DeleteVolumesOutput{}
-    r, err := request.New(o, i, x)
-    if err != nil {
-        return nil, err
-    }
+	x := &DeleteVolumesOutput{}
+	r, err := request.New(o, i, x)
+	if err != nil {
+		return nil, err
+	}
 
-    err = r.Send()
-    if err != nil {
-        return nil, err
-    }
+	err = r.Send()
+	if err != nil {
+		return nil, err
+	}
 
-    return x, err
+	return x, err
 }
 
 type DeleteVolumesInput struct {
-    Volumes []*string `json:"volumes" name:"volumes" location:"params"` // Required
+	Volumes []*string `json:"volumes" name:"volumes" location:"params"` // Required
 }
 
 func (v *DeleteVolumesInput) Validate() error {
 
-    if len(v.Volumes) == 0 {
-        return errors.ParameterRequiredError{
-            ParameterName: "Volumes",
-            ParentName:    "DeleteVolumesInput",
-        }
-    }
+	if len(v.Volumes) == 0 {
+		return errors.ParameterRequiredError{
+			ParameterName: "Volumes",
+			ParentName:    "DeleteVolumesInput",
+		}
+	}
 
-    return nil
+	return nil
 }
 
 type DeleteVolumesOutput struct {
-    Message *string `json:"message" name:"message"`
-    Action  *string `json:"action" name:"action" location:"elements"`
-    JobID   *string `json:"job_id" name:"job_id" location:"elements"`
-    RetCode *int    `json:"ret_code" name:"ret_code" location:"elements"`
+	Message *string `json:"message" name:"message"`
+	Action  *string `json:"action" name:"action" location:"elements"`
+	JobID   *string `json:"job_id" name:"job_id" location:"elements"`
+	RetCode *int    `json:"ret_code" name:"ret_code" location:"elements"`
 }
 
 // Documentation URL: https://docs.qingcloud.com/api/volume/describe_volumes.html
 func (s *VolumeService) DescribeVolumes(i *DescribeVolumesInput) (*DescribeVolumesOutput, error) {
-    if i == nil {
-        i = &DescribeVolumesInput{}
-    }
-    o := &data.Operation{
-        Config:        s.Config,
-        Properties:    s.Properties,
-        APIName:       "DescribeVolumes",
-        RequestMethod: "GET",
-    }
+	if i == nil {
+		i = &DescribeVolumesInput{}
+	}
+	o := &data.Operation{
+		Config:        s.Config,
+		Properties:    s.Properties,
+		APIName:       "DescribeVolumes",
+		RequestMethod: "GET",
+	}
 
-    x := &DescribeVolumesOutput{}
-    r, err := request.New(o, i, x)
-    if err != nil {
-        return nil, err
-    }
+	x := &DescribeVolumesOutput{}
+	r, err := request.New(o, i, x)
+	if err != nil {
+		return nil, err
+	}
 
-    err = r.Send()
-    if err != nil {
-        return nil, err
-    }
+	err = r.Send()
+	if err != nil {
+		return nil, err
+	}
 
-    return x, err
+	return x, err
 }
 
 type DescribeVolumesInput struct {
-    Limit      *int      `json:"limit" name:"limit" default:"20" location:"params"`
-    Offset     *int      `json:"offset" name:"offset" default:"0" location:"params"`
-    Owner      *string   `json:"owner" name:"owner" location:"params"`
-    ProjectID  *string   `json:"project_id" name:"project_id" location:"params"`
-    SearchWord *string   `json:"search_word" name:"search_word" location:"params"`
-    Status     []*string `json:"status" name:"status" location:"params"`
-    Tags       []*string `json:"tags" name:"tags" location:"params"`
-    // Verbose's available values: 0, 1
-    Verbose    *int      `json:"verbose" name:"verbose" default:"0" location:"params"`
-    VolumeType *int      `json:"volume_type" name:"volume_type" location:"params"`
-    Volumes    []*string `json:"volumes" name:"volumes" location:"params"`
-    Zone       *string   `json:"zone" name:"zone" location:"params"`
+	Limit      *int      `json:"limit" name:"limit" default:"20" location:"params"`
+	Offset     *int      `json:"offset" name:"offset" default:"0" location:"params"`
+	Owner      *string   `json:"owner" name:"owner" location:"params"`
+	ProjectID  *string   `json:"project_id" name:"project_id" location:"params"`
+	SearchWord *string   `json:"search_word" name:"search_word" location:"params"`
+	Status     []*string `json:"status" name:"status" location:"params"`
+	Tags       []*string `json:"tags" name:"tags" location:"params"`
+	// Verbose's available values: 0, 1
+	Verbose    *int      `json:"verbose" name:"verbose" default:"0" location:"params"`
+	VolumeType *int      `json:"volume_type" name:"volume_type" location:"params"`
+	Volumes    []*string `json:"volumes" name:"volumes" location:"params"`
+	Zone       *string   `json:"zone" name:"zone" location:"params"`
 }
 
 func (v *DescribeVolumesInput) Validate() error {
 
-    if v.Verbose != nil {
-        verboseValidValues := []string{"0", "1"}
-        verboseParameterValue := fmt.Sprint(*v.Verbose)
+	if v.Verbose != nil {
+		verboseValidValues := []string{"0", "1"}
+		verboseParameterValue := fmt.Sprint(*v.Verbose)
 
-        verboseIsValid := false
-        for _, value := range verboseValidValues {
-            if value == verboseParameterValue {
-                verboseIsValid = true
-            }
-        }
+		verboseIsValid := false
+		for _, value := range verboseValidValues {
+			if value == verboseParameterValue {
+				verboseIsValid = true
+			}
+		}
 
-        if !verboseIsValid {
-            return errors.ParameterValueNotAllowedError{
-                ParameterName:  "Verbose",
-                ParameterValue: verboseParameterValue,
-                AllowedValues:  verboseValidValues,
-            }
-        }
-    }
+		if !verboseIsValid {
+			return errors.ParameterValueNotAllowedError{
+				ParameterName:  "Verbose",
+				ParameterValue: verboseParameterValue,
+				AllowedValues:  verboseValidValues,
+			}
+		}
+	}
 
-    if v.VolumeType != nil {
-        volumeTypeIsValid := false
-        volumeTypeParameterValue := fmt.Sprint(*v.VolumeType)
-        for _, value := range _volumeTypeValidValues {
-            if value == volumeTypeParameterValue {
-                volumeTypeIsValid = true
-            }
-        }
+	if v.VolumeType != nil {
+		volumeTypeIsValid := false
+		volumeTypeParameterValue := fmt.Sprint(*v.VolumeType)
+		for _, value := range _volumeTypeValidValues {
+			if value == volumeTypeParameterValue {
+				volumeTypeIsValid = true
+			}
+		}
 
-        if !volumeTypeIsValid {
-            return errors.ParameterValueNotAllowedError{
-                ParameterName:  "VolumeType",
-                ParameterValue: volumeTypeParameterValue,
-                AllowedValues:  _volumeTypeValidValues,
-            }
-        }
-    }
+		if !volumeTypeIsValid {
+			return errors.ParameterValueNotAllowedError{
+				ParameterName:  "VolumeType",
+				ParameterValue: volumeTypeParameterValue,
+				AllowedValues:  _volumeTypeValidValues,
+			}
+		}
+	}
 
-    return nil
+	return nil
 }
 
 type DescribeVolumesOutput struct {
-    Message    *string   `json:"message" name:"message"`
-    Action     *string   `json:"action" name:"action" location:"elements"`
-    RetCode    *int      `json:"ret_code" name:"ret_code" location:"elements"`
-    TotalCount *int      `json:"total_count" name:"total_count" location:"elements"`
-    VolumeSet  []*Volume `json:"volume_set" name:"volume_set" location:"elements"`
+	Message    *string   `json:"message" name:"message"`
+	Action     *string   `json:"action" name:"action" location:"elements"`
+	RetCode    *int      `json:"ret_code" name:"ret_code" location:"elements"`
+	TotalCount *int      `json:"total_count" name:"total_count" location:"elements"`
+	VolumeSet  []*Volume `json:"volume_set" name:"volume_set" location:"elements"`
 }
 
 // Documentation URL: https://docs.qingcloud.com/api/volume/detach_volumes.html
 func (s *VolumeService) DetachVolumes(i *DetachVolumesInput) (*DetachVolumesOutput, error) {
-    if i == nil {
-        i = &DetachVolumesInput{}
-    }
-    o := &data.Operation{
-        Config:        s.Config,
-        Properties:    s.Properties,
-        APIName:       "DetachVolumes",
-        RequestMethod: "GET",
-    }
+	if i == nil {
+		i = &DetachVolumesInput{}
+	}
+	o := &data.Operation{
+		Config:        s.Config,
+		Properties:    s.Properties,
+		APIName:       "DetachVolumes",
+		RequestMethod: "GET",
+	}
 
-    x := &DetachVolumesOutput{}
-    r, err := request.New(o, i, x)
-    if err != nil {
-        return nil, err
-    }
+	x := &DetachVolumesOutput{}
+	r, err := request.New(o, i, x)
+	if err != nil {
+		return nil, err
+	}
 
-    err = r.Send()
-    if err != nil {
-        return nil, err
-    }
+	err = r.Send()
+	if err != nil {
+		return nil, err
+	}
 
-    return x, err
+	return x, err
 }
 
 type DetachVolumesInput struct {
-    Instance *string   `json:"instance" name:"instance" location:"params"` // Required
-    Volumes  []*string `json:"volumes" name:"volumes" location:"params"`   // Required
+	Instance *string   `json:"instance" name:"instance" location:"params"` // Required
+	Volumes  []*string `json:"volumes" name:"volumes" location:"params"`   // Required
 }
 
 func (v *DetachVolumesInput) Validate() error {
 
-    if v.Instance == nil {
-        return errors.ParameterRequiredError{
-            ParameterName: "Instance",
-            ParentName:    "DetachVolumesInput",
-        }
-    }
+	if v.Instance == nil {
+		return errors.ParameterRequiredError{
+			ParameterName: "Instance",
+			ParentName:    "DetachVolumesInput",
+		}
+	}
 
-    if len(v.Volumes) == 0 {
-        return errors.ParameterRequiredError{
-            ParameterName: "Volumes",
-            ParentName:    "DetachVolumesInput",
-        }
-    }
+	if len(v.Volumes) == 0 {
+		return errors.ParameterRequiredError{
+			ParameterName: "Volumes",
+			ParentName:    "DetachVolumesInput",
+		}
+	}
 
-    return nil
+	return nil
 }
 
 type DetachVolumesOutput struct {
-    Message *string `json:"message" name:"message"`
-    Action  *string `json:"action" name:"action" location:"elements"`
-    JobID   *string `json:"job_id" name:"job_id" location:"elements"`
-    RetCode *int    `json:"ret_code" name:"ret_code" location:"elements"`
+	Message *string `json:"message" name:"message"`
+	Action  *string `json:"action" name:"action" location:"elements"`
+	JobID   *string `json:"job_id" name:"job_id" location:"elements"`
+	RetCode *int    `json:"ret_code" name:"ret_code" location:"elements"`
 }
 
 // Documentation URL: https://docs.qingcloud.com/api/volume/modify_volume_attributes.html
 func (s *VolumeService) ModifyVolumeAttributes(i *ModifyVolumeAttributesInput) (*ModifyVolumeAttributesOutput, error) {
-    if i == nil {
-        i = &ModifyVolumeAttributesInput{}
-    }
-    o := &data.Operation{
-        Config:        s.Config,
-        Properties:    s.Properties,
-        APIName:       "ModifyVolumeAttributes",
-        RequestMethod: "GET",
-    }
+	if i == nil {
+		i = &ModifyVolumeAttributesInput{}
+	}
+	o := &data.Operation{
+		Config:        s.Config,
+		Properties:    s.Properties,
+		APIName:       "ModifyVolumeAttributes",
+		RequestMethod: "GET",
+	}
 
-    x := &ModifyVolumeAttributesOutput{}
-    r, err := request.New(o, i, x)
-    if err != nil {
-        return nil, err
-    }
+	x := &ModifyVolumeAttributesOutput{}
+	r, err := request.New(o, i, x)
+	if err != nil {
+		return nil, err
+	}
 
-    err = r.Send()
-    if err != nil {
-        return nil, err
-    }
+	err = r.Send()
+	if err != nil {
+		return nil, err
+	}
 
-    return x, err
+	return x, err
 }
 
 type ModifyVolumeAttributesInput struct {
-    Description *string `json:"description" name:"description" location:"params"`
-    Volume      *string `json:"volume" name:"volume" location:"params"` // Required
-    VolumeName  *string `json:"volume_name" name:"volume_name" location:"params"`
+	Description *string `json:"description" name:"description" location:"params"`
+	Volume      *string `json:"volume" name:"volume" location:"params"` // Required
+	VolumeName  *string `json:"volume_name" name:"volume_name" location:"params"`
 }
 
 func (v *ModifyVolumeAttributesInput) Validate() error {
 
-    if v.Volume == nil {
-        return errors.ParameterRequiredError{
-            ParameterName: "Volume",
-            ParentName:    "ModifyVolumeAttributesInput",
-        }
-    }
+	if v.Volume == nil {
+		return errors.ParameterRequiredError{
+			ParameterName: "Volume",
+			ParentName:    "ModifyVolumeAttributesInput",
+		}
+	}
 
-    return nil
+	return nil
 }
 
 type ModifyVolumeAttributesOutput struct {
-    Message *string `json:"message" name:"message"`
-    Action  *string `json:"action" name:"action" location:"elements"`
-    RetCode *int    `json:"ret_code" name:"ret_code" location:"elements"`
+	Message *string `json:"message" name:"message"`
+	Action  *string `json:"action" name:"action" location:"elements"`
+	RetCode *int    `json:"ret_code" name:"ret_code" location:"elements"`
 }
 
 // Documentation URL: https://docs.qingcloud.com/api/volume/resize_volumes.html
 func (s *VolumeService) ResizeVolumes(i *ResizeVolumesInput) (*ResizeVolumesOutput, error) {
-    if i == nil {
-        i = &ResizeVolumesInput{}
-    }
-    o := &data.Operation{
-        Config:        s.Config,
-        Properties:    s.Properties,
-        APIName:       "ResizeVolumes",
-        RequestMethod: "GET",
-    }
+	if i == nil {
+		i = &ResizeVolumesInput{}
+	}
+	o := &data.Operation{
+		Config:        s.Config,
+		Properties:    s.Properties,
+		APIName:       "ResizeVolumes",
+		RequestMethod: "GET",
+	}
 
-    x := &ResizeVolumesOutput{}
-    r, err := request.New(o, i, x)
-    if err != nil {
-        return nil, err
-    }
+	x := &ResizeVolumesOutput{}
+	r, err := request.New(o, i, x)
+	if err != nil {
+		return nil, err
+	}
 
-    err = r.Send()
-    if err != nil {
-        return nil, err
-    }
+	err = r.Send()
+	if err != nil {
+		return nil, err
+	}
 
-    return x, err
+	return x, err
 }
 
 type ResizeVolumesInput struct {
-    Size    *int      `json:"size" name:"size" location:"params"`       // Required
-    Volumes []*string `json:"volumes" name:"volumes" location:"params"` // Required
+	Size    *int      `json:"size" name:"size" location:"params"`       // Required
+	Volumes []*string `json:"volumes" name:"volumes" location:"params"` // Required
 }
 
 func (v *ResizeVolumesInput) Validate() error {
 
-    if v.Size == nil {
-        return errors.ParameterRequiredError{
-            ParameterName: "Size",
-            ParentName:    "ResizeVolumesInput",
-        }
-    }
+	if v.Size == nil {
+		return errors.ParameterRequiredError{
+			ParameterName: "Size",
+			ParentName:    "ResizeVolumesInput",
+		}
+	}
 
-    if len(v.Volumes) == 0 {
-        return errors.ParameterRequiredError{
-            ParameterName: "Volumes",
-            ParentName:    "ResizeVolumesInput",
-        }
-    }
+	if len(v.Volumes) == 0 {
+		return errors.ParameterRequiredError{
+			ParameterName: "Volumes",
+			ParentName:    "ResizeVolumesInput",
+		}
+	}
 
-    return nil
+	return nil
 }
 
 type ResizeVolumesOutput struct {
-    Message *string `json:"message" name:"message"`
-    Action  *string `json:"action" name:"action" location:"elements"`
-    JobID   *string `json:"job_id" name:"job_id" location:"elements"`
-    RetCode *int    `json:"ret_code" name:"ret_code" location:"elements"`
+	Message *string `json:"message" name:"message"`
+	Action  *string `json:"action" name:"action" location:"elements"`
+	JobID   *string `json:"job_id" name:"job_id" location:"elements"`
+	RetCode *int    `json:"ret_code" name:"ret_code" location:"elements"`
 }
