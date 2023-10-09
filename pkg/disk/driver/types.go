@@ -182,6 +182,12 @@ const (
 	EnterpriseCompute3InstanceType      InstanceType = 203
 	PremiumInstanceType                 InstanceType = 301
 	NvidiaAmpereG3InstanceType          InstanceType = 1003
+	TPSCInstanceType                    InstanceType = 400
+	TPSC1InstanceType                   InstanceType = 401
+	TPSC2InstanceType                   InstanceType = 402
+	TPSC3InstanceType                   InstanceType = 403
+	TPSC4InstanceType                   InstanceType = 404
+	TPSC5InstanceType                   InstanceType = 405
 )
 
 var InstanceTypeName = map[InstanceType]string{
@@ -196,6 +202,12 @@ var InstanceTypeName = map[InstanceType]string{
 	203:  "EnterpriseCompute3",
 	301:  "Premium",
 	1003: "NvidiaAmpereG3",
+	400:  "TPSC",
+	401:  "TPSC1",
+	402:  "TPSC2",
+	403:  "TPSC3",
+	404:  "TPSC4",
+	405:  "TPSC5",
 }
 
 var InstanceTypeValue = map[string]InstanceType{
@@ -210,6 +222,12 @@ var InstanceTypeValue = map[string]InstanceType{
 	"EnterpriseCompute3":      203,
 	"Premium":                 301,
 	"NvidiaAmpereG3":          1003,
+	"TPSC":                    400,
+	"TPSC1":                   401,
+	"TPSC2":                   402,
+	"TPSC3":                   403,
+	"TPSC4":                   404,
+	"TPSC5":                   405,
 }
 
 var InstanceTypeAttachPreferred = map[InstanceType]VolumeType{
@@ -224,6 +242,12 @@ var InstanceTypeAttachPreferred = map[InstanceType]VolumeType{
 	EnterpriseCompute3InstanceType:      SSDEnterpriseVolumeType,
 	PremiumInstanceType:                 SSDEnterpriseVolumeType,
 	NvidiaAmpereG3InstanceType:          NeonSANHDDVolumeType,
+	TPSCInstanceType:                    ThirdPartyStorageType,
+	TPSC1InstanceType:                   ThirdPartyStorageType,
+	TPSC2InstanceType:                   ThirdPartyStorageType,
+	TPSC3InstanceType:                   ThirdPartyStorageType,
+	TPSC4InstanceType:                   ThirdPartyStorageType,
+	TPSC5InstanceType:                   ThirdPartyStorageType,
 }
 
 var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
@@ -287,6 +311,12 @@ var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
 	},
 	ThirdPartyStorageType: {
 		StandardInstanceType,
+		TPSCInstanceType,
+		TPSC1InstanceType,
+		TPSC2InstanceType,
+		TPSC3InstanceType,
+		TPSC4InstanceType,
+		TPSC5InstanceType,
 	},
 	StandardVolumeType: {
 		HighPerformanceInstanceType,
