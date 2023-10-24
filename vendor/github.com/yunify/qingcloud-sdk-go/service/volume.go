@@ -215,6 +215,7 @@ type CreateVolumesInput struct {
 	// For VolumeType=5/6/7 to set replica count
 	ReplicaCount    *int    `json:"replica_count" name:"replica_count" location:"params"`
 	ContainerConfID *string `json:"container_conf_id" name:"container_conf_id" location:"params"`
+	RG              *string `json:"rg" name:"rg" location:"params"`
 }
 
 func (v *CreateVolumesInput) Validate() error {

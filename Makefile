@@ -17,11 +17,11 @@
 .PHONY: all disk
 
 DISK_IMAGE_NAME=csiplugin/csi-qingcloud
-DISK_VERSION=v1.3.9
+DISK_VERSION=v1.4.0
 ROOT_PATH=$(pwd)
 PACKAGE_LIST=./cmd/... ./pkg/...
 
-disk: mod
+disk:
 	docker build -t ${DISK_IMAGE_NAME}-builder:${DISK_VERSION} -f deploy/disk/docker/Dockerfile . --target builder
 
 disk-container:

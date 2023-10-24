@@ -160,7 +160,7 @@ func (m *MockCloudManager) FindVolumeByName(volName string) (volInfo *qcservice.
 	return nil, nil
 }
 
-func (m *MockCloudManager) CreateVolume(volName string, requestSize int, replicas int, volType int, zone string, containerConfID string) (
+func (m *MockCloudManager) CreateVolume(volName string, requestSize int, replicas int, volType int, zone string, containerConfID string, rg string) (
 	volId string, err error) {
 	exVol, err := m.FindVolumeByName(volName)
 	if err != nil {

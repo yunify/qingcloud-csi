@@ -162,7 +162,7 @@ func (cs *ControllerServer) CreateVolume(ctx context.Context, req *csi.CreateVol
 		requiredSizeGib := common.ByteCeilToGib(requiredSizeByte)
 		klog.Infof("%s: Creating empty volume %s with %d Gib in zone %s...", hash, volName, requiredSizeGib,
 			top.GetZone())
-		newVolId, err := cs.cloud.CreateVolume(volName, requiredSizeGib, sc.GetReplica(), sc.GetDiskType().Int(), top.GetZone(), sc.GetContainerConfID())
+		newVolId, err := cs.cloud.CreateVolume(volName, requiredSizeGib, sc.GetReplica(), sc.GetDiskType().Int(), top.GetZone(), sc.GetContainerConfID(), sc.GetRG())
 		if err != nil {
 			klog.Errorf("%s: Failed to create volume %s, error: %v", hash, volName, err)
 			return nil, status.Error(codes.Internal, err.Error())

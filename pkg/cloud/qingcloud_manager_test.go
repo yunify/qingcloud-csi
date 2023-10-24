@@ -67,7 +67,7 @@ func TestQingCloudManager_CreateVolume(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		volId, err := cfg.CreateVolume(test.volName, test.volSize, test.volRepl, test.volType, test.volZone, "")
+		volId, err := cfg.CreateVolume(test.volName, test.volSize, test.volRepl, test.volType, test.volZone, "", "")
 		if err != nil {
 			if !test.isError {
 				t.Errorf("testcase %s: expect error %t, but actually error: %s", test.name, test.isError, err)

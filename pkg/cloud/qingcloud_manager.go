@@ -302,7 +302,7 @@ func (cm *qingCloudManager) FindVolumeByName(name string) (volume *qcservice.Vol
 // 1. format volume size
 // 2. create volume
 // 3. wait job
-func (qm *qingCloudManager) CreateVolume(volName string, requestSize int, replicas int, volType int, zone string, containerConfID string) (
+func (qm *qingCloudManager) CreateVolume(volName string, requestSize int, replicas int, volType int, zone string, containerConfID string, rg string) (
 	newVolId string, err error) {
 	// 0. Set CreateVolume args
 	// create volume count
@@ -319,14 +319,16 @@ func (qm *qingCloudManager) CreateVolume(volName string, requestSize int, replic
 		VolumeType:   &volType,
 		Zone:         &zone,
 	}
-	if volType == int(driver.ThirdPartyStorageType) {
+
+	if volType == driver.ThirdPartyStorageType.Int() && containerConfID != "" {
 		input.ContainerConfID = &containerConfID
-		klog.Infof("Call IaaS CreateVolume request name: %s, size: %d GB, type: %d, zone: %s, count: %d, replica: %s, replica_count: %d, container_conf_id: %s",
-			*input.VolumeName, *input.Size, *input.VolumeType, *input.Zone, *input.Count, *input.Repl, *input.ReplicaCount, *input.ContainerConfID)
-	} else {
-		klog.Infof("Call IaaS CreateVolume request name: %s, size: %d GB, type: %d, zone: %s, count: %d, replica: %s, replica_count: %d",
-			*input.VolumeName, *input.Size, *input.VolumeType, *input.Zone, *input.Count, *input.Repl, *input.ReplicaCount)
 	}
+	if (volType == driver.NeonSANVolumeType.Int() || volType == driver.NeonSANHDDVolumeType.Int() || volType == driver.NeonSANRDMAVolumeType.Int()) && rg != "" {
+		input.RG = &rg
+	}
+
+	klog.Infof("Call IaaS CreateVolume request name: %s, size: %d GB, type: %d, zone: %s, count: %d, replica: %s, replica_count: %d, container_conf_id: %s, rg: %s",
+		*input.VolumeName, *input.Size, *input.VolumeType, *input.Zone, *input.Count, *input.Repl, *input.ReplicaCount, containerConfID, rg)
 
 	// 1. Create volume
 	output, err := qm.volumeService.CreateVolumes(input)

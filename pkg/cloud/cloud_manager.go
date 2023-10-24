@@ -39,7 +39,7 @@ type VolumeManager interface {
 	// Return:
 	//   volume id, nil: succeed to create volume and return volume id
 	//   nil, error: failed to create volume
-	CreateVolume(volName string, requestSize int, replicas int, volType int, zone string, containerConfID string) (volId string, err error)
+	CreateVolume(volName string, requestSize int, replicas int, volType int, zone string, containerConfID string, rg string) (volId string, err error)
 	// DeleteVolume deletes volume by id.
 	// Return:
 	//   nil: succeed to delete volume

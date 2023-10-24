@@ -35,6 +35,7 @@ const (
 	StorageClassReplicaName     = "replica"
 	StorageClassTagsName        = "tags"
 	StorageClassContainerConfID = "containerConfID"
+	StorageClassRG              = "rg"
 )
 
 type QingStorageClass struct {
@@ -46,6 +47,7 @@ type QingStorageClass struct {
 	replica         int
 	tags            []string
 	containerConfID string
+	rg              string
 }
 
 // NewDefaultQingStorageClassFromType create default qingStorageClass by specified volume type
@@ -70,6 +72,7 @@ func NewQingStorageClassFromMap(opt map[string]string, topology *Topology) (*Qin
 	fsType := ""
 	replica := -1
 	containerConfID := ""
+	rg := ""
 	var tags []string
 	for k, v := range opt {
 		switch strings.ToLower(k) {
@@ -118,6 +121,8 @@ func NewQingStorageClassFromMap(opt map[string]string, topology *Topology) (*Qin
 			}
 		case strings.ToLower(StorageClassContainerConfID):
 			containerConfID = v
+		case strings.ToLower(StorageClassRG):
+			rg = v
 		}
 	}
 
@@ -149,6 +154,7 @@ func NewQingStorageClassFromMap(opt map[string]string, topology *Topology) (*Qin
 	_ = sc.setReplica(replica)
 	sc.setTags(tags)
 	sc.setContainerConfID(containerConfID)
+	sc.setRG(rg)
 	return sc, nil
 }
 
@@ -181,6 +187,10 @@ func (sc QingStorageClass) GetTags() []string {
 
 func (sc QingStorageClass) GetContainerConfID() string {
 	return sc.containerConfID
+}
+
+func (sc QingStorageClass) GetRG() string {
+	return sc.rg
 }
 
 func (sc *QingStorageClass) setFsType(fs string) error {
@@ -217,6 +227,10 @@ func (sc *QingStorageClass) setTags(tagsStr []string) {
 
 func (sc *QingStorageClass) setContainerConfID(containerConfID string) {
 	sc.containerConfID = containerConfID
+}
+
+func (sc *QingStorageClass) setRG(rg string) {
+	sc.rg = rg
 }
 
 // FormatVolumeSize transfer to proper volume size
