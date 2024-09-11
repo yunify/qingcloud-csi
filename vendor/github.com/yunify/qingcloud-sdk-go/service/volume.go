@@ -216,6 +216,7 @@ type CreateVolumesInput struct {
 	ReplicaCount    *int    `json:"replica_count" name:"replica_count" location:"params"`
 	ContainerConfID *string `json:"container_conf_id" name:"container_conf_id" location:"params"`
 	RG              *string `json:"rg" name:"rg" location:"params"`
+	PlaceGroupID    *string `json:"place_group_id" name:"place_group_id" location:"params"`
 }
 
 func (v *CreateVolumesInput) Validate() error {
