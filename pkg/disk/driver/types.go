@@ -188,6 +188,7 @@ const (
 	TPSC3InstanceType                   InstanceType = 403
 	TPSC4InstanceType                   InstanceType = 404
 	TPSC5InstanceType                   InstanceType = 405
+	AMDFireProS7150InstanceType         InstanceType = 1002
 )
 
 var InstanceTypeName = map[InstanceType]string{
@@ -208,6 +209,7 @@ var InstanceTypeName = map[InstanceType]string{
 	403:  "TPSC3",
 	404:  "TPSC4",
 	405:  "TPSC5",
+	1002: "AMDFireProS7150",
 }
 
 var InstanceTypeValue = map[string]InstanceType{
@@ -228,6 +230,7 @@ var InstanceTypeValue = map[string]InstanceType{
 	"TPSC3":                   403,
 	"TPSC4":                   404,
 	"TPSC5":                   405,
+	"AMDFireProS7150":         1002,
 }
 
 var InstanceTypeAttachPreferred = map[InstanceType]VolumeType{
@@ -248,6 +251,7 @@ var InstanceTypeAttachPreferred = map[InstanceType]VolumeType{
 	TPSC3InstanceType:                   ThirdPartyStorageType,
 	TPSC4InstanceType:                   ThirdPartyStorageType,
 	TPSC5InstanceType:                   ThirdPartyStorageType,
+	AMDFireProS7150InstanceType:         NeonSANHDDVolumeType,
 }
 
 var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
@@ -263,6 +267,7 @@ var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
 		Enterprise2InstanceType,
 		PremiumInstanceType,
 		NvidiaAmpereG3InstanceType,
+		AMDFireProS7150InstanceType,
 	},
 	SuperHighPerformanceVolumeType: {
 		SuperHighPerformanceInstanceType,
@@ -282,6 +287,7 @@ var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
 		EnterpriseCompute3InstanceType,
 		PremiumInstanceType,
 		NvidiaAmpereG3InstanceType,
+		AMDFireProS7150InstanceType,
 	},
 	NeonSANHDDVolumeType: {
 		HighPerformanceInstanceType,
@@ -295,6 +301,7 @@ var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
 		EnterpriseCompute3InstanceType,
 		PremiumInstanceType,
 		NvidiaAmpereG3InstanceType,
+		AMDFireProS7150InstanceType,
 	},
 	NeonSANRDMAVolumeType: {
 		HighPerformanceInstanceType,
@@ -308,6 +315,7 @@ var VolumeTypeAttachConstraint = map[VolumeType][]InstanceType{
 		EnterpriseCompute3InstanceType,
 		PremiumInstanceType,
 		NvidiaAmpereG3InstanceType,
+		AMDFireProS7150InstanceType,
 	},
 	ThirdPartyStorageType: {
 		StandardInstanceType,
